@@ -11,7 +11,7 @@ import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
 
-// Define language codes
+// Define language codes for the Google Cloud Translation API
 const LANGUAGES: Record<string, string> = {
     'en-IN': 'en',
     'mr-IN': 'mr',
@@ -22,12 +22,13 @@ const LANGUAGES: Record<string, string> = {
 const translationClient = new TranslationServiceClient();
 
 async function translateText(text: string, languageCode: string): Promise<string> {
+    const targetLanguage = LANGUAGES[languageCode];
+    
     // Do not translate if the target language is English
-    if (languageCode === 'en-IN') {
+    if (targetLanguage === 'en') {
         return text;
     }
 
-    const targetLanguage = LANGUAGES[languageCode];
     if (!targetLanguage) {
         return text; // Fallback if language code is not found
     }
