@@ -77,12 +77,13 @@ export async function getDb() {
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
     `);
-  await db.exec(`
+    await db.exec(`
     CREATE TABLE IF NOT EXISTS announcement_templates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category TEXT NOT NULL,
         language_code TEXT NOT NULL,
         template_text TEXT NOT NULL,
+        template_audio_parts TEXT,
         UNIQUE(category, language_code)
     )
     `);
@@ -468,12 +469,13 @@ export type Template = {
   category: string;
   language_code: string;
   template_text: string;
+  template_audio_parts: string | null;
 };
 
 export async function getAnnouncementTemplates(): Promise<Template[]> {
     const db = await getDb();
     try {
-        const templates = await db.all('SELECT category, language_code, template_text FROM announcement_templates');
+        const templates = await db.all('SELECT category, language_code, template_text, template_audio_parts FROM announcement_templates');
         return templates;
     } catch (error) {
         console.error('Failed to fetch announcement templates:', error);
@@ -488,10 +490,10 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
     try {
         await db.run('DELETE FROM announcement_templates');
         const stmt = await db.prepare(
-            'INSERT INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
+            'INSERT INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)'
         );
         for (const template of templates) {
-            await stmt.run(template.category, template.language_code, template.template_text);
+            await stmt.run(template.category, template.language_code, template.template_text, template.template_audio_parts);
         }
         await stmt.finalize();
         revalidatePath('/announcement-templates');
@@ -506,6 +508,8 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
 export async function clearAllAnnouncementTemplates() {
   const db = await getDb();
   try {
+    const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts');
+    await fs.rm(audioDir, { recursive: true, force: true });
     await db.run('DELETE FROM announcement_templates');
     revalidatePath('/announcement-templates');
     return { message: 'All announcement templates have been deleted.' };
@@ -575,3 +579,5 @@ export async function getSession() {
     return null;
   }
 }
+
+    

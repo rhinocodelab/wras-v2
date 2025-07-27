@@ -39,9 +39,15 @@ async function getRouteData(routeId: number) {
 
 async function getTemplate(category: string, languageCode: string) {
     const db = await getDb();
-    const template = await db.get('SELECT template_text FROM announcement_templates WHERE category = ? AND language_code = ?', category, languageCode);
+    const template = await db.get('SELECT template_text, template_audio_parts FROM announcement_templates WHERE category = ? AND language_code = ?', category, languageCode);
     await db.close();
-    return template?.template_text || null;
+    if (template) {
+        return {
+            text: template.template_text,
+            audio_parts: template.template_audio_parts ? JSON.parse(template.template_audio_parts) : []
+        };
+    }
+    return null;
 }
 
 function replacePlaceholders(template: string, data: any, platform: string, trainNumber: string): string {
@@ -127,7 +133,7 @@ const generateAnnouncementFlow = ai.defineFlow(
 
     for (const lang of languages) {
         const template = await getTemplate(category, lang);
-        if (!template) continue;
+        if (!template || !template.text) continue;
 
         const translationData = translations.find(t => t.language_code === lang);
         const audioData = audioFiles.find(a => a.language_code === lang);
@@ -135,14 +141,15 @@ const generateAnnouncementFlow = ai.defineFlow(
         if (!translationData) continue;
 
         // 1. Generate Text
-        const text = replacePlaceholders(template, translationData, platform, route.train_number);
+        const text = replacePlaceholders(template.text, translationData, platform, route.train_number);
         
         // 2. Generate Audio
         let finalAudioPath: string | null = null;
         if(audioData) {
             const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
-            const parts = template.split(placeholderRegex);
+            const parts = template.text.split(placeholderRegex);
             const audioSnippets: (string | null)[] = [];
+            let staticAudioIndex = 0;
             
             for (const part of parts) {
                 if (placeholderRegex.test(part)) {
@@ -165,13 +172,9 @@ const generateAnnouncementFlow = ai.defineFlow(
                             break;
                     }
                 } else if (part.trim().length > 0) {
-                    const staticAudio = await generateSpeech(part, lang);
-                    if (staticAudio) {
-                        const tempDir = path.join(process.cwd(), 'public', 'audio', '_temp');
-                        await fsPromises.mkdir(tempDir, { recursive: true });
-                        const tempPath = path.join(tempDir, `static_${Date.now()}_${lang}.wav`);
-                        await fsPromises.writeFile(tempPath, staticAudio);
-                        audioSnippets.push(tempPath);
+                     if (template.audio_parts && template.audio_parts[staticAudioIndex]) {
+                        audioSnippets.push(path.join(process.cwd(), 'public', template.audio_parts[staticAudioIndex]));
+                        staticAudioIndex++;
                     }
                 }
             }
@@ -197,3 +200,5 @@ const generateAnnouncementFlow = ai.defineFlow(
 export async function generateAnnouncement(input: AnnouncementInput): Promise<AnnouncementOutput> {
   return await generateAnnouncementFlow(input);
 }
+
+    

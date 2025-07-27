@@ -128,17 +128,22 @@ export default function AnnouncementTemplatesPage() {
 
         for (const category in englishTemplates) {
             const englishTemplate = englishTemplates[category];
-            allTemplates.push({ category, language_code: 'en', template_text: englishTemplate });
-
-            const translationPromises = ['hi', 'mr', 'gu'].map(langCode => 
-                translateTemplateFlow({ template: englishTemplate, languageCode: langCode })
+            
+            // Process English template first
+            const englishResult = await translateTemplateFlow({ template: englishTemplate, languageCode: 'en', category });
+            allTemplates.push({ category, language_code: 'en', template_text: englishResult.translatedText, template_audio_parts: JSON.stringify(englishResult.audioParts) });
+            
+            // Process other languages
+            const otherLangs = ['hi', 'mr', 'gu'];
+            const translationPromises = otherLangs.map(langCode => 
+                translateTemplateFlow({ template: englishTemplate, languageCode: langCode, category })
             );
 
-            const translatedTexts = await Promise.all(translationPromises);
+            const results = await Promise.all(translationPromises);
 
-            translatedTexts.forEach((translatedText, index) => {
-                const langCode = ['hi', 'mr', 'gu'][index];
-                allTemplates.push({ category, language_code: langCode, template_text: translatedText });
+            results.forEach((result, index) => {
+                const langCode = otherLangs[index];
+                allTemplates.push({ category, language_code: langCode, template_text: result.translatedText, template_audio_parts: JSON.stringify(result.audioParts) });
             });
         }
         
@@ -257,7 +262,7 @@ export default function AnnouncementTemplatesPage() {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete all
-                announcement templates from the database.
+                announcement templates and their generated audio from the database.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -304,7 +309,7 @@ export default function AnnouncementTemplatesPage() {
                             >
                             Browse File
                             </label>
-                            <Button variant="secondary" onClick={handleUseSample}>Use Sample</Button>
+                            <Button variant="secondary" onClick={handleUseSample} className="h-9">Use Sample</Button>
                         </div>
                     </div>
                      <div className="mt-4 text-xs text-muted-foreground">
@@ -410,3 +415,5 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+    

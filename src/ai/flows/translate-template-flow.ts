@@ -4,6 +4,24 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TranslationServiceClient } from '@google-cloud/translate';
+import { generateSpeech } from './tts-flow';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+
+const TemplateTranslationInputSchema = z.object({
+    template: z.string(),
+    languageCode: z.string(),
+    category: z.string(),
+});
+export type TemplateTranslationInput = z.infer<typeof TemplateTranslationInputSchema>;
+
+
+const TemplateTranslationOutputSchema = z.object({
+    translatedText: z.string(),
+    audioParts: z.array(z.string()),
+});
+export type TemplateTranslationOutput = z.infer<typeof TemplateTranslationOutputSchema>;
+
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (!text || targetLanguage === 'en') {
@@ -35,36 +53,52 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
 export const translateTemplateFlow = ai.defineFlow(
     {
         name: 'translateTemplateFlow',
-        inputSchema: z.object({ template: z.string(), languageCode: z.string() }),
-        outputSchema: z.string(),
+        inputSchema: TemplateTranslationInputSchema,
+        outputSchema: TemplateTranslationOutputSchema,
     },
-    async ({ template, languageCode }) => {
-        if (languageCode === 'en') {
-            return template;
-        }
-
+    async ({ template, languageCode, category }) => {
         const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
+        
+        // 1. Translate the full text template
         const parts = template.split(placeholderRegex);
-        const placeholders = template.match(placeholderRegex) || [];
         const textToTranslate = parts.filter(part => !placeholderRegex.test(part));
 
         const translatedParts = await Promise.all(
             textToTranslate.map(part => translateText(part, languageCode))
         );
         
-        // Reconstruct the template
-        let result = '';
+        let translatedText = '';
         let translatedIndex = 0;
         let placeholderIndex = 0;
+        const placeholders = template.match(placeholderRegex) || [];
 
         for(const part of parts) {
             if(placeholderRegex.test(part)) {
-                result += placeholders[placeholderIndex++];
+                translatedText += placeholders[placeholderIndex++];
             } else {
-                result += translatedParts[translatedIndex++];
+                translatedText += translatedParts[translatedIndex++];
             }
         }
         
-        return result;
+        // 2. Generate audio for static parts of the translated template
+        const audioParts: string[] = [];
+        const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
+        const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
+        await fs.mkdir(audioDir, { recursive: true });
+
+        for (let i = 0; i < translatedStaticParts.length; i++) {
+            const part = translatedStaticParts[i];
+            const audioContent = await generateSpeech(part, languageCode);
+            if (audioContent) {
+                const audioPath = path.join(audioDir, `part_${i}.wav`);
+                await fs.writeFile(audioPath, audioContent, 'binary');
+                const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
+                audioParts.push(publicPath);
+            }
+        }
+
+        return { translatedText, audioParts };
     }
 );
+
+    
