@@ -11,7 +11,6 @@ import {
   PanelLeft,
   TramFront,
 } from 'lucide-react';
-import { Separator } from "@/components/ui/separator";
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import { logout } from '@/app/actions';
@@ -94,13 +93,6 @@ export default function HomePage() {
                   <Home className="h-5 w-5" />
                   Dashboard
                 </div>
-                
-                 <div className='px-2.5'>
-                  <Separator />
-                </div>
-
-                <div className="px-2.5 text-xs font-semibold text-muted-foreground">CORE FEATURES</div>
-
                 <div
                   onClick={() => setActiveView('route-management')}
                   className={getMobileLinkClassName('route-management')}
@@ -149,8 +141,6 @@ export default function HomePage() {
                   <Home className="h-4 w-4" />
                   Dashboard
                 </div>
-                 <Separator className="my-2" />
-                 <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">CORE FEATURES</div>
                 <div
                   onClick={() => setActiveView('route-management')}
                   className={getLinkClassName('route-management')}
