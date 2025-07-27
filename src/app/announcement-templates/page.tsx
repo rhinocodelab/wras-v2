@@ -112,26 +112,28 @@ export default function AnnouncementTemplatesPage() {
     try {
         const parsedTemplates = JSON.parse(content);
         const englishTemplates: { [key: string]: string } = {};
-        const allNewTemplates: Template[] = [];
-
+        
         // Validate input JSON and prepare English templates
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
             }
             englishTemplates[category] = parsedTemplates[category];
-             // Add English template first
+        }
+        
+        const allNewTemplates: Template[] = [];
+
+        // Process translations for other languages
+        for (const category of ANNOUNCEMENT_CATEGORIES) {
+            // Add English template first
             allNewTemplates.push({
                 category,
                 language_code: 'en',
                 template_text: englishTemplates[category],
                 template_audio_parts: JSON.stringify([]),
             });
-        }
-        
-        // Process translations for other languages
-        for (const langCode of ['hi', 'mr', 'gu']) {
-            for (const category of ANNOUNCEMENT_CATEGORIES) {
+
+            for (const langCode of ['hi', 'mr', 'gu']) {
                 const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
                 setProcessingItem(`Translating: ${langName} '${category.replace('_', ' ')}'`);
                 
@@ -139,7 +141,7 @@ export default function AnnouncementTemplatesPage() {
                     template: englishTemplates[category],
                     languageCode: langCode,
                     category: category,
-                    generateAudio: false,
+                    generateAudio: false, // Only generate text
                 });
 
                 allNewTemplates.push({
@@ -148,7 +150,6 @@ export default function AnnouncementTemplatesPage() {
                     template_text: result.translatedText,
                     template_audio_parts: JSON.stringify(result.audioParts),
                 });
-                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
         
@@ -204,49 +205,77 @@ export default function AnnouncementTemplatesPage() {
     }
   }
 
-    const handleGenerateAudioForCategory = async (category: string) => {
-        setIsGeneratingAudio(category);
-        try {
-            const englishTemplate = templates.find(t => t.category === category && t.language_code === 'en');
-            if (!englishTemplate || !englishTemplate.template_text) {
-                 toast({
-                    variant: 'destructive',
-                    title: 'Missing Template',
-                    description: `Could not find the base English template for the '${category}' category.`,
-                });
-                setIsGeneratingAudio(null);
-                return;
-            }
+  const handleGenerateAudioForCategory = async (category: string) => {
+    setIsGeneratingAudio(category);
+    toast({
+        title: `Starting Audio Generation`,
+        description: `Preparing to generate audio for the '${category.replace('_', ' ')}' category.`,
+    });
 
-            const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
-            for (const langCode of languagesToProcess) {
-                // We always pass the english template to the flow
+    try {
+        const englishTemplate = templates.find(t => t.category === category && t.language_code === 'en');
+        
+        if (!englishTemplate || !englishTemplate.template_text) {
+             toast({
+                variant: 'destructive',
+                title: 'Missing English Template',
+                description: `Could not find the base English template for '${category}'. Cannot proceed.`,
+            });
+            setIsGeneratingAudio(null);
+            return;
+        }
+
+        const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
+        for (const langCode of languagesToProcess) {
+            const langName = LANGUAGE_MAP[langCode];
+            try {
+                toast({
+                    title: `Processing: ${langName}`,
+                    description: `Generating audio for '${category.replace('_', ' ')}' template.`,
+                });
+                
                 await runTemplateFlow({
                     template: englishTemplate.template_text,
                     languageCode: langCode,
                     category: category,
-                    generateAudio: true,
+                    generateAudio: true, // Generate audio this time
                 });
-                 await new Promise(resolve => setTimeout(resolve, 1000));
+
+                toast({
+                    title: `Success: ${langName}`,
+                    description: `Successfully generated audio for ${langName}.`,
+                });
+                
+                // Add a delay to avoid rate-limiting issues with the TTS API
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            } catch (error: any) {
+                 toast({
+                    variant: 'destructive',
+                    title: `Error processing ${langName}`,
+                    description: `Failed to generate audio for '${category}': ${error.message}`,
+                    duration: 9000,
+                });
+                // Stop the process if one language fails
+                throw new Error(`Failed on ${langName}: ${error.message}`);
             }
-
-            await fetchTemplates();
-
-            toast({
-                title: 'Audio Generated',
-                description: `Audio successfully generated for the '${category.replace('_', ' ')}' category.`,
-            });
-        } catch (error: any) {
-            toast({
-                variant: 'destructive',
-                title: 'Audio Generation Failed',
-                description: error.message,
-            });
-        } finally {
-            setIsGeneratingAudio(null);
         }
-    };
 
+        await fetchTemplates(); // Refresh the data on the page
+
+        toast({
+            title: 'Audio Generation Complete',
+            description: `Successfully generated all audio for the '${category.replace('_', ' ')}' category.`,
+        });
+
+    } catch (error: any) {
+        // This will catch the re-thrown error from the inner loop
+        console.error('Audio generation process failed:', error);
+        // The specific error toast is already shown inside the loop
+    } finally {
+        setIsGeneratingAudio(null);
+    }
+  };
 
   const handleClearAll = async () => {
     setIsClearing(true);
@@ -487,3 +516,4 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
