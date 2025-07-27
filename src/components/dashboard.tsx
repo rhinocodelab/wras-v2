@@ -225,7 +225,7 @@ export function Dashboard() {
         <title>Announcement: ${trainName}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-          .main-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items-center; padding: 20px; }
+          .main-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
           .info-header { text-align: center; margin-bottom: 20px; padding: 10px 20px; border-radius: 12px; background-color: rgba(255, 255, 255, 0.1); }
           .info-header h1 { margin: 0; font-size: 2.5em; }
           .info-header p { margin: 5px 0 0; font-size: 1.2em; letter-spacing: 1px; }
@@ -283,6 +283,10 @@ export function Dashboard() {
                 playNextVideo();
              }
              if (audioPlaylist.length > 0) {
+                audioPlayer.oncanplay = () => {
+                    audioPlayer.play().catch(e => console.error("Audio play error:", e));
+                    audioPlayer.oncanplay = null; // Prevent re-triggering
+                }
                 playNextAudio();
              }
           }
@@ -290,6 +294,7 @@ export function Dashboard() {
           videoElement.addEventListener('ended', playNextVideo);
           audioPlayer.addEventListener('ended', playNextAudio);
           
+          // Use a more reliable event to start playback
           window.addEventListener('load', startPlayback, { once: true });
         <\/script>
       </body>
@@ -540,14 +545,14 @@ export function Dashboard() {
       </Dialog>
       
       <Dialog open={isAnnouncementModalOpen} onOpenChange={handleModalOpenChange}>
-        <DialogContent className="max-w-4xl h-[75vh]">
+        <DialogContent className="max-w-4xl h-[75vh] flex flex-col">
             <DialogHeader>
                 <DialogTitle>Generated Announcement</DialogTitle>
                  <DialogDescription>
                     Review the generated text, audio, and ISL video for the announcement.
                 </DialogDescription>
             </DialogHeader>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100%-100px)] overflow-hidden pt-2">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 flex-1 overflow-hidden pt-2">
                 <div className="flex flex-col h-full overflow-y-auto pr-4">
                     <div className="space-y-4">
                         {generatedData?.announcements.map(ann => (
