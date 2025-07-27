@@ -503,6 +503,20 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
     }
 }
 
+export async function clearAllAnnouncementTemplates() {
+  const db = await getDb();
+  try {
+    await db.run('DELETE FROM announcement_templates');
+    revalidatePath('/announcement-templates');
+    return { message: 'All announcement templates have been deleted.' };
+  } catch (error) {
+    console.error('Failed to clear announcement templates:', error);
+    throw new Error('Failed to clear templates.');
+  } finally {
+    await db.close();
+  }
+}
+
 export async function handleGenerateAnnouncement(input: AnnouncementInput): Promise<AnnouncementOutput> {
   return await generateAnnouncement(input);
 }

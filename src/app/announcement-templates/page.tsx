@@ -22,6 +22,17 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
@@ -29,7 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, ClipboardList } from 'lucide-react';
-import { getAnnouncementTemplates, saveAnnouncementTemplates, Template } from '@/app/actions';
+import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
 import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
@@ -52,6 +63,7 @@ export default function AnnouncementTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [isClearing, setIsClearing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const { toast } = useToast();
@@ -177,6 +189,26 @@ export default function AnnouncementTemplatesPage() {
     }
   }
 
+  const handleClearAll = async () => {
+    setIsClearing(true);
+    try {
+      const result = await clearAllAnnouncementTemplates();
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+      await fetchTemplates(); // Refresh the list
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to clear templates.',
+      });
+    } finally {
+      setIsClearing(false);
+    }
+  };
+
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -213,6 +245,29 @@ export default function AnnouncementTemplatesPage() {
             Upload and manage multilingual announcement templates.
           </p>
         </div>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="destructive" size="sm" disabled={isClearing || templates.length === 0}>
+                {isClearing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Clear All
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This action cannot be undone. This will permanently delete all
+                announcement templates from the database.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogAction onClick={handleClearAll}>
+                Continue
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </div>
       
       <div className="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -294,17 +349,17 @@ export default function AnnouncementTemplatesPage() {
                                 <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
                                 <TableCell>
                                     <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))}>HI</Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
                                     </DialogTrigger>
                                 </TableCell>
                                 <TableCell>
                                      <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))}>MR</Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))} disabled={!getTemplate(category, 'Marathi')}>MR</Button>
                                     </DialogTrigger>
                                 </TableCell>
                                 <TableCell>
                                      <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))}>GU</Button>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
                                     </DialogTrigger>
                                 </TableCell>
                                 </TableRow>
