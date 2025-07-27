@@ -13,6 +13,7 @@ import {
   Video,
   Search,
   PanelLeft,
+  TramFront,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -26,13 +27,14 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="min-h-screen w-full bg-muted/40">
-      <div className="mx-auto flex h-full max-w-7xl flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
-             <div className="flex items-center gap-2 font-semibold">
-                 <Home className="h-6 w-6" />
-                <span>Dashboard</span>
-              </div>
+    <div className="flex min-h-screen w-full flex-col items-center bg-muted/40">
+      <div className="w-full max-w-7xl">
+        <div className="flex min-h-screen w-full flex-col">
+          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+            <div className="flex items-center gap-2 font-semibold">
+              <TramFront className="h-6 w-6" />
+              <span>WRAS-DHH</span>
+            </div>
             <Sheet>
               <SheetTrigger asChild>
                 <Button size="icon" variant="outline" className="sm:hidden">
@@ -102,7 +104,7 @@ export default async function HomePage() {
               </SheetContent>
             </Sheet>
             <div className="flex items-center gap-4 ml-auto">
-               {session && (
+              {session && (
                 <div className="flex items-center gap-2 text-sm font-medium">
                   <span>Welcome, {session.name}</span>
                 </div>
@@ -114,107 +116,108 @@ export default async function HomePage() {
               </form>
             </div>
           </header>
-        <div className="flex flex-1">
-          <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
-            <nav className="flex-1 overflow-auto py-4">
-              <div className="grid items-start px-4 text-sm font-medium">
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
-                  prefetch={false}
-                >
-                  <Home className="h-4 w-4" />
-                  Dashboard
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  prefetch={false}
-                >
-                  <GitFork className="h-4 w-4" />
-                  Route Management
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  prefetch={false}
-                >
-                  <Megaphone className="h-4 w-4" />
-                  Announcement Templates
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  prefetch={false}
-                >
-                  <Volume2 className="h-4 w-4" />
-                  Audio Templates
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  prefetch={false}
-                >
-                  <Database className="h-4 w-4" />
-                  AI Database
-                </Link>
-                <Link
-                  href="#"
-                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                  prefetch={false}
-                >
-                  <Video className="h-4 w-4" />
-                  ISL Dataset
-                </Link>
+          <div className="flex flex-1">
+            <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
+              <nav className="flex-1 overflow-auto py-4">
+                <div className="grid items-start px-4 text-sm font-medium">
+                  <Link
+                    href="#"
+                    className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
+                    prefetch={false}
+                  >
+                    <Home className="h-4 w-4" />
+                    Dashboard
+                  </Link>
+                  <Link
+                    href="#"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    prefetch={false}
+                  >
+                    <GitFork className="h-4 w-4" />
+                    Route Management
+                  </Link>
+                  <Link
+                    href="#"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    prefetch={false}
+                  >
+                    <Megaphone className="h-4 w-4" />
+                    Announcement Templates
+                  </Link>
+                  <Link
+                    href="#"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    prefetch={false}
+                  >
+                    <Volume2 className="h-4 w-4" />
+                    Audio Templates
+                  </Link>
+                  <Link
+                    href="#"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    prefetch={false}
+                  >
+                    <Database className="h-4 w-4" />
+                    AI Database
+                  </Link>
+                  <Link
+                    href="#"
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                    prefetch={false}
+                  >
+                    <Video className="h-4 w-4" />
+                    ISL Dataset
+                  </Link>
+                </div>
+              </nav>
+            </aside>
+            <main className="flex-1 p-4 sm:p-6">
+              <div className="flex items-center">
+                <h1 className="text-lg font-semibold md:text-2xl">
+                  Train Search
+                </h1>
               </div>
-            </nav>
-          </aside>
-          <main className="flex-1 p-4 sm:p-6">
-            <div className="flex items-center">
-              <h1 className="text-lg font-semibold md:text-2xl">
-                Train Search
-              </h1>
-            </div>
-            <p className="text-muted-foreground">
-              Search for trains by number or name
-            </p>
-            <div className="w-full max-w-xl mt-4">
-              <Tabs defaultValue="train-number">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="train-number">Train Number</TabsTrigger>
-                  <TabsTrigger value="train-name">Train Name</TabsTrigger>
-                </TabsList>
-                <TabsContent value="train-number">
-                  <div className="flex items-center space-x-2 pt-4">
-                    <div className="relative flex-grow">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by train number..."
-                        className="pl-10"
-                      />
+              <p className="text-muted-foreground">
+                Search for trains by number or name
+              </p>
+              <div className="w-full max-w-xl mt-4">
+                <Tabs defaultValue="train-number">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="train-number">Train Number</TabsTrigger>
+                    <TabsTrigger value="train-name">Train Name</TabsTrigger>
+                  </TabsList>
+                  <TabsContent value="train-number">
+                    <div className="flex items-center space-x-2 pt-4">
+                      <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by train number..."
+                          className="pl-10"
+                        />
+                      </div>
+                      <Button>Search</Button>
+                      <Button variant="secondary">Pick Route</Button>
+                      <Button variant="ghost">Clear</Button>
                     </div>
-                    <Button>Search</Button>
-                    <Button variant="secondary">Pick Route</Button>
-                    <Button variant="ghost">Clear</Button>
-                  </div>
-                </TabsContent>
-                <TabsContent value="train-name">
-                  <div className="flex items-center space-x-2 pt-.5">
-                    <div className="relative flex-grow">
-                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        placeholder="Search by train name..."
-                        className="pl-10"
-                      />
+                  </TabsContent>
+                  <TabsContent value="train-name">
+                    <div className="flex items-center space-x-2 pt-.5">
+                      <div className="relative flex-grow">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          placeholder="Search by train name..."
+                          className="pl-10"
+                        />
+                      </div>
+                      <Button>Search</Button>
+                      <Button variant="secondary">Pick Route</Button>
+                      <Button variant="ghost">Clear</Button>
                     </div>
-                    <Button>Search</Button>
-                    <Button variant="secondary">Pick Route</Button>
-                    <Button variant="ghost">Clear</Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-          </main>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </main>
+          </div>
         </div>
       </div>
     </div>
