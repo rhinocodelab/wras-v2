@@ -12,22 +12,24 @@ type HeaderProps = {
 
 export function Header({ session }: HeaderProps) {
   return (
-    <header className="sticky top-0 flex h-16 items-center gap-4 border-b bg-background px-4 md:px-6">
-      <nav className="flex w-full flex-row items-center justify-between gap-6 text-lg font-medium md:gap-5 md:text-sm lg:gap-6">
-        <Link
-          href="#"
-          className="flex items-center gap-2 text-lg font-semibold md:text-base"
-        >
-          <div className="flex h-10 w-10 items-center justify-center bg-primary">
-            <TramFront className="h-6 w-6 text-primary-foreground" />
-          </div>
-          <div>
-            <div className="font-bold">WRAS-DHH</div>
-            <div className="text-xs text-muted-foreground">
-              Western Railway Announcement System
+    <header className="sticky top-0 h-16 w-full border-b bg-background">
+      <div className="container mx-auto flex h-full items-center justify-between px-4 md:px-6">
+        <nav className="flex flex-row items-center justify-between gap-6 text-lg font-medium md:gap-5 md:text-sm lg:gap-6">
+          <Link
+            href="#"
+            className="flex items-center gap-2 text-lg font-semibold md:text-base"
+          >
+            <div className="flex h-10 w-10 items-center justify-center bg-primary">
+              <TramFront className="h-6 w-6 text-primary-foreground" />
             </div>
-          </div>
-        </Link>
+            <div>
+              <div className="font-bold">WRAS-DHH</div>
+              <div className="text-xs text-muted-foreground">
+                Western Railway Announcement System
+              </div>
+            </div>
+          </Link>
+        </nav>
         <div className="flex items-center gap-4">
           {session && (
             <div className="flex items-center gap-2 text-sm">
@@ -42,7 +44,7 @@ export function Header({ session }: HeaderProps) {
             </Button>
           </form>
         </div>
-      </nav>
+      </div>
     </header>
   );
 }
