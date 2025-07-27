@@ -33,10 +33,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import * as XLSX from 'xlsx';
-import { Upload, Trash2 } from 'lucide-react';
-import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes } from '@/app/actions';
+import { Upload, Trash2, PlusCircle } from 'lucide-react';
+import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes, addTrainRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Label } from '@/components/ui/label';
 
 const sampleData: TrainRoute[] = [
   {
@@ -57,12 +58,23 @@ const sampleData: TrainRoute[] = [
   },
 ];
 
+const initialNewRouteState: Omit<TrainRoute, 'id'> = {
+  'Train Number': '',
+  'Train Name': '',
+  'Start Station': '',
+  'Start Code': '',
+  'End Station': '',
+  'End Code': '',
+};
+
 export default function TrainRouteManagementPage() {
   const [data, setData] = useState<TrainRoute[]>([]);
   const [fileName, setFileName] = useState('');
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [newRoute, setNewRoute] = useState(initialNewRouteState);
   const { toast } = useToast();
 
   const recordsPerPage = 7;
@@ -104,7 +116,7 @@ export default function TrainRouteManagementPage() {
         const result = await saveTrainRoutes(routes);
         await fetchRoutes();
         setCurrentPage(1); // Reset to first page after import
-        setIsModalOpen(false);
+        setIsImportModalOpen(false);
         toast({
           title: "Success",
           description: result.message,
@@ -207,6 +219,30 @@ export default function TrainRouteManagementPage() {
       });
     }
   };
+  
+  const handleNewRouteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setNewRoute(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddRoute = async () => {
+    try {
+      const result = await addTrainRoute(newRoute);
+      await fetchRoutes();
+      setNewRoute(initialNewRouteState);
+      setIsAddModalOpen(false);
+      toast({
+        title: "Success",
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to add route.",
+      });
+    }
+  };
 
 
   return (
@@ -243,13 +279,17 @@ export default function TrainRouteManagementPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Button size="sm" onClick={() => setIsModalOpen(true)}>
+          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+            <PlusCircle className="mr-2 h-4 w-4" />
+            Add Route
+          </Button>
+          <Button size="sm" onClick={() => setIsImportModalOpen(true)}>
             Import
           </Button>
         </div>
       </div>
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+      <Dialog open={isImportModalOpen} onOpenChange={setIsImportModalOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Import Train Routes</DialogTitle>
@@ -324,6 +364,98 @@ export default function TrainRouteManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Add New Train Route</DialogTitle>
+            <DialogDescription>
+              Enter the details for the new train route below.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="Train Number" className="text-right">
+                Train No.
+              </Label>
+              <Input
+                id="Train Number"
+                name="Train Number"
+                value={newRoute['Train Number']}
+                onChange={handleNewRouteChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="Train Name" className="text-right">
+                Train Name
+              </Label>
+              <Input
+                id="Train Name"
+                name="Train Name"
+                value={newRoute['Train Name']}
+                onChange={handleNewRouteChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="Start Station" className="text-right">
+                Start Station
+              </Label>
+              <Input
+                id="Start Station"
+                name="Start Station"
+                value={newRoute['Start Station']}
+                onChange={handleNewRouteChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="Start Code" className="text-right">
+                Start Code
+              </Label>
+              <Input
+                id="Start Code"
+                name="Start Code"
+                value={newRoute['Start Code']}
+                onChange={handleNewRouteChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="End Station" className="text-right">
+                End Station
+              </Label>
+              <Input
+                id="End Station"
+                name="End Station"
+                value={newRoute['End Station']}
+                onChange={handleNewRouteChange}
+                className="col-span-3"
+              />
+            </div>
+            <div className="grid grid-cols-4 items-center gap-4">
+              <Label htmlFor="End Code" className="text-right">
+                End Code
+              </Label>
+              <Input
+                id="End Code"
+                name="End Code"
+                value={newRoute['End Code']}
+                onChange={handleNewRouteChange}
+                className="col-span-3"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleAddRoute}>Save Route</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
 
       <div className="mt-4 rounded-lg border">
         <Table>

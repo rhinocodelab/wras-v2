@@ -60,6 +60,23 @@ export type TrainRoute = {
   'End Code': string;
 };
 
+export async function addTrainRoute(route: Omit<TrainRoute, 'id'>) {
+  const db = await getDb();
+  await db.run(
+    'INSERT INTO train_routes (train_number, train_name, start_station, start_code, end_station, end_code) VALUES (?, ?, ?, ?, ?, ?)',
+    route['Train Number'],
+    route['Train Name'],
+    route['Start Station'],
+    route['Start Code'],
+    route['End Station'],
+    route['End Code']
+  );
+  await db.close();
+  revalidatePath('/train-route-management');
+  return { message: 'Route added successfully.' };
+}
+
+
 export async function saveTrainRoutes(routes: TrainRoute[]) {
   const db = await getDb();
   await db.run('DELETE FROM train_routes'); // Clear existing routes
