@@ -37,7 +37,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# studio
-.studio
+# credentials
+config/isl.json
+
+# database
 database.db
 database.db-journal
