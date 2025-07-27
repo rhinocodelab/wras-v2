@@ -10,7 +10,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Search, Accessibility } from 'lucide-react';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { Search, Volume2, Accessibility } from 'lucide-react';
 import { getTrainRoutes, TrainRoute } from '@/app/actions';
 
 type DisplayRoute = TrainRoute & {
@@ -252,6 +258,7 @@ export function Dashboard() {
                             <TableHead>End Station</TableHead>
                             <TableHead className="w-[120px]">Platform</TableHead>
                             <TableHead className="w-[200px]">Category</TableHead>
+                             <TableHead>Action</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -286,6 +293,20 @@ export function Dashboard() {
                                         </SelectContent>
                                     </Select>
                                 </TableCell>
+                                <TableCell>
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <Volume2 className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>generate announcement</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
@@ -296,3 +317,5 @@ export function Dashboard() {
     </>
   );
 }
+
+    
