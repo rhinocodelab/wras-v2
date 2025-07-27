@@ -95,6 +95,8 @@ export const translateTemplateFlow = ai.defineFlow(
                 const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
                 audioParts.push(publicPath);
             }
+            // Add a delay to avoid rate-limiting issues with the TTS API
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
 
         return { translatedText, audioParts };

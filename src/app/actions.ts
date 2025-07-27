@@ -488,9 +488,9 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
 export async function saveAnnouncementTemplates(templates: Template[]) {
     const db = await getDb();
     try {
-        await db.run('DELETE FROM announcement_templates');
+        // Use INSERT OR REPLACE to avoid unique constraint errors and simplify the logic.
         const stmt = await db.prepare(
-            'INSERT INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)'
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)'
         );
         for (const template of templates) {
             await stmt.run(template.category, template.language_code, template.template_text, template.template_audio_parts);
