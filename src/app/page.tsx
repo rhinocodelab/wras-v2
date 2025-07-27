@@ -19,6 +19,7 @@ import { logout } from '@/app/actions';
 import { Dashboard } from '@/components/dashboard';
 import TrainRouteManagementPage from '@/app/train-route-management/page';
 import AiDatabasePage from '@/app/ai-database/page';
+import TranslationsPage from '@/app/ai-database/translations/page';
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -31,23 +32,29 @@ export default function HomePage() {
       case 'route-management':
         return <TrainRouteManagementPage />;
       case 'ai-database':
-        return <AiDatabasePage />;
+        return <AiDatabasePage onViewChange={setActiveView} />;
+      case 'translations':
+        return <TranslationsPage onViewChange={setActiveView} />;
       default:
         return <Dashboard />;
     }
   };
 
   const getLinkClassName = (view: string) => {
-    return `flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
-      activeView === view
+    const baseClass = `flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary`;
+    const isActive = activeView === view || (view === 'ai-database' && activeView === 'translations');
+    return `${baseClass} ${
+      isActive
         ? 'bg-muted text-primary'
         : 'text-muted-foreground'
     }`;
   };
 
   const getMobileLinkClassName = (view: string) => {
-    return `flex cursor-pointer items-center gap-4 px-2.5 transition-all hover:text-foreground ${
-      activeView === view
+    const baseClass = `flex cursor-pointer items-center gap-4 px-2.5 transition-all hover:text-foreground`;
+    const isActive = activeView === view || (view === 'ai-database' && activeView === 'translations');
+    return `${baseClass} ${
+      isActive
         ? 'text-foreground'
         : 'text-muted-foreground'
     }`;

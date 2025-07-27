@@ -2,16 +2,9 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,51 +16,30 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { getTranslations, FullTranslationInfo, clearAllTranslations } from '@/app/actions';
+import { clearAllTranslations, getTrainRoutes } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
-const LANGUAGE_MAP: { [key: string]: string } = {
-  'en': 'English',
-  'mr': 'Marathi',
-  'hi': 'Hindi',
-  'gu': 'Gujarati',
-};
-
-export default function AiDatabasePage() {
-  const [translations, setTranslations] = useState<FullTranslationInfo[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [hasFetched, setHasFetched] = useState(false);
+export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: string) => void }) {
+  const [isClearing, setIsClearing] = useState(false);
+  const [routesExist, setRoutesExist] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
-  const handleFetchTranslations = async () => {
-    setIsLoading(true);
-    setHasFetched(true);
-    try {
-      const data = await getTranslations();
-      setTranslations(data);
-      if (data.length === 0) {
-        toast({
-          title: 'No Data',
-          description: 'No translations found in the database.',
-        });
-      }
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to fetch translations.',
-      });
-      console.error('Failed to fetch translations:', error);
-    } finally {
-      setIsLoading(false);
-    }
+  const handleViewTranslations = () => {
+    onViewChange('translations');
   };
+  
+  useState(() => {
+    getTrainRoutes().then(routes => {
+        setRoutesExist(routes.length > 0)
+    })
+  })
 
   const handleClearTranslations = async () => {
+    setIsClearing(true);
     try {
       const result = await clearAllTranslations();
-      setTranslations([]);
       toast({
         title: 'Success',
         description: result.message,
@@ -79,6 +51,8 @@ export default function AiDatabasePage() {
         description: 'Failed to clear translations.',
       });
       console.error('Failed to clear translations:', error);
+    } finally {
+        setIsClearing(false);
     }
   };
 
@@ -103,14 +77,14 @@ export default function AiDatabasePage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap gap-2">
-            <Button onClick={handleFetchTranslations} disabled={isLoading}>
-              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isLoading ? 'Loading...' : 'View Translations'}
+            <Button onClick={handleViewTranslations} disabled={!routesExist}>
+              View Translations
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={!hasFetched || translations.length === 0}>
-                  Clear All
+                <Button variant="destructive" disabled={isClearing}>
+                    {isClearing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isClearing ? 'Clearing...' : 'Clear All'}
                 </Button>
               </AlertDialogTrigger>
               <AlertDialogContent>
@@ -132,60 +106,6 @@ export default function AiDatabasePage() {
           </CardContent>
         </Card>
       </div>
-
-      {hasFetched && (
-        <div className="mt-6">
-          {isLoading ? (
-             <div className="flex justify-center items-center h-32">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-             </div>
-          ) : translations.length > 0 ? (
-            <Card>
-                <CardHeader>
-                    <CardTitle>Route Translations</CardTitle>
-                    <CardDescription>Displaying translated text for all train routes.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                    <div className="space-y-4">
-                    {translations.map((item) => (
-                        <div key={item.train_number} className="rounded-md border">
-                        <div className="bg-muted p-3">
-                            <h3 className="font-semibold">{item.train_name} ({item.train_number})</h3>
-                        </div>
-                        <Table>
-                            <TableHeader>
-                            <TableRow>
-                                <TableHead className="w-[150px]">Language</TableHead>
-                                <TableHead>Train Number</TableHead>
-                                <TableHead>Train Name</TableHead>
-                                <TableHead>Start Station</TableHead>
-                                <TableHead>End Station</TableHead>
-                            </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                            {item.translations.map((t) => (
-                                <TableRow key={t.language_code}>
-                                <TableCell className="font-medium">{LANGUAGE_MAP[t.language_code] || t.language_code}</TableCell>
-                                <TableCell>{t.train_number_translation}</TableCell>
-                                <TableCell>{t.train_name_translation}</TableCell>
-                                <TableCell>{t.start_station_translation}</TableCell>
-                                <TableCell>{t.end_station_translation}</TableCell>
-                                </TableRow>
-                            ))}
-                            </TableBody>
-                        </Table>
-                        </div>
-                    ))}
-                    </div>
-                </CardContent>
-            </Card>
-          ) : (
-            <div className="mt-6 text-center text-muted-foreground">
-              <p>No translation data to display. Please generate translations from the Route Management page.</p>
-            </div>
-          )}
-        </div>
-      )}
     </div>
   );
 }
