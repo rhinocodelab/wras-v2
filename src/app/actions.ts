@@ -5,6 +5,8 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
+import { revalidatePath } from 'next/cache';
+
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -76,8 +78,6 @@ export async function saveTrainRoutes(routes: TrainRoute[]) {
   }
   await stmt.finalize();
   await db.close();
-  // Revalidate path to refetch data on the client
-  const { revalidatePath } = await import('next/cache');
   revalidatePath('/train-route-management');
   return { message: `${routes.length} routes saved successfully.` };
 }
@@ -85,13 +85,29 @@ export async function saveTrainRoutes(routes: TrainRoute[]) {
 export async function getTrainRoutes(): Promise<TrainRoute[]> {
   try {
     const db = await getDb();
-    const routes = await db.all('SELECT train_number as "Train Number", train_name as "Train Name", start_station as "Start Station", start_code as "Start Code", end_station as "End Station", end_code as "End Code" FROM train_routes');
+    const routes = await db.all('SELECT id, train_number as "Train Number", train_name as "Train Name", start_station as "Start Station", start_code as "Start Code", end_station as "End Station", end_code as "End Code" FROM train_routes');
     await db.close();
     return routes;
   } catch (error) {
     console.error('Failed to fetch train routes:', error);
     return [];
   }
+}
+
+export async function deleteTrainRoute(id: number) {
+  const db = await getDb();
+  await db.run('DELETE FROM train_routes WHERE id = ?', id);
+  await db.close();
+  revalidatePath('/train-route-management');
+  return { message: 'Route deleted successfully.' };
+}
+
+export async function clearAllTrainRoutes() {
+  const db = await getDb();
+  await db.run('DELETE FROM train_routes');
+  await db.close();
+  revalidatePath('/train-route-management');
+  return { message: 'All routes have been deleted.' };
 }
 
 

@@ -21,9 +21,20 @@ import {
   DialogFooter,
   DialogClose,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 import * as XLSX from 'xlsx';
-import { Upload } from 'lucide-react';
-import { saveTrainRoutes, getTrainRoutes, TrainRoute } from '@/app/actions';
+import { Upload, Trash2 } from 'lucide-react';
+import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 
@@ -60,11 +71,12 @@ export default function TrainRouteManagementPage() {
   const currentRecords = data.slice(indexOfFirstRecord, indexOfLastRecord);
   const nPages = Math.ceil(data.length / recordsPerPage);
 
+  const fetchRoutes = async () => {
+    const routes = await getTrainRoutes();
+    setData(routes);
+  };
+
   useEffect(() => {
-    async function fetchRoutes() {
-      const routes = await getTrainRoutes();
-      setData(routes);
-    }
     fetchRoutes();
   }, []);
   
@@ -90,8 +102,7 @@ export default function TrainRouteManagementPage() {
         );
 
         const result = await saveTrainRoutes(routes);
-        const latestRoutes = await getTrainRoutes();
-        setData(latestRoutes);
+        await fetchRoutes();
         setCurrentPage(1); // Reset to first page after import
         setIsModalOpen(false);
         toast({
@@ -153,10 +164,50 @@ export default function TrainRouteManagementPage() {
   };
 
   const nextPage = () => {
-    if (currentPage !== nPages) {
+    if (currentPage !== nPages && nPages > 0) {
       setCurrentPage(currentPage + 1);
     }
   };
+
+  const handleDeleteRoute = async (id?: number) => {
+    if (id === undefined) return;
+    try {
+      const result = await deleteTrainRoute(id);
+      await fetchRoutes();
+      toast({
+        title: "Success",
+        description: result.message,
+      });
+      if (currentRecords.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to delete route.",
+      });
+    }
+  };
+
+  const handleClearAll = async () => {
+    try {
+      const result = await clearAllTrainRoutes();
+      await fetchRoutes();
+      setCurrentPage(1);
+      toast({
+        title: "Success",
+        description: result.message,
+      });
+    } catch (error) {
+       toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to clear all routes.",
+      });
+    }
+  };
+
 
   return (
     <div className="w-full">
@@ -169,9 +220,33 @@ export default function TrainRouteManagementPage() {
             Upload and manage train route information.
           </p>
         </div>
-        <Button size="sm" onClick={() => setIsModalOpen(true)}>
-          Import
-        </Button>
+        <div className="flex items-center gap-2">
+           <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button size="sm" variant="destructive" disabled={data.length === 0}>
+                Clear All
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete all
+                  train route data from the database.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleClearAll}>
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+          <Button size="sm" onClick={() => setIsModalOpen(true)}>
+            Import
+          </Button>
+        </div>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -246,13 +321,6 @@ export default function TrainRouteManagementPage() {
         </DialogContent>
       </Dialog>
 
-
-      {fileName && (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Loaded routes from: <strong>{fileName}</strong>
-        </p>
-      )}
-
       <div className="mt-4 rounded-lg border">
         <Table>
           <TableHeader>
@@ -261,12 +329,13 @@ export default function TrainRouteManagementPage() {
               <TableHead>Train Name</TableHead>
               <TableHead>Start Station</TableHead>
               <TableHead>End Station</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {currentRecords.length > 0 ? (
-              currentRecords.map((row, index) => (
-                <TableRow key={index}>
+              currentRecords.map((row) => (
+                <TableRow key={row.id}>
                   <TableCell>{row['Train Number']}</TableCell>
                   <TableCell>{row['Train Name']}</TableCell>
                   <TableCell>
@@ -277,11 +346,37 @@ export default function TrainRouteManagementPage() {
                     <div>{row['End Station']}</div>
                     <Badge variant="secondary">{row['End Code']}</Badge>
                   </TableCell>
+                   <TableCell>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="icon">
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the train route for{' '}
+                            <strong>{row['Train Name']} ({row['Train Number']})</strong>.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction
+                            onClick={() => handleDeleteRoute(row.id)}
+                          >
+                            Delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={4} className="text-center">
+                <TableCell colSpan={5} className="text-center h-24">
                   No data available. Import an Excel file to see routes.
                 </TableCell>
               </TableRow>
@@ -307,7 +402,7 @@ export default function TrainRouteManagementPage() {
             variant="outline"
             size="sm"
             onClick={nextPage}
-            disabled={currentPage === nPages}
+            disabled={currentPage === nPages || nPages === 0}
           >
             Next
           </Button>
@@ -315,5 +410,3 @@ export default function TrainRouteManagementPage() {
       )}
     </div>
   );
-
-    
