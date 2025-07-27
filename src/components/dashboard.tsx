@@ -1,13 +1,46 @@
 
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Search, Accessibility } from 'lucide-react';
+import { getTrainRoutes, TrainRoute } from '@/app/actions';
 
 export function Dashboard() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [allRoutes, setAllRoutes] = useState<TrainRoute[]>([]);
+  const [selectedRoutes, setSelectedRoutes] = useState<TrainRoute[]>([]);
+  const [displayedRoutes, setDisplayedRoutes] = useState<TrainRoute[]>([]);
+
+  useEffect(() => {
+    async function fetchRoutes() {
+      const routes = await getTrainRoutes();
+      setAllRoutes(routes);
+    }
+    fetchRoutes();
+  }, []);
+
+  const handleSelectRoute = (route: TrainRoute) => {
+    setSelectedRoutes(prevSelected => {
+      if (prevSelected.find(r => r.id === route.id)) {
+        return prevSelected.filter(r => r.id !== route.id);
+      } else {
+        return [...prevSelected, route];
+      }
+    });
+  };
+
+  const handleAddSelectedRoutes = () => {
+    setDisplayedRoutes(selectedRoutes);
+    setIsModalOpen(false);
+  };
+
   return (
     <>
       <div className="flex items-center">
@@ -22,10 +55,6 @@ export function Dashboard() {
             <Accessibility className="h-6 w-6 text-primary" />
             Welcome to the WRAS-DHH
           </CardTitle>
-          <CardDescription>
-            This is the Western Railway Announcement System for the Deaf and Hard of Hearing. 
-            This application is designed to generate announcements in Indian Sign Language (ISL) video format.
-          </CardDescription>
         </CardHeader>
         <CardContent>
              <div className="mt-2">
@@ -49,7 +78,52 @@ export function Dashboard() {
                             />
                         </div>
                         <Button>Search</Button>
-                        <Button variant="secondary">Pick Route</Button>
+                        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="secondary" onClick={() => setSelectedRoutes(displayedRoutes)}>Pick Route</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl">
+                                <DialogHeader>
+                                <DialogTitle>Select Train Routes</DialogTitle>
+                                <DialogDescription>
+                                    Select one or more train routes to add to the dashboard.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <div className="max-h-[60vh] overflow-y-auto">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]">Select</TableHead>
+                                        <TableHead>Train Number</TableHead>
+                                        <TableHead>Train Name</TableHead>
+                                        <TableHead>Start Station</TableHead>
+                                        <TableHead>End Station</TableHead>
+                                    </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {allRoutes.map(route => (
+                                        <TableRow key={route.id}>
+                                        <TableCell>
+                                            <Checkbox
+                                            checked={!!selectedRoutes.find(r => r.id === route.id)}
+                                            onCheckedChange={() => handleSelectRoute(route)}
+                                            />
+                                        </TableCell>
+                                        <TableCell>{route['Train Number']}</TableCell>
+                                        <TableCell>{route['Train Name']}</TableCell>
+                                        <TableCell>{route['Start Station']}</TableCell>
+                                        <TableCell>{route['End Station']}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
+                                </div>
+                                <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                         <Button variant="ghost">Clear</Button>
                         </div>
                     </TabsContent>
@@ -63,7 +137,52 @@ export function Dashboard() {
                             />
                         </div>
                         <Button>Search</Button>
-                        <Button variant="secondary">Pick Route</Button>
+                         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                            <DialogTrigger asChild>
+                                <Button variant="secondary" onClick={() => setSelectedRoutes(displayedRoutes)}>Pick Route</Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-2xl">
+                                <DialogHeader>
+                                <DialogTitle>Select Train Routes</DialogTitle>
+                                <DialogDescription>
+                                    Select one or more train routes to add to the dashboard.
+                                </DialogDescription>
+                                </DialogHeader>
+                                <div className="max-h-[60vh] overflow-y-auto">
+                                <Table>
+                                    <TableHeader>
+                                    <TableRow>
+                                        <TableHead className="w-[50px]">Select</TableHead>
+                                        <TableHead>Train Number</TableHead>
+                                        <TableHead>Train Name</TableHead>
+                                        <TableHead>Start Station</TableHead>
+                                        <TableHead>End Station</TableHead>
+                                    </TableRow>
+                                    </TableHeader>
+                                    <TableBody>
+                                    {allRoutes.map(route => (
+                                        <TableRow key={route.id}>
+                                        <TableCell>
+                                            <Checkbox
+                                            checked={!!selectedRoutes.find(r => r.id === route.id)}
+                                            onCheckedChange={() => handleSelectRoute(route)}
+                                            />
+                                        </TableCell>
+                                        <TableCell>{route['Train Number']}</TableCell>
+                                        <TableCell>{route['Train Name']}</TableCell>
+                                        <TableCell>{route['Start Station']}</TableCell>
+                                        <TableCell>{route['End Station']}</TableCell>
+                                        </TableRow>
+                                    ))}
+                                    </TableBody>
+                                </Table>
+                                </div>
+                                <DialogFooter>
+                                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
+                                </DialogFooter>
+                            </DialogContent>
+                        </Dialog>
                         <Button variant="ghost">Clear</Button>
                         </div>
                     </TabsContent>
@@ -72,6 +191,37 @@ export function Dashboard() {
             </div>
         </CardContent>
       </Card>
+
+      {displayedRoutes.length > 0 && (
+        <Card className="mt-4">
+            <CardHeader>
+                <CardTitle>Selected Routes</CardTitle>
+                <CardDescription>The following routes have been selected for processing.</CardDescription>
+            </CardHeader>
+            <CardContent>
+                <Table>
+                    <TableHeader>
+                        <TableRow>
+                            <TableHead>Train Number</TableHead>
+                            <TableHead>Train Name</TableHead>
+                            <TableHead>Start Station</TableHead>
+                            <TableHead>End Station</TableHead>
+                        </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                        {displayedRoutes.map(route => (
+                            <TableRow key={route.id}>
+                                <TableCell>{route['Train Number']}</TableCell>
+                                <TableCell>{route['Train Name']}</TableCell>
+                                <TableCell>{route['Start Station']}</TableCell>
+                                <TableCell>{route['End Station']}</TableCell>
+                            </TableRow>
+                        ))}
+                    </TableBody>
+                </Table>
+            </CardContent>
+        </Card>
+      )}
     </>
   );
 }
