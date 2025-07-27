@@ -363,9 +363,8 @@ export default function AnnouncementTemplatesPage() {
                             <TableHeader>
                             <TableRow>
                                 <TableHead>Category</TableHead>
-                                {LANGUAGES.map(lang => (
-                                    <TableHead key={lang} className="text-center">{lang}</TableHead>
-                                ))}
+                                <TableHead className="w-[50%]">English Template</TableHead>
+                                <TableHead className="text-center">Translations</TableHead>
                                 <TableHead className="text-center">Audio</TableHead>
                             </TableRow>
                             </TableHeader>
@@ -373,22 +372,14 @@ export default function AnnouncementTemplatesPage() {
                             {ANNOUNCEMENT_CATEGORIES.map(category => (
                                 <TableRow key={category}>
                                 <TableCell className="font-medium">{category.replace('_', ' ')}</TableCell>
-                                <TableCell className="text-center">
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'English'))} disabled={!getTemplate(category, 'English')}>EN</Button>
-                                    </DialogTrigger>
-                                </TableCell>
+                                <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
                                 <TableCell className="text-center">
                                     <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
                                     </DialogTrigger>
-                                </TableCell>
-                                <TableCell className="text-center">
                                      <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))} disabled={!getTemplate(category, 'Marathi')}>MR</Button>
                                     </DialogTrigger>
-                                </TableCell>
-                                <TableCell className="text-center">
                                      <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
                                     </DialogTrigger>
@@ -450,3 +441,5 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+    
