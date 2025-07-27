@@ -7,7 +7,6 @@ import {
   Home,
   GitFork,
   Database,
-  Video,
   PanelLeft,
   TramFront,
   FolderKanban,
@@ -123,13 +122,6 @@ export default function HomePage() {
                   onClick={() => {}}
                   className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
-                  <Video className="h-5 w-5" />
-                  ISL Video Generation
-                </div>
-                <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
                   <ClipboardList className="h-5 w-5" />
                   Announcement Templates
                 </div>
@@ -180,13 +172,6 @@ export default function HomePage() {
                 >
                   <FolderKanban className="h-4 w-4" />
                   ISL Dataset
-                </div>
-                <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                >
-                  <Video className="h-4 w-4" />
-                  ISL Video Generation
                 </div>
                 <div
                   onClick={() => {}}
