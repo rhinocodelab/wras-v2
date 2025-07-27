@@ -7,5 +7,4 @@ export const ai = genkit({
       apiClient: 'vertex',
     }),
   ],
-  model: 'googleai/gemini-1.5-flash',
 });
