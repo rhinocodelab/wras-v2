@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -11,16 +12,17 @@ import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
 import * as path from 'path';
+import * as fs from 'fs';
 
-const keyFilename = path.resolve(process.cwd(), 'config/isl.json');
-const credentials = require(keyFilename);
-const projectId = credentials.project_id;
-
+const keyFilename = path.join(process.cwd(), 'config', 'isl.json');
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (!text || targetLanguage === 'en') {
         return text;
     }
+    
+    const credentials = JSON.parse(fs.readFileSync(keyFilename, 'utf8'));
+    const projectId = credentials.project_id;
 
     const translationClient = new TranslationServiceClient({
         projectId,
