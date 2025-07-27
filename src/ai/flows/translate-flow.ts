@@ -10,19 +10,26 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
+import * as path from 'path';
 
-const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
+const keyFilename = path.resolve(process.cwd(), 'config/isl.json');
+const credentials = require(keyFilename);
+const projectId = credentials.project_id;
 
-const translationClient = new TranslationServiceClient();
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (!text || targetLanguage === 'en') {
         return text;
     }
 
+    const translationClient = new TranslationServiceClient({
+        projectId,
+        keyFilename,
+    });
+
     try {
         const [response] = await translationClient.translateText({
-            parent: `projects/amiable-bonus-462911-c8/locations/global`,
+            parent: `projects/${projectId}/locations/global`,
             contents: [text],
             mimeType: 'text/plain',
             sourceLanguageCode: 'en',
@@ -49,15 +56,13 @@ const translateRouteFlow = ai.defineFlow(
     },
     async ({ route, languageCode }) => {
         
-        const trainNumberFormatted = `Train number: ${route['Train Number']}`;
-
         const [
             trainNumberTranslation,
             trainNameTranslation,
             startStationTranslation,
             endStationTranslation
         ] = await Promise.all([
-            translateText(trainNumberFormatted, languageCode).then(translated => translated.replace(/Train number: /i, '').replace(/ट्रेन नंबर: /i, '').trim()),
+            translateText(route['Train Number'], languageCode),
             translateText(route['Train Name'], languageCode),
             translateText(route['Start Station'], languageCode),
             translateText(route['End Station'], languageCode),
@@ -80,7 +85,7 @@ export async function translateAllRoutes(routes: TrainRoute[]): Promise<Translat
   for (const route of routes) {
       if (!route.id) continue;
       
-      const languagePromises = LANGUAGES.map(langCode => 
+      const languagePromises = ['en', 'mr', 'hi', 'gu'].map(langCode => 
         translateRouteFlow({route, languageCode: langCode})
       );
       
