@@ -207,15 +207,42 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                     <TableCell>{englishVersion?.start_station_translation || 'N/A'}</TableCell>
                                     <TableCell>{englishVersion?.end_station_translation || 'N/A'}</TableCell>
                                     <TableCell className="flex gap-2">
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'hi'))}>Hindi</Button>
-                                        </DialogTrigger>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'mr'))}>Marathi</Button>
-                                        </DialogTrigger>
-                                        <DialogTrigger asChild>
-                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'gu'))}>Gujarati</Button>
-                                        </DialogTrigger>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'hi'))}>HI</Button>
+                                                    </DialogTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Hindi</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'mr'))}>MR</Button>
+                                                    </DialogTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Marathi</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
+                                        <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <DialogTrigger asChild>
+                                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'gu'))}>GU</Button>
+                                                    </DialogTrigger>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Gujarati</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                     </TableCell>
                                     <TableCell className="flex items-center gap-2">
                                          <TooltipProvider>
@@ -366,3 +393,5 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     </div>
   );
 }
+
+    
