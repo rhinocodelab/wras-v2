@@ -9,42 +9,35 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
-import { gemini15Flash } from '@genkit-ai/googleai';
+import { Translate } from '@google-cloud/translate/build/src/v2';
 
 // Define language codes
 const LANGUAGES = {
-    'en-IN': 'Indian English',
-    'mr-IN': 'Indian Marathi',
-    'hi-IN': 'Indian Hindi',
-    'gu-IN': 'Indian Gujarati',
+    'en-IN': 'en',
+    'mr-IN': 'mr',
+    'hi-IN': 'hi',
+    'gu-IN': 'gu',
 };
 
-const TranslationInputSchema = z.object({
-  text: z.string(),
-  languageName: z.string(),
-});
-
-const TranslationOutputSchema = z.object({
-    translation: z.string(),
-});
-
-const translatePrompt = ai.definePrompt({
-    name: 'translatePrompt',
-    model: gemini15Flash,
-    input: { schema: TranslationInputSchema },
-    output: { schema: TranslationOutputSchema },
-    prompt: `Translate the following text to {{languageName}}: "{{text}}"`,
-});
-
+// Instantiate the Google Cloud Translation client
+// It will automatically use credentials from the environment.
+const translateClient = new Translate();
 
 async function translateText(text: string, languageCode: string): Promise<string> {
-    const languageName = LANGUAGES[languageCode as keyof typeof LANGUAGES];
-    if (!languageName) {
+    const targetLanguage = LANGUAGES[languageCode as keyof typeof LANGUAGES];
+    if (!targetLanguage) {
         throw new Error(`Language code '${languageCode}' not supported.`);
     }
 
-    const { output } = await translatePrompt({ text, languageName });
-    return output?.translation ?? text;
+    // Use the Google Cloud Translation API
+    try {
+        const [translation] = await translateClient.translate(text, targetLanguage);
+        return translation;
+    } catch (error) {
+        console.error('Error during translation:', error);
+        // Fallback to original text in case of an error
+        return text;
+    }
 }
 
 
