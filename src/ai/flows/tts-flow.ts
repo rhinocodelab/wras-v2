@@ -56,10 +56,10 @@ const ttsFlow = ai.defineFlow(
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
+          languageCode: localeMap[languageCode] || 'en-IN',
           voiceConfig: {
             prebuiltVoiceConfig: { 
                 voiceName: 'Achernar',
-                languageCode: localeMap[languageCode] || 'en-IN',
              },
           },
         },
