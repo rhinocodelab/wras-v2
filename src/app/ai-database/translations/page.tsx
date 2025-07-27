@@ -37,7 +37,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { getTranslations, FullTranslationInfo, TranslationRecord, generateAudioForRoute, clearAudioForRoute } from '@/app/actions';
+import { getTranslations, FullTranslationInfo, TranslationRecord, generateAudioForRoute, clearAudioForRoute, TrainRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, ChevronRight, Volume2, Trash2 } from 'lucide-react';
 
@@ -56,7 +56,8 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
   const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
   const [isClearingAudio, setIsClearingAudio] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [selectedTranslation, setSelectedTranslation] = useState<TranslationRecord | null>(null);
+  const [selectedItem, setSelectedItem] = useState<FullTranslationInfo | null>(null);
+  const [selectedLang, setSelectedLang] = useState<string | null>(null);
   const { toast } = useToast();
 
   const handleFetchTranslations = async () => {
@@ -96,22 +97,28 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     return item.translations.find(t => t.language_code === langCode) || null;
   }
   
-  const getEnglishTranslation = (item: FullTranslationInfo) => {
-    return getTranslationForLang(item, 'en');
-  }
-
-  const handleOpenModal = (translation: TranslationRecord | null) => {
-    setSelectedTranslation(translation);
+  const handleOpenModal = (item: FullTranslationInfo, langCode: string) => {
+    setSelectedItem(item);
+    setSelectedLang(langCode);
   };
 
-  const handleGenerateAudio = async (routeId: number, trainNumber: string, translations: TranslationRecord[]) => {
-    setIsGeneratingAudio(trainNumber);
+  const handleGenerateAudio = async (route: FullTranslationInfo) => {
+    if (!route.id || route.translations.length === 0) {
+        toast({
+            variant: "destructive",
+            title: "Cannot Generate Audio",
+            description: "No translations exist for this route. Please generate translations first."
+        });
+        return;
+    }
+    setIsGeneratingAudio(route.train_number);
     try {
-      const result = await generateAudioForRoute(routeId, trainNumber, translations);
+      const result = await generateAudioForRoute(route.id, route.train_number, route.translations);
       toast({
         title: 'Success',
         description: result.message,
       });
+      await handleFetchTranslations();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -145,7 +152,6 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     }
   };
 
-
   const prevPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
@@ -157,6 +163,9 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
       setCurrentPage(currentPage + 1);
     }
   };
+  
+  const selectedTranslation = selectedItem && selectedLang ? getTranslationForLang(selectedItem, selectedLang) : null;
+  const englishTranslation = selectedItem ? getTranslationForLang(selectedItem, 'en') : null;
 
 
   return (
@@ -191,58 +200,59 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                             <TableRow>
                                 <TableHead>Train Number</TableHead>
                                 <TableHead>Train Name</TableHead>
-                                <TableHead>Start Station</TableHead>
-                                <TableHead>End Station</TableHead>
                                 <TableHead>Translations</TableHead>
                                 <TableHead>Actions</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
                             {paginatedTranslations.map((item) => {
-                                const englishVersion = getEnglishTranslation(item);
                                 return (
                                 <TableRow key={item.id}>
                                     <TableCell>{item.train_number}</TableCell>
                                     <TableCell>{item.train_name}</TableCell>
-                                    <TableCell>{englishVersion?.start_station_translation || 'N/A'}</TableCell>
-                                    <TableCell>{englishVersion?.end_station_translation || 'N/A'}</TableCell>
                                     <TableCell className="flex gap-2">
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'hi'))}>HI</Button>
-                                                    </DialogTrigger>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Hindi</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'mr'))}>MR</Button>
-                                                    </DialogTrigger>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Marathi</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
-                                        <TooltipProvider>
-                                            <Tooltip>
-                                                <TooltipTrigger asChild>
-                                                    <DialogTrigger asChild>
-                                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'gu'))}>GU</Button>
-                                                    </DialogTrigger>
-                                                </TooltipTrigger>
-                                                <TooltipContent>
-                                                    <p>Gujarati</p>
-                                                </TooltipContent>
-                                            </Tooltip>
-                                        </TooltipProvider>
+                                      {item.translations.length > 0 ? (
+                                        <>
+                                          <TooltipProvider>
+                                              <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                      <DialogTrigger asChild>
+                                                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'hi')}>HI</Button>
+                                                      </DialogTrigger>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                      <p>Hindi</p>
+                                                  </TooltipContent>
+                                              </Tooltip>
+                                          </TooltipProvider>
+                                          <TooltipProvider>
+                                              <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                      <DialogTrigger asChild>
+                                                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'mr')}>MR</Button>
+                                                      </DialogTrigger>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                      <p>Marathi</p>
+                                                  </TooltipContent>
+                                              </Tooltip>
+                                          </TooltipProvider>
+                                          <TooltipProvider>
+                                              <Tooltip>
+                                                  <TooltipTrigger asChild>
+                                                      <DialogTrigger asChild>
+                                                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'gu')}>GU</Button>
+                                                      </DialogTrigger>
+                                                  </TooltipTrigger>
+                                                  <TooltipContent>
+                                                      <p>Gujarati</p>
+                                                  </TooltipContent>
+                                              </Tooltip>
+                                          </TooltipProvider>
+                                        </>
+                                      ) : (
+                                        <span className="text-xs text-muted-foreground">No translations</span>
+                                      )}
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
@@ -252,8 +262,8 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                                     <Button 
                                                         variant="outline"
                                                         size="icon" 
-                                                        onClick={() => handleGenerateAudio(item.id, item.train_number, item.translations)}
-                                                        disabled={isGeneratingAudio === item.train_number}
+                                                        onClick={() => handleGenerateAudio(item)}
+                                                        disabled={isGeneratingAudio === item.train_number || item.translations.length === 0}
                                                     >
                                                         {isGeneratingAudio === item.train_number ? (
                                                             <Loader2 className="h-4 w-4 animate-spin" />
@@ -299,7 +309,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                                 </AlertDialogHeader>
                                                 <AlertDialogFooter>
                                                     <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                    <AlertDialogAction onClick={() => handleClearAudio(item.id)}>
+                                                    <AlertDialogAction onClick={() => item.id && handleClearAudio(item.id)}>
                                                         Continue
                                                     </AlertDialogAction>
                                                 </AlertDialogFooter>
@@ -341,7 +351,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            {selectedTranslation ? `${LANGUAGE_MAP[selectedTranslation.language_code]} Translation` : 'Translation'}
+                            {selectedItem && selectedLang ? `${LANGUAGE_MAP[selectedLang]} Translation for ${selectedItem.train_name}` : 'Translation'}
                         </DialogTitle>
                         <DialogDescription>
                             Showing the translated details for the selected language.
