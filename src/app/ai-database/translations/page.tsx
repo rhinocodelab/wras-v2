@@ -84,7 +84,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
 
   useEffect(() => {
     handleFetchTranslations();
-  }, [toast]);
+  }, []);
 
   const totalPages = Math.ceil(allTranslations.length / RECORDS_PER_PAGE);
   const paginatedTranslations = allTranslations.slice(
