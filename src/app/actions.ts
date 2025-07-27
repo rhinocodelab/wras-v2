@@ -486,26 +486,18 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
     }
 }
 
-export async function saveAnnouncementTemplates(templates: Omit<Template, 'id' | 'template_audio_parts'>[]) {
+export async function saveAnnouncementTemplates(template: Omit<Template, 'id' | 'template_audio_parts'>) {
     const db = await getDb();
     try {
-        await db.run('BEGIN TRANSACTION');
-        
         const stmt = await db.prepare(
             'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
         );
-        for (const template of templates) {
-            await stmt.run(template.category, template.language_code, template.template_text);
-        }
+        await stmt.run(template.category, template.language_code, template.template_text);
         await stmt.finalize();
-        
-        await db.run('COMMIT');
         revalidatePath('/announcement-templates');
-        
     } catch (error) {
-        await db.run('ROLLBACK');
-        console.error('Failed to save announcement templates:', error);
-        throw new Error('Failed to save templates.');
+        console.error('Failed to save announcement template:', error);
+        throw new Error('Failed to save template.');
     } finally {
         await db.close();
     }
@@ -622,4 +614,5 @@ export async function getSession() {
   }
 }
 
+    
     

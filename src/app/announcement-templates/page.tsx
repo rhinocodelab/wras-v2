@@ -109,18 +109,19 @@ export default function AnnouncementTemplatesPage() {
     setIsProcessing(true);
     try {
         const parsedData = JSON.parse(content);
-        const allNewTemplates: Omit<Template, 'id' | 'template_audio_parts'>[] = [];
-
+        
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if (!parsedData[category]) {
-                throw new Error(`Category "${category}" not found in JSON file.`);
+                console.warn(`Category "${category}" not found in JSON file. Skipping.`);
+                continue;
             }
 
             for (const langCode of Object.values(LANGUAGE_CODES)) {
                 if (typeof parsedData[category][langCode] !== 'string') {
-                    throw new Error(`Template for category "${category}" and language "${langCode}" is missing or invalid.`);
+                    console.warn(`Template for category "${category}" and language "${langCode}" is missing or invalid. Skipping.`);
+                    continue;
                 }
-                allNewTemplates.push({
+                await saveAnnouncementTemplates({
                     category,
                     language_code: langCode,
                     template_text: parsedData[category][langCode],
@@ -128,7 +129,6 @@ export default function AnnouncementTemplatesPage() {
             }
         }
         
-        await saveAnnouncementTemplates(allNewTemplates);
         await fetchTemplates();
 
         toast({
@@ -180,7 +180,7 @@ export default function AnnouncementTemplatesPage() {
       "Platform_Change": {
         "en": "Attention please. The platform for train number {train_number}, {train_name} has been changed to platform number {platform}.",
         "hi": "कृपया ध्यान दें। ट्रेन नंबर {train_number}, {train_name} के लिए प्लेटफॉर्म को बदलकर प्लेटफॉर्म नंबर {platform} कर दिया गया है।",
-        "mr": "कृपया लक्ष द्या. गाडी क्रमांक {train_number}, {train_name} साठी प्लॅटफॉर्म बदलून प्लॅટफॉर्म क्रमांक {platform} करण्यात आला आहे.",
+        "mr": "कृपया लक्ष द्या. गाडी क्रमांक {train_number}, {train_name} साठी प्लॅટफॉर्म बदलून प्लॅटफॉर्म क्रमांक {platform} करण्यात आला आहे.",
         "gu": "કૃપા કરીને ધ્યાન આપો. ટ્રેન નંબર {train_number}, {train_name} માટે પ્લેટફોર્મ બદલીને પ્લેટફોર્મ નંબર {platform} કરવામાં આવ્યો છે."
       }
     };
@@ -446,3 +446,5 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+    
