@@ -26,74 +26,13 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full justify-center bg-muted/40">
-      <div className="flex w-full max-w-7xl">
-        <aside className="fixed inset-y-0 left-0 z-10 hidden w-60 flex-col border-r bg-background sm:flex">
-          <div className="flex h-16 items-center border-b px-6">
-            <Link
-              href="#"
-              className="flex items-center gap-2 font-semibold"
-              prefetch={false}
-            >
-              <Home className="h-6 w-6" />
-              <span>Dashboard</span>
-            </Link>
-          </div>
-          <nav className="flex-1 overflow-auto py-4">
-            <div className="grid items-start px-4 text-sm font-medium">
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
-                prefetch={false}
-              >
-                <Home className="h-4 w-4" />
-                Dashboard
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                prefetch={false}
-              >
-                <GitFork className="h-4 w-4" />
-                Route Management
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                prefetch={false}
-              >
-                <Megaphone className="h-4 w-4" />
-                Announcement Templates
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                prefetch={false}
-              >
-                <Volume2 className="h-4 w-4" />
-                Audio Templates
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                prefetch={false}
-              >
-                <Database className="h-4 w-4" />
-                AI Database
-              </Link>
-              <Link
-                href="#"
-                className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                prefetch={false}
-              >
-                <Video className="h-4 w-4" />
-                ISL Dataset
-              </Link>
-            </div>
-          </nav>
-        </aside>
-        <div className="flex flex-col sm:pl-60 flex-grow">
-          <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+    <div className="min-h-screen w-full bg-muted/40">
+      <div className="mx-auto flex h-full max-w-7xl flex-col">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
+             <div className="flex items-center gap-2 font-semibold">
+                 <Home className="h-6 w-6" />
+                <span>Dashboard</span>
+              </div>
             <Sheet>
               <SheetTrigger asChild>
                 <Button size="icon" variant="outline" className="sm:hidden">
@@ -175,6 +114,61 @@ export default async function HomePage() {
               </form>
             </div>
           </header>
+        <div className="flex flex-1">
+          <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
+            <nav className="flex-1 overflow-auto py-4">
+              <div className="grid items-start px-4 text-sm font-medium">
+                <Link
+                  href="#"
+                  className="flex items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
+                  prefetch={false}
+                >
+                  <Home className="h-4 w-4" />
+                  Dashboard
+                </Link>
+                <Link
+                  href="#"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  prefetch={false}
+                >
+                  <GitFork className="h-4 w-4" />
+                  Route Management
+                </Link>
+                <Link
+                  href="#"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  prefetch={false}
+                >
+                  <Megaphone className="h-4 w-4" />
+                  Announcement Templates
+                </Link>
+                <Link
+                  href="#"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  prefetch={false}
+                >
+                  <Volume2 className="h-4 w-4" />
+                  Audio Templates
+                </Link>
+                <Link
+                  href="#"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  prefetch={false}
+                >
+                  <Database className="h-4 w-4" />
+                  AI Database
+                </Link>
+                <Link
+                  href="#"
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  prefetch={false}
+                >
+                  <Video className="h-4 w-4" />
+                  ISL Dataset
+                </Link>
+              </div>
+            </nav>
+          </aside>
           <main className="flex-1 p-4 sm:p-6">
             <div className="flex items-center">
               <h1 className="text-lg font-semibold md:text-2xl">
