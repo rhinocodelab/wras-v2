@@ -73,7 +73,7 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-muted/40">
-      <div className="flex min-h-screen w-full max-w-7xl flex-col">
+      <div className="flex w-full max-w-7xl flex-col">
         <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
           <div className="flex items-center gap-2 font-semibold text-primary">
             <TramFront className="h-6 w-6" />
@@ -189,9 +189,16 @@ export default function HomePage() {
               </div>
             </nav>
           </aside>
-          <main className="flex-1 p-4 sm:p-6">{renderContent()}</main>
+          <main className="flex-1 p-4 sm:p-6 pb-16">{renderContent()}</main>
         </div>
       </div>
+      <footer className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6">
+              <div className="py-3 text-center text-sm text-muted-foreground">
+                  Designed and Developed by Sundyne Technologies copyright 2025
+              </div>
+          </div>
+      </footer>
     </div>
   );
 }
