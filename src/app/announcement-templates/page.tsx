@@ -122,18 +122,19 @@ export default function AnnouncementTemplatesPage() {
             englishTemplates[category] = parsedTemplates[category];
         }
 
-        // Process translations sequentially
+        // Add English templates first
         for (const category of ANNOUNCEMENT_CATEGORIES) {
-             // Add English template
-            allNewTemplates.push({
+             allNewTemplates.push({
                 category,
                 language_code: 'en',
                 template_text: englishTemplates[category],
                 template_audio_parts: null
             });
+        }
 
-            // Translate for other languages
-            for (const langCode of ['hi', 'mr', 'gu']) {
+        // Process translations sequentially for other languages
+        for (const langCode of ['hi', 'mr', 'gu']) {
+            for (const category of ANNOUNCEMENT_CATEGORIES) {
                 const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
                 setProcessingItem(`Translating: ${langName} '${category.replace('_', ' ')}'`);
                 
@@ -141,16 +142,16 @@ export default function AnnouncementTemplatesPage() {
                     template: englishTemplates[category],
                     languageCode: langCode,
                     category: category,
-                    generateAudio: false,
+                    generateAudio: false, // Only generate text
                 });
 
                 allNewTemplates.push({
                     category,
                     language_code: langCode,
                     template_text: result.translatedText,
-                    template_audio_parts: null,
+                    template_audio_parts: JSON.stringify(result.audioParts),
                 });
-                 await new Promise(resolve => setTimeout(resolve, 200)); // Small delay
+                await new Promise(resolve => setTimeout(resolve, 500)); // Delay
             }
         }
         
