@@ -65,7 +65,7 @@ const translateRouteFlow = ai.defineFlow(
             const numberToWordsPrompt = ai.definePrompt({
                 name: 'numberToWordsPrompt',
                 input: { schema: z.object({ number: z.string() }) },
-                output: { schema: z.string() },
+                output: { schema: z.any() },
                 model: googleAI.model('gemini-1.5-flash-latest'),
                 prompt: `Convert the following number into Hindi words, with each digit spelled out. For example, '123' should be 'एक दो तीन'.\nNumber: {{{number}}}`,
             });
