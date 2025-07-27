@@ -228,6 +228,14 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
   }
 }
 
+export async function clearAllTranslations() {
+  const db = await getDb();
+  await db.run('DELETE FROM train_route_translations');
+  await db.close();
+  revalidatePath('/ai-database');
+  return { message: 'All translations have been deleted.' };
+}
+
 // --- Auth Functions ---
 
 export async function login(
