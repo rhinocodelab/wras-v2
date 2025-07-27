@@ -418,6 +418,20 @@ export async function clearAllAudio() {
     }
 }
 
+export async function getIslVideos(): Promise<string[]> {
+  const videoDir = path.join(process.cwd(), 'public', 'isl_dataset');
+  try {
+    await fs.access(videoDir);
+    const files = await fs.readdir(videoDir);
+    return files
+      .filter(file => file.endsWith('.mp4'))
+      .map(file => `/isl_dataset/${file}`);
+  } catch (error) {
+    console.warn('ISL dataset directory does not exist or is not accessible.');
+    return [];
+  }
+}
+
 
 // --- Auth Functions ---
 

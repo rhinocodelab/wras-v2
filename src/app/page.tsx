@@ -10,6 +10,7 @@ import {
   Video,
   PanelLeft,
   TramFront,
+  FolderKanban,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -19,8 +20,7 @@ import TrainRouteManagementPage from '@/app/train-route-management/page';
 import AiDatabasePage from '@/app/ai-database/page';
 import TranslationsPage from '@/app/ai-database/translations/page';
 import AudioPage from '@/app/ai-database/audio/page';
-import { Separator } from '@/components/ui/separator';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import IslDatasetPage from '@/app/isl-dataset/page';
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -38,6 +38,8 @@ export default function HomePage() {
         return <TranslationsPage onViewChange={setActiveView} />;
       case 'audio':
         return <AudioPage onViewChange={setActiveView} />;
+      case 'isl-dataset':
+        return <IslDatasetPage />;
       default:
         return <Dashboard />;
     }
@@ -109,6 +111,13 @@ export default function HomePage() {
                   <Database className="h-5 w-5" />
                   AI Generated Assets
                 </div>
+                 <div
+                  onClick={() => setActiveView('isl-dataset')}
+                  className={getMobileLinkClassName('isl-dataset')}
+                >
+                  <FolderKanban className="h-5 w-5" />
+                  ISL Dataset
+                </div>
                 <div
                   onClick={() => {}}
                   className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
@@ -156,6 +165,13 @@ export default function HomePage() {
                 >
                   <Database className="h-4 w-4" />
                   AI Generated Assets
+                </div>
+                <div
+                  onClick={() => setActiveView('isl-dataset')}
+                  className={getLinkClassName('isl-dataset')}
+                >
+                  <FolderKanban className="h-4 w-4" />
+                  ISL Dataset
                 </div>
                 <div
                   onClick={() => {}}
