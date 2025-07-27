@@ -275,8 +275,8 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
             generateSpeech(t.train_name_translation, lang),
         ]);
         
-        const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.mp3`)) : '';
-        const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.mp3`)) : '';
+        const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
+        const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.wav`)) : '';
         
         if (numPath || namePath) {
           await db.run(
@@ -284,6 +284,9 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
               routeId, lang, numPath, namePath
           );
         }
+
+        // Add a delay to avoid rate limiting
+        await new Promise(resolve => setTimeout(resolve, 2000));
     }
 
     await db.close();

@@ -32,7 +32,7 @@ export async function generateSpeech(text: string, languageCode: string): Promis
                 languageCode: localeMap[languageCode] || 'en-IN', 
                 name: voiceMap[languageCode] || 'en-IN-Chirp3-HD-Achernar'
             },
-            audioConfig: { audioEncoding: 'MP3' as const },
+            audioConfig: { audioEncoding: 'LINEAR16' as const },
         };
 
         const [response] = await client.synthesizeSpeech(request);
