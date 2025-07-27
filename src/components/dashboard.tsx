@@ -17,7 +17,7 @@ import {
     TooltipTrigger,
 } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
-import { Search, Volume2, Accessibility, Loader2, Video } from 'lucide-react';
+import { Search, Volume2, Accessibility, Loader2, Video, Rocket } from 'lucide-react';
 import { getTrainRoutes, TrainRoute, handleGenerateAnnouncement, clearAnnouncementsFolder } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -111,6 +111,7 @@ export function Dashboard() {
   const [selectedRoutes, setSelectedRoutes] = useState<TrainRoute[]>([]);
   const [displayedRoutes, setDisplayedRoutes] = useState<DisplayRoute[]>([]);
   const [generatedData, setGeneratedData] = useState<FullAnnouncement | null>(null);
+  const [currentRouteInfo, setCurrentRouteInfo] = useState<DisplayRoute | null>(null);
   const [searchNumber, setSearchNumber] = useState('');
   const [searchName, setSearchName] = useState('');
   const { toast } = useToast();
@@ -177,6 +178,7 @@ export function Dashboard() {
     if (!route.id) return;
     setIsGenerating(true);
     setGeneratedData(null);
+    setCurrentRouteInfo(route);
     try {
         const result = await handleGenerateAnnouncement({
             routeId: route.id,
@@ -202,6 +204,100 @@ export function Dashboard() {
       if (!open) {
           clearAnnouncementsFolder();
       }
+  };
+
+  const handlePublishAnnouncement = () => {
+    if (!generatedData || !currentRouteInfo) return;
+
+    const { announcements, isl_video_playlist } = generatedData;
+    const { 'Train Name': trainName, 'Train Number': trainNumber, 'Start Station': startStation, 'End Station': endStation, 'Start Code': startCode, 'End Code': endCode } = currentRouteInfo;
+
+    const tickerText = announcements.map(a => a.text).join(' &nbsp; | &nbsp; ');
+    const audioSources = JSON.stringify(announcements.map(a => a.audio_path).filter(p => p !== null));
+    const videoSources = JSON.stringify(isl_video_playlist);
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html lang="en">
+      <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Announcement: ${trainName}</title>
+        <style>
+          body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+          .main-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+          .info-header { text-align: center; margin-bottom: 20px; padding: 10px 20px; border-radius: 12px; background-color: rgba(255, 255, 255, 0.1); }
+          .info-header h1 { margin: 0; font-size: 2.5em; }
+          .info-header p { margin: 5px 0 0; font-size: 1.2em; letter-spacing: 1px; }
+          .route { display: flex; align-items: center; justify-content: center; gap: 20px; }
+          .video-container { width: 80%; max-width: 960px; aspect-ratio: 16 / 9; background-color: #111; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+          video { width: 100%; height: 100%; object-fit: cover; }
+          .ticker-wrap { position: fixed; bottom: 0; left: 0; width: 100%; background-color: #1a1a1a; padding: 15px 0; overflow: hidden; }
+          .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 40s linear infinite; font-size: 1.5em; }
+          @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+        </style>
+      </head>
+      <body>
+        <div class="main-content">
+          <div class="info-header">
+            <h1>${trainNumber} - ${trainName}</h1>
+            <div class="route">
+              <p>${startStation} (${startCode})</p>
+              <span>&rarr;</span>
+              <p>${endStation} (${endCode})</p>
+            </div>
+          </div>
+          <div class="video-container">
+            <video id="isl-video" muted playsinline></video>
+          </div>
+        </div>
+        <div class="ticker-wrap">
+          <div class="ticker">${tickerText}</div>
+        </div>
+        <audio id="announcement-audio"></audio>
+
+        <script>
+          const videoElement = document.getElementById('isl-video');
+          const audioPlayer = document.getElementById('announcement-audio');
+          const videoPlaylist = ${videoSources};
+          const audioPlaylist = ${audioSources};
+          let currentVideoIndex = 0;
+          let currentAudioIndex = 0;
+
+          function playNextVideo() {
+            if (videoPlaylist.length === 0) return;
+            currentVideoIndex = (currentVideoIndex + 1) % videoPlaylist.length;
+            videoElement.src = videoPlaylist[currentVideoIndex];
+            videoElement.play();
+          }
+
+          function playNextAudio() {
+            if (audioPlaylist.length === 0) return;
+            currentAudioIndex = (currentAudioIndex + 1) % audioPlaylist.length;
+            audioPlayer.src = audioPlaylist[currentAudioIndex];
+            audioPlayer.play();
+          }
+
+          videoElement.addEventListener('ended', playNextVideo);
+          videoElement.addEventListener('canplay', () => videoElement.play());
+          audioPlayer.addEventListener('ended', playNextAudio);
+          audioPlayer.addEventListener('canplay', () => audioPlayer.play());
+
+          if (videoPlaylist.length > 0) {
+            videoElement.src = videoPlaylist[0];
+          }
+          if (audioPlaylist.length > 0) {
+            audioPlayer.src = audioPlaylist[0];
+          }
+        <\/script>
+      </body>
+      </html>
+    `;
+
+    const blob = new Blob([htmlContent], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank');
+    URL.revokeObjectURL(url); // Clean up the object URL
   };
 
   return (
@@ -485,11 +581,17 @@ export function Dashboard() {
                 </div>
 
              </div>
-            <DialogFooter className="mt-4">
-                <Button onClick={() => setIsAnnouncementModalOpen(false)}>Close</Button>
+            <DialogFooter className="mt-4 sm:justify-between">
+                <Button onClick={handlePublishAnnouncement}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Publish Announcement
+                </Button>
+                <Button variant="outline" onClick={() => handleModalOpenChange(false)}>Close</Button>
             </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   );
 }
+
+    
