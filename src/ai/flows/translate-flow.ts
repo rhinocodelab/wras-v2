@@ -14,8 +14,6 @@ import { TranslationServiceClient } from '@google-cloud/translate';
 
 const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
 
-const translationClient = new TranslationServiceClient();
-
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     // If the target language is English, just return the original text.
     if (targetLanguage === 'en') {
@@ -27,6 +25,9 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         throw new Error('GCP_PROJECT_ID environment variable not set.');
     }
     const location = 'global';
+
+    // Instantiates a client within the function scope to ensure proper credential handling.
+    const translationClient = new TranslationServiceClient();
 
     // Construct the request for the Translation API.
     const request = {
@@ -102,4 +103,3 @@ export async function translateAllRoutes(routes: TrainRoute[]): Promise<Translat
 
   return allTranslations;
 }
-
