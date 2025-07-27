@@ -12,7 +12,7 @@ import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
 
 // Define language codes
-const LANGUAGES = {
+const LANGUAGES: Record<string, string> = {
     'en-IN': 'en',
     'mr-IN': 'mr',
     'hi-IN': 'hi',
@@ -22,7 +22,7 @@ const LANGUAGES = {
 const translationClient = new TranslationServiceClient();
 
 async function translateText(text: string, languageCode: string): Promise<string> {
-    const targetLanguage = LANGUAGES[languageCode as keyof typeof LANGUAGES];
+    const targetLanguage = LANGUAGES[languageCode];
     if (!targetLanguage || targetLanguage === 'en') {
         return text;
     }
@@ -43,13 +43,13 @@ async function translateText(text: string, languageCode: string): Promise<string
 
     try {
         const [response] = await translationClient.translateText(request);
-        if (response.translations && response.translations.length > 0) {
-            return response.translations[0].translatedText || text;
+        if (response.translations && response.translations.length > 0 && response.translations[0].translatedText) {
+            return response.translations[0].translatedText;
         }
-        return text;
+        return text; // Fallback to original text if translation is empty
     } catch (error) {
-        console.error('Error during translation:', error);
-        return text; // Fallback to original text
+        console.error(`Error during translation to ${targetLanguage}:`, error);
+        return text; // Fallback to original text on error
     }
 }
 
