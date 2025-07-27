@@ -1,88 +1,48 @@
 
 'use server';
 
-import { googleAI } from '@genkit-ai/googleai';
-import { ai } from '@/ai/genkit';
+import { TextToSpeechClient } from '@google-cloud/text-to-speech';
 import { z } from 'zod';
-import wav from 'wav';
 
-async function toWav(
-  pcmData: Buffer,
-  channels = 1,
-  rate = 24000,
-  sampleWidth = 2
-): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const writer = new wav.Writer({
-      channels,
-      sampleRate: rate,
-      bitDepth: sampleWidth * 8,
-    });
+const client = new TextToSpeechClient();
 
-    let bufs: any[] = [];
-    writer.on('error', reject);
-    writer.on('data', function (d) {
-      bufs.push(d);
-    });
-    writer.on('end', function () {
-      resolve(Buffer.concat(bufs).toString('base64'));
-    });
+const localeMap: { [key: string]: string } = {
+    'en': 'en-IN',
+    'mr': 'mr-IN',
+    'hi': 'hi-IN',
+    'gu': 'gu-IN',
+};
 
-    writer.write(pcmData);
-    writer.end();
-  });
+const voiceMap: { [key: string]: string } = {
+    'en': 'en-IN-Chirp3-HD-Achernar',
+    'mr': 'mr-IN-Chirp3-HD-Achernar',
+    'hi': 'hi-IN-Chirp3-HD-Achernar',
+    'gu': 'gu-IN-Chirp3-HD-Achernar',
 }
 
-const ttsFlow = ai.defineFlow(
-  {
-    name: 'ttsFlow',
-    inputSchema: z.object({ text: z.string(), languageCode: z.string() }),
-    outputSchema: z.any(),
-  },
-  async ({ text, languageCode }) => {
+export async function generateSpeech(text: string, languageCode: string): Promise<Uint8Array | null> {
     if (!text) {
-      return { media: null };
+        return null;
     }
 
-    const localeMap: { [key: string]: string } = {
-        'en': 'en-IN',
-        'mr': 'mr-IN',
-        'hi': 'hi-IN',
-        'gu': 'gu-IN',
-    };
+    try {
+        const request = {
+            input: { text: text },
+            voice: { 
+                languageCode: localeMap[languageCode] || 'en-IN', 
+                name: voiceMap[languageCode] || 'en-IN-Chirp3-HD-Achernar'
+            },
+            audioConfig: { audioEncoding: 'MP3' as const },
+        };
 
-    const { media } = await ai.generate({
-      model: googleAI.model('gemini-2.5-flash-preview-tts'),
-      config: {
-        responseModalities: ['AUDIO'],
-        speechConfig: {
-          languageCode: localeMap[languageCode] || 'en-IN',
-          voiceConfig: {
-            prebuiltVoiceConfig: { 
-                voiceName: 'Achernar',
-             },
-          },
-        },
-      },
-      prompt: text,
-    });
-
-    if (!media) {
-      return { media: null };
+        const [response] = await client.synthesizeSpeech(request);
+        
+        if (response.audioContent instanceof Uint8Array) {
+            return response.audioContent;
+        }
+        return null;
+    } catch (error) {
+        console.error(`Error during TTS generation for lang '${languageCode}':`, error);
+        return null;
     }
-
-    const audioBuffer = Buffer.from(
-      media.url.substring(media.url.indexOf(',') + 1),
-      'base64'
-    );
-    const wavBase64 = await toWav(audioBuffer);
-    return {
-      media: 'data:audio/wav;base64,' + wavBase64,
-    };
-  }
-);
-
-export async function generateSpeech(text: string, languageCode: string): Promise<string | null> {
-    const result = await ttsFlow({ text, languageCode });
-    return result.media;
 }

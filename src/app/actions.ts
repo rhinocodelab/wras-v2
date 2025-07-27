@@ -252,15 +252,11 @@ export async function clearAllTranslations() {
   return { message: 'All translations have been deleted.' };
 }
 
-async function saveAudioFile(base64Data: string, filePath: string): Promise<string> {
+async function saveAudioFile(audioContent: Uint8Array, filePath: string): Promise<string> {
     const audioDir = path.dirname(filePath);
     await fs.mkdir(audioDir, { recursive: true });
-    const data = base64Data.split(';base64,').pop();
-    if (data) {
-        await fs.writeFile(filePath, data, { encoding: 'base64' });
-        return filePath.replace(path.join(process.cwd(), 'public'), '');
-    }
-    return '';
+    await fs.writeFile(filePath, audioContent, 'binary');
+    return filePath.replace(path.join(process.cwd(), 'public'), '');
 }
 
 export async function generateAudioForRoute(routeId: number, trainNumber: string, translations: TranslationRecord[]) {
@@ -273,22 +269,21 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
     for (const t of translations) {
         const lang = t.language_code;
 
-        // Generate audio concurrently for a single language
+        // Generate audio concurrently for train number and name for a single language
         const [numAudio, nameAudio] = await Promise.all([
             generateSpeech(t.train_number_translation, lang),
             generateSpeech(t.train_name_translation, lang),
         ]);
         
-        const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
-        const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.wav`)) : '';
+        const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.mp3`)) : '';
+        const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.mp3`)) : '';
         
-        await db.run(
-            'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path) VALUES (?, ?, ?, ?)',
-            routeId, lang, numPath, namePath
-        );
-
-        // Add a delay after processing each language to respect rate limits.
-        await new Promise(resolve => setTimeout(resolve, 21000)); 
+        if (numPath || namePath) {
+          await db.run(
+              'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path) VALUES (?, ?, ?, ?)',
+              routeId, lang, numPath, namePath
+          );
+        }
     }
 
     await db.close();
