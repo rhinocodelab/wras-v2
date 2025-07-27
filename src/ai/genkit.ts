@@ -1,10 +1,8 @@
 import {genkit} from 'genkit';
 import {googleAI} from '@genkit-ai/googleai';
 
-// By default, the Google AI plugin will use the value of the
-// GOOGLE_API_KEY environment variable for authentication.
-//
-// You can also specify the API key directly.
+// Genkit and the Google AI plugin will automatically detect the
+// GOOGLE_APPLICATION_CREDENTIALS environment variable and use it for authentication.
 //
 // To use Vertex AI, you must explicitly set the apiClient to 'vertex'.
 // The Vertex AI API uses Google Cloud Application Default Credentials for

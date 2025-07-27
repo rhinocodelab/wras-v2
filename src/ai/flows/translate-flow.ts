@@ -13,29 +13,16 @@ import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
 import { googleAI } from '@genkit-ai/googleai';
 
-function getCredentials() {
-    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
-        throw new Error("GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not set.");
-    }
-    try {
-        return JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
-    } catch (e) {
-        throw new Error("Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON.");
-    }
-}
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (!text || targetLanguage === 'en') {
         return text;
     }
     
-    const credentials = getCredentials();
-    const projectId = credentials.project_id;
-
-    const translationClient = new TranslationServiceClient({
-        projectId,
-        credentials,
-    });
+    // The TranslationServiceClient will automatically use the credentials
+    // from the GOOGLE_APPLICATION_CREDENTIALS environment variable.
+    const translationClient = new TranslationServiceClient();
+    const projectId = (await translationClient.getProjectId());
 
     try {
         const [response] = await translationClient.translateText({
