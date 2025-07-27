@@ -20,9 +20,10 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { getTranslations, FullTranslationInfo, TranslationRecord } from '@/app/actions';
+import { getTranslations, FullTranslationInfo, TranslationRecord, generateAudioForRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ChevronRight } from 'lucide-react';
+import { Loader2, ChevronRight, Volume2, CircleCheck } from 'lucide-react';
+import { Progress } from '@/components/ui/progress';
 
 const LANGUAGE_MAP: { [key: string]: string } = {
   'en': 'English',
@@ -36,6 +37,7 @@ const RECORDS_PER_PAGE = 5;
 export default function TranslationsPage({ onViewChange }: { onViewChange: (view: string) => void }) {
   const [allTranslations, setAllTranslations] = useState<FullTranslationInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTranslation, setSelectedTranslation] = useState<TranslationRecord | null>(null);
   const { toast } = useToast();
@@ -82,6 +84,26 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
 
   const handleOpenModal = (translation: TranslationRecord | null) => {
     setSelectedTranslation(translation);
+  };
+
+  const handleGenerateAudio = async (routeId: number, trainNumber: string, translations: TranslationRecord[]) => {
+    setIsGeneratingAudio(trainNumber);
+    try {
+      const result = await generateAudioForRoute(routeId, trainNumber, translations);
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to generate audio.',
+      });
+      console.error('Audio generation failed:', error);
+    } finally {
+      setIsGeneratingAudio(null);
+    }
   };
 
   const prevPage = () => {
@@ -132,6 +154,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                 <TableHead>Start Station</TableHead>
                                 <TableHead>End Station</TableHead>
                                 <TableHead>Translations</TableHead>
+                                <TableHead>Actions</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -153,6 +176,21 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'gu'))}>Gujarati</Button>
                                         </DialogTrigger>
+                                    </TableCell>
+                                    <TableCell>
+                                        <Button 
+                                            variant="outline"
+                                            size="sm" 
+                                            onClick={() => handleGenerateAudio(item.id, item.train_number, item.translations)}
+                                            disabled={isGeneratingAudio === item.train_number}
+                                        >
+                                            {isGeneratingAudio === item.train_number ? (
+                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                            ) : (
+                                                <Volume2 className="mr-2 h-4 w-4" />
+                                            )}
+                                            Generate Audio
+                                        </Button>
                                     </TableCell>
                                 </TableRow>
                                 );
@@ -225,6 +263,20 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
             </div>
           )}
         </div>
+         <Dialog open={!!isGeneratingAudio}>
+            <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                    <DialogTitle>Generating Audio</DialogTitle>
+                    <DialogDescription>
+                        Please wait while audio files are being generated for train {isGeneratingAudio}. This may take a moment.
+                    </DialogDescription>
+                </DialogHeader>
+                <div className="flex flex-col gap-4 py-4 items-center">
+                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                    <p className="text-sm text-muted-foreground">Processing...</p>
+                </div>
+            </DialogContent>
+        </Dialog>
     </div>
   );
 }

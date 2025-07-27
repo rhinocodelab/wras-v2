@@ -7,7 +7,9 @@ import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { revalidatePath } from 'next/cache';
 import { translateAllRoutes } from '@/ai/flows/translate-flow';
-
+import { generateSpeech } from '@/ai/flows/tts-flow';
+import * as fs from 'fs/promises';
+import * as path from 'path';
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -57,6 +59,18 @@ async function getDb() {
         train_name_translation TEXT,
         start_station_translation TEXT,
         end_station_translation TEXT,
+        FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
+    )
+    `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS train_route_audio (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        route_id INTEGER,
+        language_code TEXT,
+        train_number_audio_path TEXT,
+        train_name_audio_path TEXT,
+        start_station_audio_path TEXT,
+        end_station_audio_path TEXT,
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
     `);
@@ -179,6 +193,7 @@ export type TranslationRecord = {
 };
 
 export type FullTranslationInfo = {
+  id: number;
   train_number: string;
   train_name: string;
   translations: TranslationRecord[];
@@ -189,6 +204,7 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
     const db = await getDb();
     const results = await db.all(`
       SELECT
+        tr.id,
         tr.train_number,
         tr.train_name,
         trt.language_code,
@@ -198,7 +214,7 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
         trt.end_station_translation
       FROM train_routes tr
       JOIN train_route_translations trt ON tr.id = trt.route_id
-      ORDER BY tr.train_number, trt.language_code
+      ORDER BY tr.id, trt.language_code
     `);
     await db.close();
     
@@ -207,6 +223,7 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
     results.forEach(row => {
       if (!groupedTranslations[row.train_number]) {
         groupedTranslations[row.train_number] = {
+          id: row.id,
           train_number: row.train_number,
           train_name: row.train_name,
           translations: [],
@@ -234,6 +251,50 @@ export async function clearAllTranslations() {
   await db.close();
   revalidatePath('/ai-database');
   return { message: 'All translations have been deleted.' };
+}
+
+async function saveAudioFile(base64Data: string, filePath: string): Promise<string> {
+    const audioDir = path.dirname(filePath);
+    await fs.mkdir(audioDir, { recursive: true });
+    const data = base64Data.split(';base64,').pop();
+    if (data) {
+        await fs.writeFile(filePath, data, { encoding: 'base64' });
+        return filePath.replace(path.join(process.cwd(), 'public'), '');
+    }
+    return '';
+}
+
+export async function generateAudioForRoute(routeId: number, trainNumber: string, translations: TranslationRecord[]) {
+    const db = await getDb();
+    await db.run('DELETE FROM train_route_audio WHERE route_id = ?', routeId);
+    
+    const audioDir = path.join(process.cwd(), 'public', 'audio', trainNumber);
+    await fs.mkdir(audioDir, { recursive: true });
+
+    for (const t of translations) {
+        const lang = t.language_code;
+
+        const [numAudio, nameAudio, startAudio, endAudio] = await Promise.all([
+            generateSpeech(t.train_number_translation),
+            generateSpeech(t.train_name_translation),
+            generateSpeech(t.start_station_translation),
+            generateSpeech(t.end_station_translation)
+        ]);
+        
+        const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
+        const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.wav`)) : '';
+        const startPath = startAudio ? await saveAudioFile(startAudio, path.join(audioDir, `start_station_${lang}.wav`)) : '';
+        const endPath = endAudio ? await saveAudioFile(endAudio, path.join(audioDir, `end_station_${lang}.wav`)) : '';
+        
+        await db.run(
+            'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path, start_station_audio_path, end_station_audio_path) VALUES (?, ?, ?, ?, ?, ?)',
+            routeId, lang, numPath, namePath, startPath, endPath
+        );
+    }
+
+    await db.close();
+    revalidatePath('/ai-database/translations');
+    return { message: `Audio generated successfully for Train ${trainNumber}.` };
 }
 
 // --- Auth Functions ---
