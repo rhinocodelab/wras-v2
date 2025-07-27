@@ -8,7 +8,6 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
-  SidebarInset,
 } from '@/components/ui/sidebar';
 import { Home } from 'lucide-react';
 
@@ -20,22 +19,22 @@ export default async function HomePage() {
   }
 
   return (
-    <SidebarProvider>
-      <Sidebar>
-        <SidebarContent>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton href="#" isActive>
-                <Home />
-                Dashboard
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarContent>
-      </Sidebar>
-      <SidebarInset>
-        <div className="flex min-h-screen w-full flex-col bg-background">
-          <Header session={session} />
+    <div className="flex min-h-screen w-full flex-col bg-background">
+      <Header session={session} />
+      <div className="flex flex-1">
+        <SidebarProvider>
+          <Sidebar>
+            <SidebarContent>
+              <SidebarMenu>
+                <SidebarMenuItem>
+                  <SidebarMenuButton href="#" isActive>
+                    <Home />
+                    Dashboard
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              </SidebarMenu>
+            </SidebarContent>
+          </Sidebar>
           <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
             <div className="flex items-center">
               <h1 className="text-lg font-semibold md:text-2xl">Dashboard</h1>
@@ -51,8 +50,8 @@ export default async function HomePage() {
               </div>
             </div>
           </main>
-        </div>
-      </SidebarInset>
-    </SidebarProvider>
+        </SidebarProvider>
+      </div>
+    </div>
   );
 }
