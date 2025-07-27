@@ -1,3 +1,4 @@
+
 'use server';
 
 /**
@@ -21,7 +22,6 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         return text;
     }
 
-    // Ensure the project ID is set.
     const projectId = process.env.GCP_PROJECT_ID;
     if (!projectId) {
         throw new Error('GCP_PROJECT_ID environment variable not set.');
@@ -34,7 +34,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         contents: [text],
         mimeType: 'text/plain',
         sourceLanguageCode: 'en', // Source is always English
-        targetLanguageCode: targetLanguage, // Target is hi, mr, or gu
+        targetLanguageCode: targetLanguage,
     };
 
     try {
@@ -102,3 +102,4 @@ export async function translateAllRoutes(routes: TrainRoute[]): Promise<Translat
 
   return allTranslations;
 }
+
