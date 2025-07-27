@@ -19,6 +19,8 @@ import TrainRouteManagementPage from '@/app/train-route-management/page';
 import AiDatabasePage from '@/app/ai-database/page';
 import TranslationsPage from '@/app/ai-database/translations/page';
 import AudioPage from '@/app/ai-database/audio/page';
+import { Separator } from '@/components/ui/separator';
+import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -132,7 +134,7 @@ export default function HomePage() {
         </header>
         <div className="flex flex-1">
           <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
-            <nav className="flex-1 overflow-auto py-4">
+            <nav className="flex flex-1 flex-col overflow-auto py-4">
               <div className="grid items-start px-4 text-sm font-medium">
                 <div
                   onClick={() => setActiveView('dashboard')}
@@ -162,6 +164,33 @@ export default function HomePage() {
                   <Video className="h-4 w-4" />
                   ISL Video Generation
                 </div>
+              </div>
+              <Separator className="my-4" />
+              <div className="px-4 space-y-4">
+                <Card className="bg-muted">
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-sm font-semibold">Route Management</CardTitle>
+                        <CardDescription className="text-xs">
+                            Manage train routes for announcements.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+                <Card className="bg-muted">
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-sm font-semibold">AI Generation</CardTitle>
+                        <CardDescription className="text-xs">
+                            Generate translations and audio.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+                <Card className="bg-muted">
+                    <CardHeader className="p-4">
+                        <CardTitle className="text-sm font-semibold">ISL Video</CardTitle>
+                        <CardDescription className="text-xs">
+                            Create ISL video announcements.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
               </div>
             </nav>
           </aside>
