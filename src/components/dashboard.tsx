@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Search, GitFork, Languages, Video, Accessibility } from 'lucide-react';
+import { Search, Accessibility } from 'lucide-react';
 
 export function Dashboard() {
   return (
@@ -28,21 +28,7 @@ export function Dashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <h3 className="text-md font-semibold mb-2">Key Features:</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-                    <GitFork className="h-5 w-5 text-muted-foreground" />
-                    <span>Manage train routes and schedules.</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-                    <Languages className="h-5 w-5 text-muted-foreground" />
-                    <span>Generate multilingual text and audio translations.</span>
-                </div>
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
-                    <Video className="h-5 w-5 text-muted-foreground" />
-                    <span>Create ISL video announcements.</span>
-                </div>
-            </div>
+            <p className='text-sm text-muted-foreground'>Use the features in the sidebar to manage routes, generate AI assets, and create video announcements.</p>
         </CardContent>
       </Card>
 

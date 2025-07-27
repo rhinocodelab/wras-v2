@@ -6,13 +6,12 @@ import { Button } from '@/components/ui/button';
 import {
   Home,
   GitFork,
-  Megaphone,
-  Volume2,
   Database,
   Video,
   PanelLeft,
   TramFront,
 } from 'lucide-react';
+import { Separator } from "@/components/ui/separator";
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import { logout } from '@/app/actions';
@@ -95,6 +94,13 @@ export default function HomePage() {
                   <Home className="h-5 w-5" />
                   Dashboard
                 </div>
+                
+                 <div className='px-2.5'>
+                  <Separator />
+                </div>
+
+                <div className="px-2.5 text-xs font-semibold text-muted-foreground">CORE FEATURES</div>
+
                 <div
                   onClick={() => setActiveView('route-management')}
                   className={getMobileLinkClassName('route-management')}
@@ -103,32 +109,18 @@ export default function HomePage() {
                   Route Management
                 </div>
                 <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <Megaphone className="h-5 w-5" />
-                  Announcement Templates
-                </div>
-                <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
-                >
-                  <Volume2 className="h-5 w-5" />
-                  Audio Templates
-                </div>
-                <div
                   onClick={() => setActiveView('ai-database')}
                   className={getMobileLinkClassName('ai-database')}
                 >
                   <Database className="h-5 w-5" />
-                  AI Database
+                  AI Generated Assets
                 </div>
                 <div
                   onClick={() => {}}
                   className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
                 >
                   <Video className="h-5 w-5" />
-                  ISL Dataset
+                  ISL Video Generation
                 </div>
               </nav>
             </SheetContent>
@@ -157,6 +149,8 @@ export default function HomePage() {
                   <Home className="h-4 w-4" />
                   Dashboard
                 </div>
+                 <Separator className="my-2" />
+                 <div className="px-3 py-2 text-xs font-semibold text-muted-foreground">CORE FEATURES</div>
                 <div
                   onClick={() => setActiveView('route-management')}
                   className={getLinkClassName('route-management')}
@@ -165,32 +159,18 @@ export default function HomePage() {
                   Route Management
                 </div>
                 <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                >
-                  <Megaphone className="h-4 w-4" />
-                  Announcement Templates
-                </div>
-                <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
-                >
-                  <Volume2 className="h-4 w-4" />
-                  Audio Templates
-                </div>
-                <div
                   onClick={() => setActiveView('ai-database')}
                   className={getLinkClassName('ai-database')}
                 >
                   <Database className="h-4 w-4" />
-                  AI Database
+                  AI Generated Assets
                 </div>
                 <div
                   onClick={() => {}}
                   className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
                 >
                   <Video className="h-4 w-4" />
-                  ISL Dataset
+                  ISL Video Generation
                 </div>
               </div>
             </nav>
