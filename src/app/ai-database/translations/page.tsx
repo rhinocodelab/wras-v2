@@ -244,7 +244,8 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                             </Tooltip>
                                         </TooltipProvider>
                                     </TableCell>
-                                    <TableCell className="flex items-center gap-2">
+                                    <TableCell>
+                                        <div className="flex items-center gap-2">
                                          <TooltipProvider>
                                             <Tooltip>
                                                 <TooltipTrigger asChild>
@@ -304,6 +305,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                                 </AlertDialogFooter>
                                             </AlertDialogContent>
                                         </AlertDialog>
+                                        </div>
                                     </TableCell>
                                 </TableRow>
                                 );
@@ -393,5 +395,3 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     </div>
   );
 }
-
-    
