@@ -65,7 +65,7 @@ const IslVideoPlayer = ({ playlist }: { playlist: string[] }) => {
         if (videoRef.current) {
             videoRef.current.play();
         }
-    }, [currentVideo]);
+    }, [currentVideo, playlist]);
 
     if (!playlist || playlist.length === 0) {
         return (
@@ -82,7 +82,7 @@ const IslVideoPlayer = ({ playlist }: { playlist: string[] }) => {
             <video
                 ref={videoRef}
                 key={playlist[currentVideo]}
-                className="w-full rounded-t-lg"
+                className="w-full rounded-t-lg bg-black"
                 controls={false}
                 autoPlay
                 muted
@@ -176,6 +176,7 @@ export function Dashboard() {
   const onGenerateAnnouncement = async (route: DisplayRoute) => {
     if (!route.id) return;
     setIsGenerating(true);
+    setGeneratedData(null);
     try {
         const result = await handleGenerateAnnouncement({
             routeId: route.id,
@@ -402,7 +403,7 @@ export function Dashboard() {
                                         <Tooltip>
                                             <TooltipTrigger asChild>
                                                 <Button variant="ghost" size="icon" onClick={() => onGenerateAnnouncement(route)} disabled={isGenerating}>
-                                                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
+                                                    {isGenerating && displayedRoutes.find(r => r.id === route.id) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
@@ -442,9 +443,9 @@ export function Dashboard() {
                     Review the generated text, audio, and ISL video for the announcement.
                 </DialogDescription>
             </DialogHeader>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-hidden pt-2">
-                <div className="flex flex-col h-full">
-                    <div className="max-h-full overflow-y-auto space-y-4 pr-4">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100%-80px)] overflow-hidden pt-2">
+                <div className="flex flex-col h-full overflow-y-auto pr-4">
+                    <div className="space-y-4">
                         {generatedData?.announcements.map(ann => (
                            <Card key={ann.language_code}>
                                <CardHeader>
@@ -485,3 +486,5 @@ export function Dashboard() {
     </>
   );
 }
+
+    
