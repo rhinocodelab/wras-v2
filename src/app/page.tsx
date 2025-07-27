@@ -9,6 +9,9 @@ import {
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
+  SidebarInset,
+  SidebarTrigger,
+  SidebarRail,
 } from '@/components/ui/sidebar';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,53 +34,53 @@ export default async function HomePage() {
   }
 
   return (
-    <div className="flex min-h-screen w-full flex-col bg-background">
-      <Header session={session} />
-      <div className="flex flex-1">
-        <SidebarProvider>
-          <Sidebar>
-            <SidebarContent>
-              <SidebarMenu>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#" isActive>
-                    <Home />
-                    Dashboard
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <GitFork />
-                    Route Management
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <Megaphone />
-                    Announcement Templates
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <Volume2 />
-                    Audio Templates
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <Database />
-                    AI Database
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-                <SidebarMenuItem>
-                  <SidebarMenuButton href="#">
-                    <Video />
-                    ISL Dataset
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              </SidebarMenu>
-            </SidebarContent>
-          </Sidebar>
-          <main className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full flex-col bg-muted/40">
+        <Sidebar>
+          <SidebarContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#" isActive>
+                  <Home />
+                  Dashboard
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#">
+                  <GitFork />
+                  Route Management
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#">
+                  <Megaphone />
+                  Announcement Templates
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#">
+                  <Volume2 />
+                  Audio Templates
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#">
+                  <Database />
+                  AI Database
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton href="#">
+                  <Video />
+                  ISL Dataset
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarContent>
+        </Sidebar>
+        <div className="flex flex-col sm:gap-4 sm:py-4 sm:pl-14">
+          <Header session={session} />
+          <main className="grid flex-1 items-start gap-4 p-4 sm:px-6 sm:py-0 md:gap-8">
             <div className="flex items-center">
               <h1 className="text-lg font-semibold md:text-2xl">
                 Train Search
@@ -124,8 +127,8 @@ export default async function HomePage() {
               </Tabs>
             </div>
           </main>
-        </SidebarProvider>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
