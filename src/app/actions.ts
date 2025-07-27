@@ -771,3 +771,17 @@ export async function clearAllTemplateAudio() {
         await db.close();
     }
 }
+
+export async function clearAnnouncementsFolder() {
+    const announcementsDir = path.join(process.cwd(), 'public', 'audio', '_announcements');
+    try {
+        await fs.rm(announcementsDir, { recursive: true, force: true });
+        // Recreate the directory so it exists for the next generation
+        await fs.mkdir(announcementsDir, { recursive: true });
+        return { message: 'Announcements folder cleared.' };
+    } catch (error) {
+        console.error('Failed to clear announcements folder:', error);
+        // It's not a critical failure if this doesn't work, so don't throw.
+        return { message: 'Could not clear announcements folder.' };
+    }
+}

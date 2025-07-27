@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/tooltip';
 import { Separator } from '@/components/ui/separator';
 import { Search, Volume2, Accessibility, Loader2, Video } from 'lucide-react';
-import { getTrainRoutes, TrainRoute, handleGenerateAnnouncement } from '@/app/actions';
+import { getTrainRoutes, TrainRoute, handleGenerateAnnouncement, clearAnnouncementsFolder } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
 type DisplayRoute = TrainRoute & {
@@ -196,6 +196,13 @@ export function Dashboard() {
         setIsGenerating(false);
     }
   }
+
+  const handleModalOpenChange = (open: boolean) => {
+      setIsAnnouncementModalOpen(open);
+      if (!open) {
+          clearAnnouncementsFolder();
+      }
+  };
 
   return (
     <>
@@ -435,7 +442,7 @@ export function Dashboard() {
         </DialogContent>
       </Dialog>
       
-      <Dialog open={isAnnouncementModalOpen} onOpenChange={setIsAnnouncementModalOpen}>
+      <Dialog open={isAnnouncementModalOpen} onOpenChange={handleModalOpenChange}>
         <DialogContent className="max-w-4xl h-[80vh]">
             <DialogHeader>
                 <DialogTitle>Generated Announcement</DialogTitle>
@@ -486,5 +493,3 @@ export function Dashboard() {
     </>
   );
 }
-
-    
