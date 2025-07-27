@@ -512,13 +512,25 @@ export async function runTemplateFlow(input: TemplateTranslationInput) {
         const result = await translateTemplateFlow(input);
         
         const db = await getDb();
-        await db.run(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)',
-            input.category,
-            input.languageCode,
-            result.translatedText,
-            JSON.stringify(result.audioParts)
-        );
+        
+        // If generating audio, we UPDATE the existing record.
+        if (input.generateAudio) {
+             await db.run(
+                'UPDATE announcement_templates SET template_audio_parts = ? WHERE category = ? AND language_code = ?',
+                JSON.stringify(result.audioParts),
+                input.category,
+                input.languageCode
+            );
+        } else {
+            // Otherwise, we INSERT OR REPLACE the text template.
+            await db.run(
+                'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)',
+                input.category,
+                input.languageCode,
+                result.translatedText,
+                JSON.stringify(result.audioParts)
+            );
+        }
        
         await db.close();
         revalidatePath('/announcement-templates');

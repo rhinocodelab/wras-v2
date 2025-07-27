@@ -120,11 +120,8 @@ export default function AnnouncementTemplatesPage() {
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
             }
             englishTemplates[category] = parsedTemplates[category];
-        }
-
-        // Add English templates first
-        for (const category of ANNOUNCEMENT_CATEGORIES) {
-             allNewTemplates.push({
+             // Add English template first
+            allNewTemplates.push({
                 category,
                 language_code: 'en',
                 template_text: englishTemplates[category],
@@ -142,7 +139,7 @@ export default function AnnouncementTemplatesPage() {
                     template: englishTemplates[category],
                     languageCode: langCode,
                     category: category,
-                    generateAudio: false, // Only generate text
+                    generateAudio: false,
                 });
 
                 allNewTemplates.push({
@@ -151,7 +148,7 @@ export default function AnnouncementTemplatesPage() {
                     template_text: result.translatedText,
                     template_audio_parts: JSON.stringify(result.audioParts),
                 });
-                await new Promise(resolve => setTimeout(resolve, 500)); // Delay
+                await new Promise(resolve => setTimeout(resolve, 500));
             }
         }
         
@@ -162,7 +159,7 @@ export default function AnnouncementTemplatesPage() {
 
         toast({
           title: 'Processing Complete',
-          description: 'Templates have been translated successfully. You can now generate audio for each category.',
+          description: 'Text templates have been translated and saved successfully.',
         });
 
     } catch (error: any) {
@@ -211,7 +208,7 @@ export default function AnnouncementTemplatesPage() {
         setIsGeneratingAudio(category);
         try {
             const englishTemplate = templates.find(t => t.category === category && t.language_code === 'en');
-            if (!englishTemplate) {
+            if (!englishTemplate || !englishTemplate.template_text) {
                  toast({
                     variant: 'destructive',
                     title: 'Missing Template',
@@ -223,14 +220,18 @@ export default function AnnouncementTemplatesPage() {
 
             const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
             for (const langCode of languagesToProcess) {
+                // We always pass the english template to the flow
                 await runTemplateFlow({
                     template: englishTemplate.template_text,
                     languageCode: langCode,
                     category: category,
                     generateAudio: true,
                 });
+                 await new Promise(resolve => setTimeout(resolve, 1000));
             }
+
             await fetchTemplates();
+
             toast({
                 title: 'Audio Generated',
                 description: `Audio successfully generated for the '${category.replace('_', ' ')}' category.`,
