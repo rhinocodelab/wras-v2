@@ -119,9 +119,9 @@ export default function AudioPage({ onViewChange }: { onViewChange: (view: strin
                     </CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
                       <div>
-                        <h4 className="font-semibold mb-2">Train Number Audio</h4>
+                        <h4 className="font-semibold mb-2">Train Number</h4>
                         <div className="space-y-2">
                           {['en', 'hi', 'mr', 'gu'].map(lang => {
                             const audioRecord = item.audio.find(a => a.language_code === lang);
@@ -135,7 +135,7 @@ export default function AudioPage({ onViewChange }: { onViewChange: (view: strin
                         </div>
                       </div>
                       <div>
-                        <h4 className="font-semibold mb-2">Train Name Audio</h4>
+                        <h4 className="font-semibold mb-2">Train Name</h4>
                          <div className="space-y-2">
                           {['en', 'hi', 'mr', 'gu'].map(lang => {
                             const audioRecord = item.audio.find(a => a.language_code === lang);
@@ -143,6 +143,34 @@ export default function AudioPage({ onViewChange }: { onViewChange: (view: strin
                               <div key={lang} className="grid grid-cols-[80px_1fr] items-center gap-2">
                                 <span className="text-sm font-medium">{LANGUAGE_MAP[lang]}</span>
                                 <AudioPlayer src={audioRecord?.train_name_audio_path ?? null} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                       <div>
+                        <h4 className="font-semibold mb-2">Start Station</h4>
+                         <div className="space-y-2">
+                          {['en', 'hi', 'mr', 'gu'].map(lang => {
+                            const audioRecord = item.audio.find(a => a.language_code === lang);
+                            return (
+                              <div key={lang} className="grid grid-cols-[80px_1fr] items-center gap-2">
+                                <span className="text-sm font-medium">{LANGUAGE_MAP[lang]}</span>
+                                <AudioPlayer src={audioRecord?.start_station_audio_path ?? null} />
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                       <div>
+                        <h4 className="font-semibold mb-2">End Station</h4>
+                         <div className="space-y-2">
+                          {['en', 'hi', 'mr', 'gu'].map(lang => {
+                            const audioRecord = item.audio.find(a => a.language_code === lang);
+                            return (
+                              <div key={lang} className="grid grid-cols-[80px_1fr] items-center gap-2">
+                                <span className="text-sm font-medium">{LANGUAGE_MAP[lang]}</span>
+                                <AudioPlayer src={audioRecord?.end_station_audio_path ?? null} />
                               </div>
                             );
                           })}

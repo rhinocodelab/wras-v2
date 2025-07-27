@@ -70,6 +70,8 @@ async function getDb() {
         language_code TEXT,
         train_number_audio_path TEXT,
         train_name_audio_path TEXT,
+        start_station_audio_path TEXT,
+        end_station_audio_path TEXT,
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
     `);
@@ -284,19 +286,23 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
     for (const t of translations) {
         const lang = t.language_code;
 
-        // Generate audio concurrently for train number and name for a single language
-        const [numAudio, nameAudio] = await Promise.all([
+        // Generate audio concurrently for all fields for a single language
+        const [numAudio, nameAudio, startAudio, endAudio] = await Promise.all([
             generateSpeech(t.train_number_translation, lang),
             generateSpeech(t.train_name_translation, lang),
+            generateSpeech(t.start_station_translation, lang),
+            generateSpeech(t.end_station_translation, lang),
         ]);
         
         const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
         const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.wav`)) : '';
+        const startPath = startAudio ? await saveAudioFile(startAudio, path.join(audioDir, `start_station_${lang}.wav`)) : '';
+        const endPath = endAudio ? await saveAudioFile(endAudio, path.join(audioDir, `end_station_${lang}.wav`)) : '';
         
-        if (numPath || namePath) {
+        if (numPath || namePath || startPath || endPath) {
           await db.run(
-              'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path) VALUES (?, ?, ?, ?)',
-              routeId, lang, numPath, namePath
+              'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path, start_station_audio_path, end_station_audio_path) VALUES (?, ?, ?, ?, ?, ?)',
+              routeId, lang, numPath, namePath, startPath, endPath
           );
         }
 
@@ -338,6 +344,8 @@ export type AudioRecord = {
     language_code: string;
     train_number_audio_path: string | null;
     train_name_audio_path: string | null;
+    start_station_audio_path: string | null;
+    end_station_audio_path: string | null;
 };
 
 export type FullAudioInfo = {
@@ -357,7 +365,9 @@ export async function getAudioData(): Promise<FullAudioInfo[]> {
                 tr.train_name,
                 tra.language_code,
                 tra.train_number_audio_path,
-                tra.train_name_audio_path
+                tra.train_name_audio_path,
+                tra.start_station_audio_path,
+                tra.end_station_audio_path
             FROM train_routes tr
             JOIN train_route_audio tra ON tr.id = tra.route_id
             ORDER BY tr.id, tra.language_code
@@ -379,6 +389,8 @@ export async function getAudioData(): Promise<FullAudioInfo[]> {
                 language_code: row.language_code,
                 train_number_audio_path: row.train_number_audio_path,
                 train_name_audio_path: row.train_name_audio_path,
+                start_station_audio_path: row.start_station_audio_path,
+                end_station_audio_path: row.end_station_audio_path,
             });
         });
 
