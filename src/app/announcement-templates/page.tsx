@@ -19,7 +19,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, ClipboardList } from 'lucide-react';
 import { getAnnouncementTemplates, saveAnnouncementTemplates, Template } from '@/app/actions';
@@ -33,12 +40,20 @@ const LANGUAGE_CODES: { [key: string]: string } = {
     'Marathi': 'mr',
     'Gujarati': 'gu'
 };
+const LANGUAGE_MAP: { [key: string]: string } = {
+  'en': 'English',
+  'mr': 'Marathi',
+  'hi': 'Hindi',
+  'gu': 'Gujarati',
+};
+
 
 export default function AnnouncementTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const { toast } = useToast();
 
   const fetchTemplates = async () => {
@@ -177,8 +192,14 @@ export default function AnnouncementTemplatesPage() {
   
   const getTemplate = (category: string, lang: string) => {
     const langCode = LANGUAGE_CODES[lang];
-    return templates.find(t => t.category === category && t.language_code === langCode)?.template_text || 'N/A';
+    return templates.find(t => t.category === category && t.language_code === langCode);
   }
+
+  const handleOpenModal = (template: Template | undefined) => {
+    if (template) {
+        setSelectedTemplate(template);
+    }
+  };
 
   return (
     <div className="w-full">
@@ -242,6 +263,7 @@ export default function AnnouncementTemplatesPage() {
         </div>
 
         <div className="lg:col-span-2">
+        <Dialog>
            <Card>
                 <CardHeader>
                     <CardTitle>Current Templates</CardTitle>
@@ -269,9 +291,22 @@ export default function AnnouncementTemplatesPage() {
                             {ANNOUNCEMENT_CATEGORIES.map(category => (
                                 <TableRow key={category}>
                                 <TableCell className="font-medium">{category.replace('_', ' ')}</TableCell>
-                                {LANGUAGES.map(lang => (
-                                    <TableCell key={lang} className="text-xs">{getTemplate(category, lang)}</TableCell>
-                                ))}
+                                <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
+                                <TableCell>
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))}>HI</Button>
+                                    </DialogTrigger>
+                                </TableCell>
+                                <TableCell>
+                                     <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))}>MR</Button>
+                                    </DialogTrigger>
+                                </TableCell>
+                                <TableCell>
+                                     <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))}>GU</Button>
+                                    </DialogTrigger>
+                                </TableCell>
                                 </TableRow>
                             ))}
                             </TableBody>
@@ -285,6 +320,21 @@ export default function AnnouncementTemplatesPage() {
                     )}
                 </CardContent>
             </Card>
+             <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>
+                        {selectedTemplate ? `${LANGUAGE_MAP[selectedTemplate.language_code]} Template - ${selectedTemplate.category.replace('_', ' ')}` : 'Template'}
+                    </DialogTitle>
+                </DialogHeader>
+                {selectedTemplate ? (
+                    <div className="py-4">
+                       <p className="text-sm">{selectedTemplate.template_text}</p>
+                    </div>
+                ) : (
+                    <p>No template data available.</p>
+                )}
+            </DialogContent>
+            </Dialog>
         </div>
       </div>
       
