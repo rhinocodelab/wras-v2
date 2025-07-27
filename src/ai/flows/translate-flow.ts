@@ -15,40 +15,31 @@ import { TranslationServiceClient } from '@google-cloud/translate';
 const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
-    // If the target language is English, just return the original text.
     if (targetLanguage === 'en') {
         return text;
     }
 
-    const projectId = process.env.GCP_PROJECT_ID;
-    if (!projectId) {
-        throw new Error('GCP_PROJECT_ID environment variable not set.');
-    }
-    const location = 'global';
-
-    // Instantiates a client within the function scope to ensure proper credential handling.
-    const translationClient = new TranslationServiceClient();
-
-    // Construct the request for the Translation API.
-    const request = {
-        parent: `projects/${projectId}/locations/${location}`,
-        contents: [text],
-        mimeType: 'text/plain',
-        sourceLanguageCode: 'en', // Source is always English
-        targetLanguageCode: targetLanguage,
-    };
-
     try {
+        const translationClient = new TranslationServiceClient();
+        const projectId = await translationClient.getProjectId();
+        
+        const request = {
+            parent: `projects/${projectId}/locations/global`,
+            contents: [text],
+            mimeType: 'text/plain',
+            sourceLanguageCode: 'en',
+            targetLanguageCode: targetLanguage,
+        };
+
         const [response] = await translationClient.translateText(request);
-        // If the translation is successful and text is returned, use it.
+        
         if (response.translations && response.translations.length > 0 && response.translations[0].translatedText) {
             return response.translations[0].translatedText;
         }
-        // Fallback to original text if translation returns no text.
+        
         return text; 
     } catch (error) {
         console.error(`Error during translation from 'en' to '${targetLanguage}':`, error);
-        // Fallback to original text in case of an API error.
         return text;
     }
 }
