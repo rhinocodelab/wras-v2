@@ -13,6 +13,7 @@ import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
 import * as path from 'path';
 import * as fs from 'fs';
+import { googleAI } from '@genkit-ai/googleai';
 
 const keyFilename = path.join(process.cwd(), 'config', 'isl.json');
 
@@ -65,9 +66,11 @@ const translateRouteFlow = ai.defineFlow(
                 name: 'numberToWordsPrompt',
                 input: { schema: z.object({ number: z.string() }) },
                 output: { schema: z.string() },
+                model: googleAI.model('gemini-1.5-flash-latest'),
                 prompt: `Convert the following number into Hindi words, with each digit spelled out. For example, '123' should be 'एक दो तीन'.\nNumber: {{{number}}}`,
             });
-            trainNumberTranslation = await numberToWordsPrompt({ number: route['Train Number'] });
+            const { output } = await numberToWordsPrompt({ number: route['Train Number'] });
+            trainNumberTranslation = output || route['Train Number'];
         } else {
             trainNumberTranslation = await translateText(route['Train Number'], languageCode);
         }
