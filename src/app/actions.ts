@@ -140,6 +140,7 @@ export async function getTrainRoutes(): Promise<TrainRoute[]> {
 export async function deleteTrainRoute(id: number) {
   const db = await getDb();
   await db.run('DELETE FROM train_routes WHERE id = ?', id);
+  await clearAudioForRoute(id);
   await db.close();
   revalidatePath('/train-route-management');
   return { message: 'Route deleted successfully.' };
@@ -148,6 +149,7 @@ export async function deleteTrainRoute(id: number) {
 export async function clearAllTrainRoutes() {
   const db = await getDb();
   await db.run('DELETE FROM train_routes');
+  await clearAllAudio();
   await db.close();
   revalidatePath('/train-route-management');
   return { message: 'All routes have been deleted.' };
@@ -309,12 +311,85 @@ export async function clearAudioForRoute(routeId: number) {
         
         await db.close();
         revalidatePath('/ai-database/translations');
+        revalidatePath('/ai-database/audio');
         return { message: 'Audio files and records deleted successfully.' };
 
     } catch (error) {
         await db.close();
         console.error('Failed to clear audio for route:', error);
         throw new Error('Failed to clear audio files.');
+    }
+}
+
+export type AudioRecord = {
+    language_code: string;
+    train_number_audio_path: string | null;
+    train_name_audio_path: string | null;
+};
+
+export type FullAudioInfo = {
+    id: number;
+    train_number: string;
+    train_name: string;
+    audio: AudioRecord[];
+};
+
+export async function getAudioData(): Promise<FullAudioInfo[]> {
+    try {
+        const db = await getDb();
+        const results = await db.all(`
+            SELECT
+                tr.id,
+                tr.train_number,
+                tr.train_name,
+                tra.language_code,
+                tra.train_number_audio_path,
+                tra.train_name_audio_path
+            FROM train_routes tr
+            JOIN train_route_audio tra ON tr.id = tra.route_id
+            ORDER BY tr.id, tra.language_code
+        `);
+        await db.close();
+
+        const groupedAudio: Record<string, FullAudioInfo> = {};
+
+        results.forEach(row => {
+            if (!groupedAudio[row.id]) {
+                groupedAudio[row.id] = {
+                    id: row.id,
+                    train_number: row.train_number,
+                    train_name: row.train_name,
+                    audio: [],
+                };
+            }
+            groupedAudio[row.id].audio.push({
+                language_code: row.language_code,
+                train_number_audio_path: row.train_number_audio_path,
+                train_name_audio_path: row.train_name_audio_path,
+            });
+        });
+
+        return Object.values(groupedAudio);
+    } catch (error) {
+        console.error('Failed to fetch audio data:', error);
+        return [];
+    }
+}
+
+export async function clearAllAudio() {
+    const db = await getDb();
+    try {
+        const audioDir = path.join(process.cwd(), 'public', 'audio');
+        await fs.rm(audioDir, { recursive: true, force: true });
+        await db.run('DELETE FROM train_route_audio');
+        await db.close();
+        revalidatePath('/ai-database/audio');
+        revalidatePath('/ai-database/translations');
+        return { message: 'All audio files and records deleted successfully.' };
+    } catch (error) {
+        await db.close();
+        console.error('Failed to clear all audio:', error);
+        throw new Error('Failed to clear all audio files.');
     }
 }
 

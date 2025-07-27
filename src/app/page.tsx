@@ -20,6 +20,7 @@ import { Dashboard } from '@/components/dashboard';
 import TrainRouteManagementPage from '@/app/train-route-management/page';
 import AiDatabasePage from '@/app/ai-database/page';
 import TranslationsPage from '@/app/ai-database/translations/page';
+import AudioPage from '@/app/ai-database/audio/page';
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -35,6 +36,8 @@ export default function HomePage() {
         return <AiDatabasePage onViewChange={setActiveView} />;
       case 'translations':
         return <TranslationsPage onViewChange={setActiveView} />;
+      case 'audio':
+        return <AudioPage onViewChange={setActiveView} />;
       default:
         return <Dashboard />;
     }
@@ -42,7 +45,7 @@ export default function HomePage() {
 
   const getLinkClassName = (view: string) => {
     const baseClass = `flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary`;
-    const isActive = activeView === view || (view === 'ai-database' && activeView === 'translations');
+    const isActive = activeView === view || (view === 'ai-database' && (activeView === 'translations' || activeView === 'audio'));
     return `${baseClass} ${
       isActive
         ? 'bg-muted text-primary'
@@ -52,7 +55,7 @@ export default function HomePage() {
 
   const getMobileLinkClassName = (view: string) => {
     const baseClass = `flex cursor-pointer items-center gap-4 px-2.5 transition-all hover:text-foreground`;
-    const isActive = activeView === view || (view === 'ai-database' && activeView === 'translations');
+    const isActive = activeView === view || (view === 'ai-database' && (activeView === 'translations' || activeView === 'audio'));
     return `${baseClass} ${
       isActive
         ? 'text-foreground'

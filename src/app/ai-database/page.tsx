@@ -2,7 +2,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -16,19 +15,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { clearAllTranslations, getTrainRoutes } from '@/app/actions';
+import { clearAllTranslations, getTrainRoutes, clearAllAudio } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: string) => void }) {
   const [isClearing, setIsClearing] = useState(false);
+  const [isClearingAudio, setIsClearingAudio] = useState(false);
   const [routesExist, setRoutesExist] = useState(false);
   const { toast } = useToast();
-  const router = useRouter();
 
-  const handleViewTranslations = () => {
-    onViewChange('translations');
-  };
+  const handleViewTranslations = () => onViewChange('translations');
+  const handleViewAudio = () => onViewChange('audio');
   
   useEffect(() => {
     getTrainRoutes().then(routes => {
@@ -53,6 +51,26 @@ export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: 
       console.error('Failed to clear translations:', error);
     } finally {
         setIsClearing(false);
+    }
+  };
+
+  const handleClearAudio = async () => {
+    setIsClearingAudio(true);
+    try {
+      const result = await clearAllAudio();
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to clear audio data.',
+      });
+      console.error('Failed to clear audio:', error);
+    } finally {
+        setIsClearingAudio(false);
     }
   };
 
@@ -98,6 +116,42 @@ export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: 
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearTranslations}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">AI Text-to-Speech</CardTitle>
+            <CardDescription>
+              Listen to AI-generated audio announcements for train routes.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button onClick={handleViewAudio} disabled={!routesExist} size="sm">
+              View Audio
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isClearingAudio || !routesExist} size="sm">
+                    {isClearingAudio && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isClearingAudio ? 'Clearing...' : 'Clear All'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete all
+                    generated audio files and data from the database.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearAudio}>
                     Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>
