@@ -210,49 +210,51 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                 <TableRow key={item.id}>
                                     <TableCell>{item.train_number}</TableCell>
                                     <TableCell>{item.train_name}</TableCell>
-                                    <TableCell className="flex gap-2">
-                                      {item.translations.length > 0 ? (
-                                        <>
-                                          <TooltipProvider>
-                                              <Tooltip>
-                                                  <TooltipTrigger asChild>
-                                                      <DialogTrigger asChild>
-                                                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'hi')}>HI</Button>
-                                                      </DialogTrigger>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                      <p>Hindi</p>
-                                                  </TooltipContent>
-                                              </Tooltip>
-                                          </TooltipProvider>
-                                          <TooltipProvider>
-                                              <Tooltip>
-                                                  <TooltipTrigger asChild>
-                                                      <DialogTrigger asChild>
-                                                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'mr')}>MR</Button>
-                                                      </DialogTrigger>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                      <p>Marathi</p>
-                                                  </TooltipContent>
-                                              </Tooltip>
-                                          </TooltipProvider>
-                                          <TooltipProvider>
-                                              <Tooltip>
-                                                  <TooltipTrigger asChild>
-                                                      <DialogTrigger asChild>
-                                                          <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'gu')}>GU</Button>
-                                                      </DialogTrigger>
-                                                  </TooltipTrigger>
-                                                  <TooltipContent>
-                                                      <p>Gujarati</p>
-                                                  </TooltipContent>
-                                              </Tooltip>
-                                          </TooltipProvider>
-                                        </>
-                                      ) : (
-                                        <span className="text-xs text-muted-foreground">No translations</span>
-                                      )}
+                                    <TableCell>
+                                      <div className="flex gap-2">
+                                        {item.translations.length > 0 ? (
+                                          <>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'hi')}>HI</Button>
+                                                        </DialogTrigger>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Hindi</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'mr')}>MR</Button>
+                                                        </DialogTrigger>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Marathi</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <DialogTrigger asChild>
+                                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'gu')}>GU</Button>
+                                                        </DialogTrigger>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Gujarati</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                          </>
+                                        ) : (
+                                          <span className="text-xs text-muted-foreground">No translations</span>
+                                        )}
+                                      </div>
                                     </TableCell>
                                     <TableCell>
                                         <div className="flex items-center gap-2">
@@ -405,6 +407,3 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     </div>
   );
 }
-
-    
-    
