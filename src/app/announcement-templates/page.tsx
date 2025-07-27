@@ -438,9 +438,9 @@ export default function AnnouncementTemplatesPage() {
             <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Processing Templates</DialogTitle>
-                    <Description>
+                    <DialogDescription>
                         Please wait while templates are being saved. This should only take a moment.
-                    </Description>
+                    </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 items-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
