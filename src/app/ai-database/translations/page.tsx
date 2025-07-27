@@ -218,19 +218,27 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                         </DialogTrigger>
                                     </TableCell>
                                     <TableCell className="flex items-center gap-2">
-                                        <Button 
-                                            variant="outline"
-                                            size="sm" 
-                                            onClick={() => handleGenerateAudio(item.id, item.train_number, item.translations)}
-                                            disabled={isGeneratingAudio === item.train_number}
-                                        >
-                                            {isGeneratingAudio === item.train_number ? (
-                                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            ) : (
-                                                <Volume2 className="mr-2 h-4 w-4" />
-                                            )}
-                                            Generate Audio
-                                        </Button>
+                                         <TooltipProvider>
+                                            <Tooltip>
+                                                <TooltipTrigger asChild>
+                                                    <Button 
+                                                        variant="outline"
+                                                        size="icon" 
+                                                        onClick={() => handleGenerateAudio(item.id, item.train_number, item.translations)}
+                                                        disabled={isGeneratingAudio === item.train_number}
+                                                    >
+                                                        {isGeneratingAudio === item.train_number ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin" />
+                                                        ) : (
+                                                            <Volume2 className="h-4 w-4" />
+                                                        )}
+                                                    </Button>
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                    <p>Generate Audio</p>
+                                                </TooltipContent>
+                                            </Tooltip>
+                                        </TooltipProvider>
                                         <AlertDialog>
                                             <TooltipProvider>
                                                 <Tooltip>
