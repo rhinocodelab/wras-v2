@@ -222,6 +222,8 @@ export type FullTranslationInfo = {
   id: number;
   train_number: string;
   train_name: string;
+  start_station: string;
+  end_station: string;
   translations: TranslationRecord[];
 };
 
@@ -233,6 +235,8 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
         tr.id,
         tr.train_number,
         tr.train_name,
+        tr.start_station,
+        tr.end_station,
         trt.language_code,
         trt.train_number_translation,
         trt.train_name_translation,
@@ -252,6 +256,8 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
           id: row.id,
           train_number: row.train_number,
           train_name: row.train_name,
+          start_station: row.start_station,
+          end_station: row.end_station,
           translations: [],
         };
       }
@@ -573,3 +579,5 @@ export async function getSession() {
     return null;
   }
 }
+
+    

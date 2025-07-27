@@ -200,6 +200,8 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                             <TableRow>
                                 <TableHead>Train Number</TableHead>
                                 <TableHead>Train Name</TableHead>
+                                <TableHead>Start Station</TableHead>
+                                <TableHead>End Station</TableHead>
                                 <TableHead>Translations</TableHead>
                                 <TableHead>Actions</TableHead>
                             </TableRow>
@@ -210,6 +212,8 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                 <TableRow key={item.id}>
                                     <TableCell>{item.train_number}</TableCell>
                                     <TableCell>{item.train_name}</TableCell>
+                                    <TableCell>{item.start_station}</TableCell>
+                                    <TableCell>{item.end_station}</TableCell>
                                     <TableCell>
                                       <div className="flex gap-1">
                                         {item.translations.length > 0 ? (
@@ -407,5 +411,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     </div>
   );
 }
+
+    
 
     
