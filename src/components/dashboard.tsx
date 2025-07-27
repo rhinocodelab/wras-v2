@@ -225,7 +225,7 @@ export function Dashboard() {
         <title>Announcement: ${trainName}</title>
         <style>
           body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
-          .main-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+          .main-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items-center; padding: 20px; }
           .info-header { text-align: center; margin-bottom: 20px; padding: 10px 20px; border-radius: 12px; background-color: rgba(255, 255, 255, 0.1); }
           .info-header h1 { margin: 0; font-size: 2.5em; }
           .info-header p { margin: 5px 0 0; font-size: 1.2em; letter-spacing: 1px; }
@@ -265,35 +265,32 @@ export function Dashboard() {
           let currentAudioIndex = 0;
 
           function playNextVideo() {
-            if (videoPlaylist.length === 0) return;
-            currentVideoIndex = (currentVideoIndex + 1) % videoPlaylist.length;
+            if (!videoElement || videoPlaylist.length === 0) return;
             videoElement.src = videoPlaylist[currentVideoIndex];
-            videoElement.play();
+            videoElement.play().catch(e => console.error("Video play error:", e));
+            currentVideoIndex = (currentVideoIndex + 1) % videoPlaylist.length;
           }
 
           function playNextAudio() {
-            if (audioPlaylist.length === 0) return;
-            currentAudioIndex = (currentAudioIndex + 1) % audioPlaylist.length;
+            if (!audioPlayer || audioPlaylist.length === 0) return;
             audioPlayer.src = audioPlaylist[currentAudioIndex];
-            audioPlayer.play();
+            audioPlayer.play().catch(e => console.error("Audio play error:", e));
+            currentAudioIndex = (currentAudioIndex + 1) % audioPlaylist.length;
           }
           
           function startPlayback() {
              if (videoPlaylist.length > 0) {
-                videoElement.src = videoPlaylist[0];
-                videoElement.play();
+                playNextVideo();
              }
              if (audioPlaylist.length > 0) {
-                audioPlayer.src = audioPlaylist[0];
-                audioPlayer.play();
+                playNextAudio();
              }
           }
 
           videoElement.addEventListener('ended', playNextVideo);
           audioPlayer.addEventListener('ended', playNextAudio);
-
-          // Start everything once the page is loaded
-          window.addEventListener('load', startPlayback);
+          
+          window.addEventListener('load', startPlayback, { once: true });
         <\/script>
       </body>
       </html>
@@ -543,14 +540,14 @@ export function Dashboard() {
       </Dialog>
       
       <Dialog open={isAnnouncementModalOpen} onOpenChange={handleModalOpenChange}>
-        <DialogContent className="max-w-4xl h-[80vh]">
+        <DialogContent className="max-w-4xl h-[75vh]">
             <DialogHeader>
                 <DialogTitle>Generated Announcement</DialogTitle>
                  <DialogDescription>
                     Review the generated text, audio, and ISL video for the announcement.
                 </DialogDescription>
             </DialogHeader>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100%-80px)] overflow-hidden pt-2">
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-[calc(100%-100px)] overflow-hidden pt-2">
                 <div className="flex flex-col h-full overflow-y-auto pr-4">
                     <div className="space-y-4">
                         {generatedData?.announcements.map(ann => (
@@ -585,7 +582,7 @@ export function Dashboard() {
                 </div>
 
              </div>
-            <DialogFooter className="mt-4 sm:justify-between">
+            <DialogFooter className="mt-4">
                 <Button onClick={handlePublishAnnouncement}>
                     <Rocket className="mr-2 h-4 w-4" />
                     Publish Announcement
