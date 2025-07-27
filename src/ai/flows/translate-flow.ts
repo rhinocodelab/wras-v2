@@ -50,6 +50,18 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
     }
 }
 
+const hindiDigitMap: { [key: string]: string } = {
+    '0': 'शून्य',
+    '1': 'एक',
+    '2': 'दो',
+    '3': 'तीन',
+    '4': 'चार',
+    '5': 'पांच',
+    '6': 'छह',
+    '7': 'सात',
+    '8': 'आठ',
+    '9': 'नौ'
+};
 
 const translateRouteFlow = ai.defineFlow(
     {
@@ -62,17 +74,10 @@ const translateRouteFlow = ai.defineFlow(
         let trainNumberTranslation: string;
 
         if (languageCode === 'hi') {
-            const numberToWordsPrompt = ai.definePrompt({
-                name: 'numberToWordsPrompt',
-                input: { schema: z.object({ number: z.string() }) },
-                output: { schema: z.any() },
-                model: googleAI.model('gemini-1.5-flash-latest'),
-                prompt: `Convert the following number into Hindi words, with each digit spelled out. For example, '123' should be 'एक दो तीन'.\nNumber: {{{number}}}`,
-            });
-            const { output } = await numberToWordsPrompt({ number: route['Train Number'] });
-            trainNumberTranslation = output || route['Train Number'];
+            const trainNumberStr = String(route['Train Number']);
+            trainNumberTranslation = trainNumberStr.split('').map(digit => hindiDigitMap[digit] || digit).join(' ');
         } else {
-            trainNumberTranslation = await translateText(route['Train Number'], languageCode);
+            trainNumberTranslation = await translateText(String(route['Train Number']), languageCode);
         }
 
         const [
