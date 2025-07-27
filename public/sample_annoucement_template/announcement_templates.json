@@ -1,0 +1,6 @@
+{
+    "Arriving": "Attention Please! Train number {train_number} {train_name} from {start_station} to {end_station} is arriving at platform number {platform}.",
+    "Delay": "Attention Please! Train number {train_number} {train_name} from {start_station} to {end_station} is running late. We apologize for the inconvenience.",
+    "Cancelled": "Attention Please! Train number {train_number} {train_name} from {start_station} to {end_station} scheduled for today has been cancelled. We apologize for the inconvenience.",
+    "Platform_Change": "Attention Please! Train number {train_number} {train_name} from {start_station} to {end_station} has been changed to platform number {platform}."
+  }

@@ -21,6 +21,7 @@ import AiDatabasePage from '@/app/ai-database/page';
 import TranslationsPage from '@/app/ai-database/translations/page';
 import AudioPage from '@/app/ai-database/audio/page';
 import IslDatasetPage from '@/app/isl-dataset/page';
+import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -40,6 +41,8 @@ export default function HomePage() {
         return <AudioPage onViewChange={setActiveView} />;
       case 'isl-dataset':
         return <IslDatasetPage />;
+      case 'announcement-templates':
+        return <AnnouncementTemplatesPage />;
       default:
         return <Dashboard />;
     }
@@ -119,8 +122,8 @@ export default function HomePage() {
                   ISL Dataset
                 </div>
                 <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setActiveView('announcement-templates')}
+                  className={getMobileLinkClassName('announcement-templates')}
                 >
                   <ClipboardList className="h-5 w-5" />
                   Announcement Templates
@@ -174,8 +177,8 @@ export default function HomePage() {
                   ISL Dataset
                 </div>
                 <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  onClick={() => setActiveView('announcement-templates')}
+                  className={getLinkClassName('announcement-templates')}
                 >
                   <ClipboardList className="h-4 w-4" />
                   Announcement Templates

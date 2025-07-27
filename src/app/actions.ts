@@ -75,6 +75,15 @@ async function getDb() {
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
     `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS announcement_templates (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        category TEXT NOT NULL,
+        language_code TEXT NOT NULL,
+        template_text TEXT NOT NULL,
+        UNIQUE(category, language_code)
+    )
+    `);
   return db;
 }
 
