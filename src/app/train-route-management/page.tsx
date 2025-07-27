@@ -33,11 +33,9 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import * as XLSX from 'xlsx';
-import { Upload, Trash2, PlusCircle } from 'lucide-react';
 import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes, addTrainRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 
 const sampleData: TrainRoute[] = [
   {
@@ -71,26 +69,46 @@ export default function TrainRouteManagementPage() {
   const [data, setData] = useState<TrainRoute[]>([]);
   const [fileName, setFileName] = useState('');
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isAdding, setIsAdding] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [newRoute, setNewRoute] = useState(initialNewRouteState);
   const { toast } = useToast();
 
   const recordsPerPage = 7;
-  const indexOfLastRecord = currentPage * recordsPerPage;
-  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
-  const currentRecords = data.slice(indexOfFirstRecord, indexOfLastRecord);
+  
   const nPages = Math.ceil(data.length / recordsPerPage);
+  const displayedRecords = data.slice(
+    (currentPage - 1) * recordsPerPage,
+    currentPage * recordsPerPage
+  );
+
 
   const fetchRoutes = async () => {
     const routes = await getTrainRoutes();
     setData(routes);
+     if (isAdding) {
+      // If we are adding, don't reset the page
+    } else {
+      const totalPages = Math.ceil(routes.length / recordsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      } else if (routes.length === 0) {
+        setCurrentPage(1);
+      }
+    }
   };
 
   useEffect(() => {
     fetchRoutes();
   }, []);
+  
+  useEffect(() => {
+    const totalPages = Math.ceil(data.length / recordsPerPage);
+    if (currentPage > totalPages && totalPages > 0) {
+      setCurrentPage(totalPages);
+    }
+  }, [data, currentPage, recordsPerPage]);
   
   const processFile = (file: File) => {
     setFileName(file.name);
@@ -115,7 +133,7 @@ export default function TrainRouteManagementPage() {
 
         const result = await saveTrainRoutes(routes);
         await fetchRoutes();
-        setCurrentPage(1); // Reset to first page after import
+        setCurrentPage(1);
         setIsImportModalOpen(false);
         toast({
           title: "Success",
@@ -170,13 +188,14 @@ export default function TrainRouteManagementPage() {
   };
   
   const prevPage = () => {
-    if (currentPage !== 1) {
+    if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
     }
   };
 
   const nextPage = () => {
-    if (currentPage !== nPages && nPages > 0) {
+    const totalPages = Math.ceil(data.length / recordsPerPage);
+    if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
     }
   };
@@ -184,15 +203,22 @@ export default function TrainRouteManagementPage() {
   const handleDeleteRoute = async (id?: number) => {
     if (id === undefined) return;
     try {
-      const result = await deleteTrainRoute(id);
-      await fetchRoutes();
+      await deleteTrainRoute(id);
+      const newRoutes = data.filter((route) => route.id !== id);
+      setData(newRoutes);
+      
+      const totalPages = Math.ceil(newRoutes.length / recordsPerPage);
+      if (currentPage > totalPages && totalPages > 0) {
+        setCurrentPage(totalPages);
+      } else if (newRoutes.length === 0) {
+        setCurrentPage(1);
+      }
+
       toast({
         title: "Success",
-        description: result.message,
+        description: "Route deleted successfully.",
       });
-      if (currentRecords.length === 1 && currentPage > 1) {
-        setCurrentPage(currentPage - 1);
-      }
+
     } catch (error) {
        toast({
         variant: "destructive",
@@ -228,9 +254,9 @@ export default function TrainRouteManagementPage() {
   const handleAddRoute = async () => {
     try {
       const result = await addTrainRoute(newRoute);
-      await fetchRoutes();
       setNewRoute(initialNewRouteState);
-      setIsAddModalOpen(false);
+      setIsAdding(false);
+      await fetchRoutes();
       toast({
         title: "Success",
         description: result.message,
@@ -244,6 +270,10 @@ export default function TrainRouteManagementPage() {
     }
   };
 
+  const handleCancelAdd = () => {
+    setIsAdding(false);
+    setNewRoute(initialNewRouteState);
+  };
 
   return (
     <div className="w-full">
@@ -279,7 +309,7 @@ export default function TrainRouteManagementPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-          <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
+          <Button size="sm" onClick={() => setIsAdding(true)} disabled={isAdding}>
             Add Route
           </Button>
           <Button size="sm" onClick={() => setIsImportModalOpen(true)}>
@@ -304,7 +334,6 @@ export default function TrainRouteManagementPage() {
             className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md transition-colors
               ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
           >
-            <Upload className="w-6 h-6 text-muted-foreground mb-2" />
             <p className="text-xs text-muted-foreground mb-2">
               Drag & drop your .xlsx file here
             </p>
@@ -364,98 +393,6 @@ export default function TrainRouteManagementPage() {
         </DialogContent>
       </Dialog>
       
-      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Add New Train Route</DialogTitle>
-            <DialogDescription>
-              Enter the details for the new train route below.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="Train Number" className="text-right">
-                Train No.
-              </Label>
-              <Input
-                id="Train Number"
-                name="Train Number"
-                value={newRoute['Train Number']}
-                onChange={handleNewRouteChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="Train Name" className="text-right">
-                Train Name
-              </Label>
-              <Input
-                id="Train Name"
-                name="Train Name"
-                value={newRoute['Train Name']}
-                onChange={handleNewRouteChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="Start Station" className="text-right">
-                Start Station
-              </Label>
-              <Input
-                id="Start Station"
-                name="Start Station"
-                value={newRoute['Start Station']}
-                onChange={handleNewRouteChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="Start Code" className="text-right">
-                Start Code
-              </Label>
-              <Input
-                id="Start Code"
-                name="Start Code"
-                value={newRoute['Start Code']}
-                onChange={handleNewRouteChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="End Station" className="text-right">
-                End Station
-              </Label>
-              <Input
-                id="End Station"
-                name="End Station"
-                value={newRoute['End Station']}
-                onChange={handleNewRouteChange}
-                className="col-span-3"
-              />
-            </div>
-            <div className="grid grid-cols-4 items-center gap-4">
-              <Label htmlFor="End Code" className="text-right">
-                End Code
-              </Label>
-              <Input
-                id="End Code"
-                name="End Code"
-                value={newRoute['End Code']}
-                onChange={handleNewRouteChange}
-                className="col-span-3"
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
-            </DialogClose>
-            <Button onClick={handleAddRoute}>Save Route</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-
       <div className="mt-4 rounded-lg border">
         <Table>
           <TableHeader>
@@ -468,8 +405,30 @@ export default function TrainRouteManagementPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {currentRecords.length > 0 ? (
-              currentRecords.map((row) => (
+            {isAdding && (
+              <TableRow>
+                <TableCell>
+                  <Input name="Train Number" value={newRoute['Train Number']} onChange={handleNewRouteChange} placeholder="Train Number" className="h-8" />
+                </TableCell>
+                <TableCell>
+                  <Input name="Train Name" value={newRoute['Train Name']} onChange={handleNewRouteChange} placeholder="Train Name" className="h-8" />
+                </TableCell>
+                <TableCell>
+                  <Input name="Start Station" value={newRoute['Start Station']} onChange={handleNewRouteChange} placeholder="Start Station" className="h-8 mb-1" />
+                  <Input name="Start Code" value={newRoute['Start Code']} onChange={handleNewRouteChange} placeholder="Code" className="h-8" />
+                </TableCell>
+                <TableCell>
+                  <Input name="End Station" value={newRoute['End Station']} onChange={handleNewRouteChange} placeholder="End Station" className="h-8 mb-1" />
+                  <Input name="End Code" value={newRoute['End Code']} onChange={handleNewRouteChange} placeholder="Code" className="h-8" />
+                </TableCell>
+                <TableCell className="flex gap-2">
+                  <Button size="sm" onClick={handleAddRoute}>Save</Button>
+                  <Button size="sm" variant="outline" onClick={handleCancelAdd}>Cancel</Button>
+                </TableCell>
+              </TableRow>
+            )}
+            {displayedRecords.length > 0 ? (
+              displayedRecords.map((row) => (
                 <TableRow key={row.id}>
                   <TableCell>{row['Train Number']}</TableCell>
                   <TableCell>{row['Train Name']}</TableCell>
@@ -485,7 +444,7 @@ export default function TrainRouteManagementPage() {
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
                          <Button variant="ghost" size="icon">
-                            <Trash2 className="h-4 w-4 text-destructive" />
+                            Delete
                           </Button>
                       </AlertDialogTrigger>
                       <AlertDialogContent>
@@ -510,17 +469,19 @@ export default function TrainRouteManagementPage() {
                 </TableRow>
               ))
             ) : (
-              <TableRow>
-                <TableCell colSpan={5} className="text-center h-24">
-                  No data available. Import an Excel file to see routes.
-                </TableCell>
-              </TableRow>
+              !isAdding && (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center h-24">
+                    No data available. Import an Excel file to see routes.
+                  </TableCell>
+                </TableRow>
+              )
             )}
           </TableBody>
         </Table>
       </div>
       
-      {data.length > recordsPerPage && (
+      {nPages > 1 && (
         <div className="flex items-center justify-end space-x-2 py-4">
           <Button
             variant="outline"
@@ -537,7 +498,7 @@ export default function TrainRouteManagementPage() {
             variant="outline"
             size="sm"
             onClick={nextPage}
-            disabled={currentPage === nPages || nPages === 0}
+            disabled={currentPage === nPages}
           >
             Next
           </Button>
@@ -545,3 +506,5 @@ export default function TrainRouteManagementPage() {
       )}
     </div>
   );
+
+    
