@@ -6,6 +6,7 @@ import { cookies } from 'next/headers';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { revalidatePath } from 'next/cache';
+import { translateAllRoutes } from '@/ai/flows/translate-flow';
 
 
 const SESSION_COOKIE_NAME = 'session';
@@ -47,6 +48,18 @@ async function getDb() {
       end_code TEXT
     )
   `);
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS train_route_translations (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        route_id INTEGER,
+        language_code TEXT,
+        train_number_translation TEXT,
+        train_name_translation TEXT,
+        start_station_translation TEXT,
+        end_station_translation TEXT,
+        FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
+    )
+    `);
   return db;
 }
 
@@ -127,6 +140,46 @@ export async function clearAllTrainRoutes() {
   return { message: 'All routes have been deleted.' };
 }
 
+export type Translation = {
+    route_id: number;
+    language_code: string;
+    train_number_translation: string;
+    train_name_translation: string;
+    start_station_translation: string;
+    end_station_translation: string;
+}
+
+export async function saveTranslations(translations: Translation[]) {
+    const db = await getDb();
+    await db.run('DELETE FROM train_route_translations');
+    const stmt = await db.prepare(
+        'INSERT INTO train_route_translations (route_id, language_code, train_number_translation, train_name_translation, start_station_translation, end_station_translation) VALUES (?, ?, ?, ?, ?, ?)'
+    );
+
+    for (const t of translations) {
+        await stmt.run(t.route_id, t.language_code, t.train_number_translation, t.train_name_translation, t.start_station_translation, t.end_station_translation);
+    }
+    await stmt.finalize();
+    await db.close();
+}
+
+
+export async function startTranslationProcess(routes: TrainRoute[], onProgress: (progress: number) => void) {
+  const totalRoutes = routes.length;
+  let completedRoutes = 0;
+  
+  const translations = await translateAllRoutes(routes);
+  
+  // Simulate progress for now. In a real scenario, you'd get progress from the flow.
+  for(let i=0; i < totalRoutes; i++){
+    await new Promise(resolve => setTimeout(resolve, 100)); // simulate network delay
+    completedRoutes++;
+    onProgress(Math.round((completedRoutes / totalRoutes) * 100));
+  }
+  
+  await saveTranslations(translations);
+  return { message: "Translation completed successfully." };
+}
 
 // --- Auth Functions ---
 

@@ -33,9 +33,10 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import * as XLSX from 'xlsx';
-import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes, addTrainRoute } from '@/app/actions';
+import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes, addTrainRoute, startTranslationProcess } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 
 const sampleData: TrainRoute[] = [
   {
@@ -73,6 +74,8 @@ export default function TrainRouteManagementPage() {
   const [isDragging, setIsDragging] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [newRoute, setNewRoute] = useState(initialNewRouteState);
+  const [isTranslating, setIsTranslating] = useState(false);
+  const [translationProgress, setTranslationProgress] = useState(0);
   const { toast } = useToast();
 
   const recordsPerPage = 7;
@@ -88,8 +91,6 @@ export default function TrainRouteManagementPage() {
     const routes = await getTrainRoutes();
     setData(routes);
     
-    // After adding a new route, we want to be on the first page
-    // where the new route is now displayed.
     if (isAdding) {
       setCurrentPage(1);
     } else {
@@ -283,6 +284,40 @@ export default function TrainRouteManagementPage() {
     setIsAdding(false);
     setNewRoute(initialNewRouteState);
   };
+  
+  const handleTranslate = async () => {
+    setIsTranslating(true);
+    setTranslationProgress(0);
+    try {
+        const routes = await getTrainRoutes();
+        if(routes.length === 0){
+             toast({
+                variant: "destructive",
+                title: "No routes",
+                description: "There are no routes to translate.",
+            });
+            setIsTranslating(false);
+            return;
+        }
+
+        const result = await startTranslationProcess(routes, setTranslationProgress);
+
+        toast({
+            title: "Success",
+            description: result.message,
+        });
+
+    } catch (error) {
+        console.error("Translation failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to translate routes.",
+        });
+    } finally {
+        setIsTranslating(false);
+    }
+};
 
   return (
     <div className="w-full">
@@ -318,6 +353,9 @@ export default function TrainRouteManagementPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
+           <Button size="sm" onClick={handleTranslate} disabled={isTranslating || data.length === 0}>
+            Translate
+          </Button>
           <Button size="sm" onClick={() => setIsAdding(true)} disabled={isAdding}>
             Add Route
           </Button>
@@ -401,6 +439,21 @@ export default function TrainRouteManagementPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={isTranslating} onOpenChange={setIsTranslating}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Translating Routes</DialogTitle>
+                <DialogDescription>
+                    Please wait while the train routes are being translated.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2 py-4">
+                <Progress value={translationProgress} />
+                <p className="text-sm text-center text-muted-foreground">{translationProgress}% complete</p>
+            </div>
+        </DialogContent>
+    </Dialog>
       
       <div className="mt-4 rounded-lg border">
         <Table>
@@ -515,5 +568,3 @@ export default function TrainRouteManagementPage() {
       )}
     </div>
   );
-
-    
