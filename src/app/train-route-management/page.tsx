@@ -248,7 +248,11 @@ export default function TrainRouteManagementPage() {
   
   const handleNewRouteChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setNewRoute(prev => ({ ...prev, [name]: value }));
+    if (name === 'Start Code' || name === 'End Code') {
+      setNewRoute(prev => ({ ...prev, [name]: value.toUpperCase() }));
+    } else {
+      setNewRoute(prev => ({ ...prev, [name]: value }));
+    }
   };
 
   const handleAddRoute = async () => {
