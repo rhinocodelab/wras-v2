@@ -9,7 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
-import { Translate } from '@google-cloud/translate/build/src/v2';
+import { TranslationServiceClient } from '@google-cloud/translate';
 
 // Define language codes
 const LANGUAGES = {
@@ -19,29 +19,37 @@ const LANGUAGES = {
     'gu-IN': 'gu',
 };
 
-// Instantiate the Google Cloud Translation client
-// It will automatically use credentials from the environment.
-const translateClient = new Translate();
+const translationClient = new TranslationServiceClient();
 
 async function translateText(text: string, languageCode: string): Promise<string> {
     const targetLanguage = LANGUAGES[languageCode as keyof typeof LANGUAGES];
-    if (!targetLanguage) {
-        throw new Error(`Language code '${languageCode}' not supported.`);
-    }
-
-    // Don't translate if the target is English, just return the original text
-    if (targetLanguage === 'en') {
+    if (!targetLanguage || targetLanguage === 'en') {
         return text;
     }
 
-    // Use the Google Cloud Translation API
+    const projectId = process.env.GCP_PROJECT_ID;
+    if (!projectId) {
+        throw new Error('GCP_PROJECT_ID environment variable not set.');
+    }
+    const location = 'global';
+
+    const request = {
+        parent: `projects/${projectId}/locations/${location}`,
+        contents: [text],
+        mimeType: 'text/plain',
+        sourceLanguageCode: 'en',
+        targetLanguageCode: targetLanguage,
+    };
+
     try {
-        const [translation] = await translateClient.translate(text, { to: targetLanguage, from: 'en' });
-        return translation;
+        const [response] = await translationClient.translateText(request);
+        if (response.translations && response.translations.length > 0) {
+            return response.translations[0].translatedText || text;
+        }
+        return text;
     } catch (error) {
         console.error('Error during translation:', error);
-        // Fallback to original text in case of an error
-        return text;
+        return text; // Fallback to original text
     }
 }
 
