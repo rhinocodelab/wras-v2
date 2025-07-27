@@ -4,8 +4,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search, GitFork, Languages, Video, Accessibility } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Search } from 'lucide-react';
 
 export function Dashboard() {
   return (
@@ -16,46 +16,10 @@ export function Dashboard() {
         </h1>
       </div>
       
-      <Card className="mt-4 w-full overflow-hidden">
-        <div className="bg-primary/10 p-6 sm:p-8 md:p-10">
-          <div className="flex flex-col items-center text-center gap-4">
-              <div className="p-3 bg-primary/20 rounded-full">
-                <Accessibility className="h-8 w-8 text-primary" />
-              </div>
-              <div className='max-w-xl'>
-                <h2 className="text-2xl font-bold text-foreground">Welcome to the WRAS-DHH Dashboard!</h2>
-                <p className="text-muted-foreground mt-2">
-                  The Western Railway Announcement System for the Deaf and Hard of Hearing. This tool empowers you to manage train routes, generate multilingual translations, and ultimately produce Indian Sign Language (ISL) video announcements.
-                </p>
-              </div>
-          </div>
-        </div>
-        <div className="p-6 bg-background">
-            <h3 className="text-lg font-semibold text-center mb-4">Key Features</h3>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 text-center">
-                <div className="flex flex-col items-center gap-2">
-                    <div className="p-3 bg-secondary rounded-full">
-                        <GitFork className="h-6 w-6 text-secondary-foreground" />
-                    </div>
-                    <h4 className="font-semibold">Route Management</h4>
-                    <p className="text-xs text-muted-foreground">Easily add, import, and manage all train routes.</p>
-                </div>
-                <div className="flex flex-col items-center gap-2">
-                    <div className="p-3 bg-secondary rounded-full">
-                        <Languages className="h-6 w-6 text-secondary-foreground" />
-                    </div>
-                    <h4 className="font-semibold">AI Translations & Audio</h4>
-                    <p className="text-xs text-muted-foreground">Generate text translations and audio in multiple languages.</p>
-                </div>
-                 <div className="flex flex-col items-center gap-2">
-                    <div className="p-3 bg-secondary rounded-full">
-                        <Video className="h-6 w-6 text-secondary-foreground" />
-                    </div>
-                    <h4 className="font-semibold">ISL Video Generation</h4>
-                    <p className="text-xs text-muted-foreground">Create accessible ISL video announcements from route data.</p>
-                </div>
-            </div>
-        </div>
+      <Card className="mt-4">
+        <CardHeader>
+          <CardTitle>Welcome to the WRAS-DHH!</CardTitle>
+        </CardHeader>
       </Card>
 
       <div className="mt-8">
