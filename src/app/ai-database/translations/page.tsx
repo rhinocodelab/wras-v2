@@ -201,7 +201,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                             {paginatedTranslations.map((item) => {
                                 const englishVersion = getEnglishTranslation(item);
                                 return (
-                                <TableRow key={item.train_number}>
+                                <TableRow key={item.id}>
                                     <TableCell>{item.train_number}</TableCell>
                                     <TableCell>{item.train_name}</TableCell>
                                     <TableCell>{englishVersion?.start_station_translation || 'N/A'}</TableCell>
@@ -395,3 +395,5 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     </div>
   );
 }
+
+    
