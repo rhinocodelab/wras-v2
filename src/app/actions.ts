@@ -9,6 +9,7 @@ import sqlite3 from 'sqlite3';
 import { revalidatePath } from 'next/cache';
 import { translateAllRoutes } from '@/ai/flows/translate-flow';
 import { generateSpeech } from '@/ai/flows/tts-flow';
+import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -460,6 +461,45 @@ export async function getIslVideos(): Promise<string[]> {
   }
 }
 
+export type Template = {
+  category: string;
+  language_code: string;
+  template_text: string;
+};
+
+export async function getAnnouncementTemplates(): Promise<Template[]> {
+    const db = await getDb();
+    try {
+        const templates = await db.all('SELECT category, language_code, template_text FROM announcement_templates');
+        return templates;
+    } catch (error) {
+        console.error('Failed to fetch announcement templates:', error);
+        return [];
+    } finally {
+        await db.close();
+    }
+}
+
+export async function saveAnnouncementTemplates(templates: Template[]) {
+    const db = await getDb();
+    try {
+        await db.run('DELETE FROM announcement_templates');
+        const stmt = await db.prepare(
+            'INSERT INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
+        );
+        for (const template of templates) {
+            await stmt.run(template.category, template.language_code, template.template_text);
+        }
+        await stmt.finalize();
+        revalidatePath('/announcement-templates');
+    } catch (error) {
+        console.error('Failed to save announcement templates:', error);
+        throw new Error('Failed to save templates.');
+    } finally {
+        await db.close();
+    }
+}
+
 
 // --- Auth Functions ---
 
@@ -514,5 +554,3 @@ export async function getSession() {
     return null;
   }
 }
-
-    

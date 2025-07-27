@@ -22,22 +22,44 @@ import {
 } from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, ClipboardList } from 'lucide-react';
+import { getAnnouncementTemplates, saveAnnouncementTemplates, Template } from '@/app/actions';
+import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Gujarati'];
-
-type Template = {
-  category: string;
-  language_code: string;
-  template_text: string;
+const LANGUAGE_CODES: { [key: string]: string } = {
+    'English': 'en',
+    'Hindi': 'hi',
+    'Marathi': 'mr',
+    'Gujarati': 'gu'
 };
 
 export default function AnnouncementTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const { toast } = useToast();
+
+  const fetchTemplates = async () => {
+    setIsLoading(true);
+    try {
+        const data = await getAnnouncementTemplates();
+        setTemplates(data);
+    } catch(error) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: 'Failed to load templates from the database.'
+        });
+    } finally {
+        setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -63,32 +85,42 @@ export default function AnnouncementTemplatesPage() {
   };
   
   const processFileContent = async (content: string) => {
+      setIsProcessing(true);
       try {
         const parsedTemplates = JSON.parse(content);
+        const englishTemplates: { [key: string]: string } = {};
 
-        // Basic validation
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
             }
+            englishTemplates[category] = parsedTemplates[category];
         }
         
-        setIsProcessing(true);
-        // Here you would call a server action to process and translate the templates
-        // For now, we'll just simulate it and display the English version
-        await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+        const allTemplates: Template[] = [];
 
-        const newTemplates: Template[] = Object.entries(parsedTemplates).map(([category, template_text]) => ({
-            category,
-            language_code: 'en',
-            template_text: template_text as string
-        }));
+        for (const category in englishTemplates) {
+            const englishTemplate = englishTemplates[category];
+            allTemplates.push({ category, language_code: 'en', template_text: englishTemplate });
 
-        setTemplates(newTemplates);
+            const translationPromises = ['hi', 'mr', 'gu'].map(langCode => 
+                translateTemplateFlow({ template: englishTemplate, languageCode: langCode })
+            );
+
+            const translatedTexts = await Promise.all(translationPromises);
+
+            translatedTexts.forEach((translatedText, index) => {
+                const langCode = ['hi', 'mr', 'gu'][index];
+                allTemplates.push({ category, language_code: langCode, template_text: translatedText });
+            });
+        }
+        
+        await saveAnnouncementTemplates(allTemplates);
+        await fetchTemplates();
 
         toast({
           title: 'Processing Complete',
-          description: 'Templates have been translated and saved (simulation).',
+          description: 'Templates have been translated and saved successfully.',
         });
       } catch (error: any) {
         toast({
@@ -111,6 +143,7 @@ export default function AnnouncementTemplatesPage() {
   };
 
   const handleUseSample = async () => {
+    setIsProcessing(true);
     try {
         const response = await fetch('/sample_annoucement_template/announcement_templates.json');
         if (!response.ok) {
@@ -124,6 +157,8 @@ export default function AnnouncementTemplatesPage() {
           title: 'Error',
           description: error.message,
         });
+    } finally {
+        setIsProcessing(false);
     }
   }
 
@@ -141,7 +176,7 @@ export default function AnnouncementTemplatesPage() {
   };
   
   const getTemplate = (category: string, lang: string) => {
-    const langCode = lang.substring(0,2).toLowerCase();
+    const langCode = LANGUAGE_CODES[lang];
     return templates.find(t => t.category === category && t.language_code === langCode)?.template_text || 'N/A';
   }
 
