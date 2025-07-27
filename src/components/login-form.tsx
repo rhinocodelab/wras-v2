@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Lock, Loader2 } from 'lucide-react';
+import { User, Lock, Loader2, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 
@@ -17,8 +17,8 @@ const initialState: { message: string, errors?: any } = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? <Loader2 className="animate-spin" /> : 'Sign In'}
+    <Button type="submit" className="w-12 h-12 p-0" disabled={pending}>
+      {pending ? <Loader2 className="animate-spin" /> : <ArrowRight />}
     </Button>
   );
 }
@@ -28,20 +28,20 @@ export function LoginForm() {
 
   return (
     <form action={formAction} className="flex flex-col h-full">
-      <CardHeader className="px-0 pt-0">
-        <CardTitle className="text-2xl font-bold">Welcome Back</CardTitle>
-        <CardDescription>Please sign in to your account</CardDescription>
+      <CardHeader className="px-0 pt-0 text-center">
+        <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
+        <CardDescription>To access your account</CardDescription>
       </CardHeader>
-      <CardContent className="space-y-4 flex-grow mt-6 px-0">
+      <CardContent className="space-y-4 mt-6 px-0">
         <div className="space-y-2">
-          <Label htmlFor="email">Username</Label>
+          <Label htmlFor="email" className='sr-only'>Username</Label>
           <div className="relative flex items-center">
             <User className="absolute left-3 h-5 w-5 text-muted-foreground" />
             <Input
               id="email"
               name="email"
               type="text"
-              placeholder="Enter username"
+              placeholder="Username"
               required
               className="pl-10"
               aria-describedby="email-error"
@@ -52,14 +52,14 @@ export function LoginForm() {
           )}
         </div>
         <div className="space-y-2">
-          <Label htmlFor="password">Password</Label>
+          <Label htmlFor="password" className='sr-only'>Password</Label>
           <div className="relative flex items-center">
             <Lock className="absolute left-3 h-5 w-5 text-muted-foreground" />
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Enter password"
+              placeholder="Password"
               required
               className="pl-10"
               aria-describedby="password-error"
@@ -77,19 +77,8 @@ export function LoginForm() {
           </Alert>
         )}
       </CardContent>
-      <CardFooter className="flex flex-col gap-4 px-0 pb-0">
+      <CardFooter className="flex flex-col items-center gap-4 px-0 pb-0 mt-4">
         <SubmitButton />
-        <div className="bg-muted p-4 rounded-md w-full text-sm text-muted-foreground">
-          <h4 className="font-semibold text-foreground mb-2">Default Credentials:</h4>
-          <div className="flex items-center">
-            <span className="w-20">Username:</span>
-            <code className="font-mono text-foreground bg-background px-2 py-1 rounded-md text-xs">admin</code>
-          </div>
-          <div className="flex items-center mt-1">
-            <span className="w-20">Password:</span>
-            <code className="font-mono text-foreground bg-background px-2 py-1 rounded-md text-xs">wras@dhh</code>
-          </div>
-        </div>
       </CardFooter>
     </form>
   );

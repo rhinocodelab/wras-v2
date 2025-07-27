@@ -13,9 +13,9 @@ export default async function LoginPage() {
 
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-background p-4 md:p-8">
-      <div className="w-full max-w-4xl">
-        <Card className="grid md:grid-cols-2 shadow-lg overflow-hidden rounded-lg border">
-          <div className="relative hidden md:flex flex-col items-center justify-center text-center bg-primary p-12 text-white">
+      <div className="w-full max-w-md">
+        <Card className="shadow-lg overflow-hidden rounded-lg border">
+          <div className="relative flex flex-col items-center justify-center text-center bg-primary p-12 text-white">
             <div className='mb-8 flex items-center justify-center h-20 w-20 rounded-full bg-white/20'>
               <RailwayIcon className="h-10 w-10 text-primary-foreground" />
             </div>
@@ -24,12 +24,6 @@ export default async function LoginPage() {
               Western Railway Announcement System
               <br />
               for Deaf and Hard of Hearing
-            </p>
-            <Separator className='my-8 bg-white/30' />
-            <p className="text-sm text-primary-foreground/70">
-              Empowering accessibility through
-              <br />
-              visual railway announcements
             </p>
           </div>
           <div className="p-8 md:p-10 flex flex-col justify-center">
