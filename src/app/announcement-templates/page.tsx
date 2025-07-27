@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
     AlertDialog,
@@ -112,7 +113,6 @@ export default function AnnouncementTemplatesPage() {
         const parsedTemplates = JSON.parse(content);
         const englishTemplates: { [key: string]: string } = {};
         
-        // Validate input JSON and prepare English templates
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
@@ -122,9 +122,7 @@ export default function AnnouncementTemplatesPage() {
         
         const allNewTemplates: Template[] = [];
 
-        // Process translations for other languages
         for (const category of ANNOUNCEMENT_CATEGORIES) {
-            // Add English template first
             allNewTemplates.push({
                 category,
                 language_code: 'en',
