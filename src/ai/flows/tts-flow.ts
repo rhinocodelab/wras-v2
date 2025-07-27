@@ -1,3 +1,4 @@
+
 'use server';
 
 import { googleAI } from '@genkit-ai/googleai';
@@ -35,20 +36,31 @@ async function toWav(
 const ttsFlow = ai.defineFlow(
   {
     name: 'ttsFlow',
-    inputSchema: z.object({ text: z.string() }),
+    inputSchema: z.object({ text: z.string(), languageCode: z.string() }),
     outputSchema: z.any(),
   },
-  async ({ text }) => {
+  async ({ text, languageCode }) => {
     if (!text) {
       return { media: null };
     }
+
+    const localeMap: { [key: string]: string } = {
+        'en': 'en-IN',
+        'mr': 'mr-IN',
+        'hi': 'hi-IN',
+        'gu': 'gu-IN',
+    };
+
     const { media } = await ai.generate({
       model: googleAI.model('gemini-2.5-flash-preview-tts'),
       config: {
         responseModalities: ['AUDIO'],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Algenib' },
+            prebuiltVoiceConfig: { 
+                voiceName: 'Achernar',
+                languageCode: localeMap[languageCode] || 'en-IN',
+             },
           },
         },
       },
@@ -70,7 +82,7 @@ const ttsFlow = ai.defineFlow(
   }
 );
 
-export async function generateSpeech(text: string): Promise<string | null> {
-    const result = await ttsFlow({ text });
+export async function generateSpeech(text: string, languageCode: string): Promise<string | null> {
+    const result = await ttsFlow({ text, languageCode });
     return result.media;
 }

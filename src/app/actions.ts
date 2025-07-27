@@ -277,10 +277,10 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
 
         // Generate audio concurrently for a single language
         const [numAudio, nameAudio, startAudio, endAudio] = await Promise.all([
-            generateSpeech(t.train_number_translation),
-            generateSpeech(t.train_name_translation),
-            generateSpeech(t.start_station_translation),
-            generateSpeech(t.end_station_translation),
+            generateSpeech(t.train_number_translation, lang),
+            generateSpeech(t.train_name_translation, lang),
+            generateSpeech(t.start_station_translation, lang),
+            generateSpeech(t.end_station_translation, lang),
         ]);
         
         const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
