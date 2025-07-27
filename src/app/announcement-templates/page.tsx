@@ -19,7 +19,6 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogTrigger,
 } from '@/components/ui/dialog';
 import {
     AlertDialog,
@@ -108,40 +107,55 @@ export default function AnnouncementTemplatesPage() {
   
   const processFileContent = async (content: string) => {
     setIsProcessing(true);
+    setProcessingItem('Parsing file...');
 
     try {
         const parsedTemplates = JSON.parse(content);
         const englishTemplates: { [key: string]: string } = {};
+        const allNewTemplates: Template[] = [];
 
-        // Validate input JSON and create English templates
+        // Validate input JSON and prepare English templates
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
             }
             englishTemplates[category] = parsedTemplates[category];
-            await saveAnnouncementTemplates([{ 
-                category, 
-                language_code: 'en', 
-                template_text: parsedTemplates[category], 
-                template_audio_parts: null 
-            }]);
         }
 
-        const languagesToProcess = ['hi', 'mr', 'gu'];
-        
-        for (const category in englishTemplates) {
-            for (const langCode of languagesToProcess) {
+        // Process translations sequentially
+        for (const category of ANNOUNCEMENT_CATEGORIES) {
+             // Add English template
+            allNewTemplates.push({
+                category,
+                language_code: 'en',
+                template_text: englishTemplates[category],
+                template_audio_parts: null
+            });
+
+            // Translate for other languages
+            for (const langCode of ['hi', 'mr', 'gu']) {
                 const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
                 setProcessingItem(`Translating: ${langName} '${category.replace('_', ' ')}'`);
                 
-                await runTemplateFlow({
+                const result = await runTemplateFlow({
                     template: englishTemplates[category],
                     languageCode: langCode,
-                    category,
-                    generateAudio: false, // Only generate text
+                    category: category,
+                    generateAudio: false,
                 });
+
+                allNewTemplates.push({
+                    category,
+                    language_code: langCode,
+                    template_text: result.translatedText,
+                    template_audio_parts: null,
+                });
+                 await new Promise(resolve => setTimeout(resolve, 200)); // Small delay
             }
         }
+        
+        setProcessingItem('Saving all templates to database...');
+        await saveAnnouncementTemplates(allNewTemplates);
         
         await fetchTemplates();
 
@@ -173,6 +187,7 @@ export default function AnnouncementTemplatesPage() {
   };
 
   const handleUseSample = async () => {
+    setIsProcessing(true);
     try {
         const response = await fetch('/sample_annoucement_template/announcement_templates.json');
         if (!response.ok) {
@@ -186,6 +201,8 @@ export default function AnnouncementTemplatesPage() {
           title: 'Error',
           description: error.message,
         });
+    } finally {
+        setIsProcessing(false);
     }
   }
 
@@ -467,3 +484,4 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
