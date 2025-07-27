@@ -20,10 +20,26 @@ import {
   DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
-import { getTranslations, FullTranslationInfo, TranslationRecord, generateAudioForRoute } from '@/app/actions';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { getTranslations, FullTranslationInfo, TranslationRecord, generateAudioForRoute, clearAudioForRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, ChevronRight, Volume2, CircleCheck } from 'lucide-react';
-import { Progress } from '@/components/ui/progress';
+import { Loader2, ChevronRight, Volume2, Trash2 } from 'lucide-react';
 
 const LANGUAGE_MAP: { [key: string]: string } = {
   'en': 'English',
@@ -38,33 +54,35 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
   const [allTranslations, setAllTranslations] = useState<FullTranslationInfo[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
+  const [isClearingAudio, setIsClearingAudio] = useState<number | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [selectedTranslation, setSelectedTranslation] = useState<TranslationRecord | null>(null);
   const { toast } = useToast();
 
-  useEffect(() => {
-    const handleFetchTranslations = async () => {
-      setIsLoading(true);
-      try {
-        const data = await getTranslations();
-        setAllTranslations(data);
-        if (data.length === 0) {
-          toast({
-            title: 'No Data',
-            description: 'No translations found. Please generate them from the Route Management page.',
-          });
-        }
-      } catch (error) {
+  const handleFetchTranslations = async () => {
+    setIsLoading(true);
+    try {
+      const data = await getTranslations();
+      setAllTranslations(data);
+      if (data.length === 0) {
         toast({
-          variant: 'destructive',
-          title: 'Error',
-          description: 'Failed to fetch translations.',
+          title: 'No Data',
+          description: 'No translations found. Please generate them from the Route Management page.',
         });
-        console.error('Failed to fetch translations:', error);
-      } finally {
-        setIsLoading(false);
       }
-    };
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch translations.',
+      });
+      console.error('Failed to fetch translations:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     handleFetchTranslations();
   }, [toast]);
 
@@ -105,6 +123,28 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
       setIsGeneratingAudio(null);
     }
   };
+
+  const handleClearAudio = async (routeId: number) => {
+    setIsClearingAudio(routeId);
+    try {
+      const result = await clearAudioForRoute(routeId);
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+      await handleFetchTranslations();
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to clear audio.',
+      });
+      console.error('Audio clearing failed:', error);
+    } finally {
+      setIsClearingAudio(null);
+    }
+  };
+
 
   const prevPage = () => {
     if (currentPage > 1) {
@@ -177,7 +217,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                             <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTranslationForLang(item, 'gu'))}>Gujarati</Button>
                                         </DialogTrigger>
                                     </TableCell>
-                                    <TableCell>
+                                    <TableCell className="flex items-center gap-2">
                                         <Button 
                                             variant="outline"
                                             size="sm" 
@@ -191,6 +231,44 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                             )}
                                             Generate Audio
                                         </Button>
+                                        <AlertDialog>
+                                            <TooltipProvider>
+                                                <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                        <AlertDialogTrigger asChild>
+                                                            <Button
+                                                                variant="ghost"
+                                                                size="icon"
+                                                                disabled={isClearingAudio === item.id}
+                                                            >
+                                                                {isClearingAudio === item.id ? (
+                                                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                                                ) : (
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                )}
+                                                            </Button>
+                                                        </AlertDialogTrigger>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent>
+                                                        <p>Clear Audio</p>
+                                                    </TooltipContent>
+                                                </Tooltip>
+                                            </TooltipProvider>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete all generated audio files for train <strong>{item.train_name} ({item.train_number})</strong>. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleClearAudio(item.id)}>
+                                                        Continue
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
                                     </TableCell>
                                 </TableRow>
                                 );

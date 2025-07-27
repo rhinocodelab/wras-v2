@@ -302,6 +302,31 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
     return { message: `Audio generated successfully for Train ${trainNumber}.` };
 }
 
+
+export async function clearAudioForRoute(routeId: number) {
+    const db = await getDb();
+    try {
+        const route = await db.get('SELECT train_number FROM train_routes WHERE id = ?', routeId);
+
+        if (route && route.train_number) {
+            const audioDir = path.join(process.cwd(), 'public', 'audio', route.train_number);
+            await fs.rm(audioDir, { recursive: true, force: true });
+        }
+
+        await db.run('DELETE FROM train_route_audio WHERE route_id = ?', routeId);
+        
+        await db.close();
+        revalidatePath('/ai-database/translations');
+        return { message: 'Audio files and records deleted successfully.' };
+
+    } catch (error) {
+        await db.close();
+        console.error('Failed to clear audio for route:', error);
+        throw new Error('Failed to clear audio files.');
+    }
+}
+
+
 // --- Auth Functions ---
 
 export async function login(
@@ -355,7 +380,3 @@ export async function getSession() {
     return null;
   }
 }
-
-    
-
-    
