@@ -16,23 +16,41 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Search, Volume2, Accessibility } from 'lucide-react';
-import { getTrainRoutes, TrainRoute } from '@/app/actions';
+import { Search, Volume2, Accessibility, Loader2 } from 'lucide-react';
+import { getTrainRoutes, TrainRoute, handleGenerateAnnouncement } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 type DisplayRoute = TrainRoute & {
   platform: string;
   category: string;
 };
 
+type Announcement = {
+    language_code: string;
+    text: string;
+    audio_path: string | null;
+}
+
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
+const LANGUAGE_MAP: { [key: string]: string } = {
+  'en': 'English',
+  'mr': 'Marathi',
+  'hi': 'Hindi',
+  'gu': 'Gujarati',
+};
+
 
 export function Dashboard() {
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isRouteModalOpen, setIsRouteModalOpen] = useState(false);
+  const [isAnnouncementModalOpen, setIsAnnouncementModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
   const [allRoutes, setAllRoutes] = useState<TrainRoute[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<TrainRoute[]>([]);
   const [displayedRoutes, setDisplayedRoutes] = useState<DisplayRoute[]>([]);
+  const [generatedAnnouncements, setGeneratedAnnouncements] = useState<Announcement[]>([]);
   const [searchNumber, setSearchNumber] = useState('');
   const [searchName, setSearchName] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     async function fetchRoutes() {
@@ -54,7 +72,7 @@ export function Dashboard() {
 
   const handleAddSelectedRoutes = () => {
     setDisplayedRoutes(selectedRoutes.map(r => ({ ...r, platform: '1', category: 'Arriving' })));
-    setIsModalOpen(false);
+    setIsRouteModalOpen(false);
   };
   
   const handleSearchByNumber = () => {
@@ -91,6 +109,29 @@ export function Dashboard() {
       prev.map(r => (r.id === routeId ? { ...r, category } : r))
     );
   };
+  
+  const onGenerateAnnouncement = async (route: DisplayRoute) => {
+    if (!route.id) return;
+    setIsGenerating(true);
+    try {
+        const result = await handleGenerateAnnouncement({
+            routeId: route.id,
+            platform: route.platform,
+            category: route.category
+        });
+        setGeneratedAnnouncements(result.announcements);
+        setIsAnnouncementModalOpen(true);
+    } catch(error) {
+        console.error("Announcement generation failed:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to generate announcement. Please ensure translations and audio are generated for this route."
+        })
+    } finally {
+        setIsGenerating(false);
+    }
+  }
 
   return (
     <>
@@ -125,7 +166,7 @@ export function Dashboard() {
                             />
                         </div>
                         <Button onClick={handleSearchByNumber}>Search</Button>
-                        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                        <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
                             </DialogTrigger>
@@ -166,7 +207,7 @@ export function Dashboard() {
                                 </Table>
                                 </div>
                                 <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                <Button variant="outline" onClick={() => setIsRouteModalOpen(false)}>Cancel</Button>
                                 <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -187,7 +228,7 @@ export function Dashboard() {
                             />
                         </div>
                         <Button onClick={handleSearchByName}>Search</Button>
-                         <Dialog>
+                         <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
                             </DialogTrigger>
@@ -228,7 +269,7 @@ export function Dashboard() {
                                 </Table>
                                 </div>
                                 <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                                <Button variant="outline" onClick={() => setIsRouteModalOpen(false)}>Cancel</Button>
                                 <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -297,12 +338,12 @@ export function Dashboard() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <Volume2 className="h-4 w-4" />
+                                                <Button variant="ghost" size="icon" onClick={() => onGenerateAnnouncement(route)} disabled={isGenerating}>
+                                                    {isGenerating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Volume2 className="h-4 w-4" />}
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>generate announcement</p>
+                                                <p>Generate announcement</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -314,8 +355,63 @@ export function Dashboard() {
             </CardContent>
         </Card>
       )}
+
+      <Dialog open={isGenerating && !isAnnouncementModalOpen}>
+        <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+                <DialogTitle>Generating Announcement</DialogTitle>
+                <DialogDescription>
+                    Please wait while the text and audio are being generated. This may take a moment.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-4 py-4 items-center">
+                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Processing...</p>
+            </div>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isAnnouncementModalOpen} onOpenChange={setIsAnnouncementModalOpen}>
+        <DialogContent className="sm:max-w-2xl">
+            <DialogHeader>
+                <DialogTitle>Generated Announcement</DialogTitle>
+                 <DialogDescription>
+                    Review the generated text and audio for each language.
+                </DialogDescription>
+            </DialogHeader>
+            <div className="max-h-[60vh] overflow-y-auto p-1">
+                <div className="space-y-4">
+                    {generatedAnnouncements.map(ann => (
+                       <Card key={ann.language_code}>
+                           <CardHeader>
+                               <CardTitle className="text-lg">{LANGUAGE_MAP[ann.language_code]}</CardTitle>
+                           </CardHeader>
+                           <CardContent className="space-y-4">
+                                <div>
+                                    <h4 className="font-semibold text-sm mb-1">Generated Text:</h4>
+                                    <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">{ann.text}</p>
+                                </div>
+                                <div>
+                                     <h4 className="font-semibold text-sm mb-1">Generated Audio:</h4>
+                                     {ann.audio_path ? (
+                                        <audio controls className="w-full h-10" key={ann.audio_path}>
+                                            <source src={ann.audio_path} type="audio/wav" />
+                                            Your browser does not support the audio element.
+                                        </audio>
+                                     ) : (
+                                        <p className="text-sm text-destructive">Audio generation failed.</p>
+                                     )}
+                                </div>
+                           </CardContent>
+                       </Card>
+                    ))}
+                </div>
+            </div>
+            <DialogFooter>
+                <Button onClick={() => setIsAnnouncementModalOpen(false)}>Close</Button>
+            </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </>
   );
 }
-
-    

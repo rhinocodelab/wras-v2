@@ -12,6 +12,7 @@ import { generateSpeech } from '@/ai/flows/tts-flow';
 import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
+import { generateAnnouncement, AnnouncementInput, AnnouncementOutput } from '@/ai/flows/announcement-flow';
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -36,7 +37,7 @@ export type FormState = {
 };
 
 // --- Database Functions ---
-async function getDb() {
+export async function getDb() {
   const db = await open({
     filename: './database.db',
     driver: sqlite3.Database,
@@ -239,7 +240,7 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
         trt.start_station_translation,
         trt.end_station_translation
       FROM train_routes tr
-      JOIN train_route_translations trt ON tr.id = trt.route_id
+      LEFT JOIN train_route_translations trt ON tr.id = trt.route_id
       ORDER BY tr.id, trt.language_code
     `);
     await db.close();
@@ -247,21 +248,23 @@ export async function getTranslations(): Promise<FullTranslationInfo[]> {
     const groupedTranslations: Record<string, FullTranslationInfo> = {};
 
     results.forEach(row => {
-      if (!groupedTranslations[row.train_number]) {
-        groupedTranslations[row.train_number] = {
+      if (!groupedTranslations[row.id]) {
+        groupedTranslations[row.id] = {
           id: row.id,
           train_number: row.train_number,
           train_name: row.train_name,
           translations: [],
         };
       }
-      groupedTranslations[row.train_number].translations.push({
-        language_code: row.language_code,
-        train_number_translation: row.train_number_translation,
-        train_name_translation: row.train_name_translation,
-        start_station_translation: row.start_station_translation,
-        end_station_translation: row.end_station_translation,
-      });
+      if (row.language_code) {
+        groupedTranslations[row.id].translations.push({
+            language_code: row.language_code,
+            train_number_translation: row.train_number_translation,
+            train_name_translation: row.train_name_translation,
+            start_station_translation: row.start_station_translation,
+            end_station_translation: row.end_station_translation,
+        });
+      }
     });
 
     return Object.values(groupedTranslations);
@@ -498,6 +501,10 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
     } finally {
         await db.close();
     }
+}
+
+export async function handleGenerateAnnouncement(input: AnnouncementInput): Promise<AnnouncementOutput> {
+  return await generateAnnouncement(input);
 }
 
 
