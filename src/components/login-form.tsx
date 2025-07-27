@@ -44,7 +44,7 @@ export function LoginForm() {
                 type="text"
                 placeholder="Enter username"
                 required
-                className="pl-8 w-full pr-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
+                className="pl-8 w-full pr-3 py-2 text-sm border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
                 aria-describedby="email-error"
               />
             </div>
@@ -62,7 +62,7 @@ export function LoginForm() {
                 type="password"
                 placeholder="Enter password"
                 required
-                className="pl-8 w-full pr-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
+                className="pl-8 w-full pr-3 py-2 text-sm border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
                 aria-describedby="password-error"
               />
             </div>
@@ -81,11 +81,11 @@ export function LoginForm() {
 
         <SubmitButton />
       </form>
-      <div className="mt-3 p-2 bg-gray-50 rounded-md border">
+      <div className="mt-3 p-2 bg-gray-50 border">
         <p className="text-xs text-gray-600 mb-1 font-medium">Default Credentials:</p>
         <div className="space-y-1">
-            <p className="text-xs text-gray-600">Username: <span className="font-mono bg-white px-1 py-0.5 border text-xs rounded">admin</span></p>
-            <p className="text-xs text-gray-600">Password: <span className="font-mono bg-white px-1 py-0.5 border text-xs rounded">wras@dhh</span></p>
+            <p className="text-xs text-gray-600">Username: <span className="font-mono bg-white px-1 py-0.5 border text-xs">admin</span></p>
+            <p className="text-xs text-gray-600">Password: <span className="font-mono bg-white px-1 py-0.5 border text-xs">wras@dhh</span></p>
         </div>
       </div>
     </div>
