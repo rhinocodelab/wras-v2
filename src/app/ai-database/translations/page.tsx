@@ -211,14 +211,14 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                     <TableCell>{item.train_number}</TableCell>
                                     <TableCell>{item.train_name}</TableCell>
                                     <TableCell>
-                                      <div className="flex gap-2">
+                                      <div className="flex gap-1">
                                         {item.translations.length > 0 ? (
                                           <>
                                             <TooltipProvider>
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <DialogTrigger asChild>
-                                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'hi')}>HI</Button>
+                                                            <Button variant="outline" size="xs" onClick={() => handleOpenModal(item, 'hi')}>HI</Button>
                                                         </DialogTrigger>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
@@ -230,7 +230,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <DialogTrigger asChild>
-                                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'mr')}>MR</Button>
+                                                            <Button variant="outline" size="xs" onClick={() => handleOpenModal(item, 'mr')}>MR</Button>
                                                         </DialogTrigger>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
@@ -242,7 +242,7 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
                                                 <Tooltip>
                                                     <TooltipTrigger asChild>
                                                         <DialogTrigger asChild>
-                                                            <Button variant="outline" size="sm" onClick={() => handleOpenModal(item, 'gu')}>GU</Button>
+                                                            <Button variant="outline" size="xs" onClick={() => handleOpenModal(item, 'gu')}>GU</Button>
                                                         </DialogTrigger>
                                                     </TooltipTrigger>
                                                     <TooltipContent>
@@ -407,3 +407,5 @@ export default function TranslationsPage({ onViewChange }: { onViewChange: (view
     </div>
   );
 }
+
+    
