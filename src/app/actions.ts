@@ -70,8 +70,6 @@ async function getDb() {
         language_code TEXT,
         train_number_audio_path TEXT,
         train_name_audio_path TEXT,
-        start_station_audio_path TEXT,
-        end_station_audio_path TEXT,
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
     `);
@@ -276,21 +274,17 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
         const lang = t.language_code;
 
         // Generate audio concurrently for a single language
-        const [numAudio, nameAudio, startAudio, endAudio] = await Promise.all([
+        const [numAudio, nameAudio] = await Promise.all([
             generateSpeech(t.train_number_translation, lang),
             generateSpeech(t.train_name_translation, lang),
-            generateSpeech(t.start_station_translation, lang),
-            generateSpeech(t.end_station_translation, lang),
         ]);
         
         const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
         const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.wav`)) : '';
-        const startPath = startAudio ? await saveAudioFile(startAudio, path.join(audioDir, `start_station_${lang}.wav`)) : '';
-        const endPath = endAudio ? await saveAudioFile(endAudio, path.join(audioDir, `end_station_${lang}.wav`)) : '';
         
         await db.run(
-            'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path, start_station_audio_path, end_station_audio_path) VALUES (?, ?, ?, ?, ?, ?)',
-            routeId, lang, numPath, namePath, startPath, endPath
+            'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path) VALUES (?, ?, ?, ?)',
+            routeId, lang, numPath, namePath
         );
 
         // Add a delay after processing each language to respect rate limits.
