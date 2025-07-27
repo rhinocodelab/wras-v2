@@ -10,28 +10,10 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
-import * as fs from 'fs';
-import * as path from 'path';
 
 const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
 
-// Function to read the service account configuration
-function getTranslationConfig() {
-    const configPath = path.join(process.cwd(), 'config', 'isl.json');
-    if (!fs.existsSync(configPath)) {
-        throw new Error("Service account file not found at 'config/isl.json'");
-    }
-    const configFile = fs.readFileSync(configPath, 'utf8');
-    const config = JSON.parse(configFile);
-    return {
-        projectId: config.project_id,
-        credentials: {
-            client_email: config.client_email,
-            private_key: config.private_key,
-        }
-    };
-}
-
+const translationClient = new TranslationServiceClient();
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (!text || targetLanguage === 'en') {
@@ -39,19 +21,14 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
     }
 
     try {
-        const { projectId, credentials } = getTranslationConfig();
-        const translationClient = new TranslationServiceClient({ projectId, credentials });
-        
-        const request = {
-            parent: `projects/${projectId}/locations/global`,
+        const [response] = await translationClient.translateText({
+            parent: `projects/amiable-bonus-462911-c8/locations/global`,
             contents: [text],
             mimeType: 'text/plain',
             sourceLanguageCode: 'en',
             targetLanguageCode: targetLanguage,
-        };
+        });
 
-        const [response] = await translationClient.translateText(request);
-        
         if (response.translations && response.translations.length > 0 && response.translations[0].translatedText) {
             return response.translations[0].translatedText;
         }
@@ -59,7 +36,6 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         return text; 
     } catch (error) {
         console.error(`Error during translation from 'en' to '${targetLanguage}':`, error);
-        // In case of an error, return the original text to avoid breaking the flow
         return text;
     }
 }
