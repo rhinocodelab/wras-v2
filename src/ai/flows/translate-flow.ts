@@ -11,25 +11,13 @@ import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
 
-// Define language codes for the Google Cloud Translation API
-const LANGUAGES: Record<string, string> = {
-    'en-IN': 'en',
-    'mr-IN': 'mr',
-    'hi-IN': 'hi',
-    'gu-IN': 'gu',
-};
+const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
 
 const translationClient = new TranslationServiceClient();
 
-async function translateText(text: string, languageCode: string): Promise<string> {
-    const targetLanguage = LANGUAGES[languageCode];
-    
-    if (languageCode === 'en-IN') {
+async function translateText(text: string, targetLanguage: string): Promise<string> {
+    if (targetLanguage === 'en') {
         return text;
-    }
-
-    if (!targetLanguage) {
-        return text; // Fallback if language code is not found
     }
 
     const projectId = process.env.GCP_PROJECT_ID;
@@ -51,10 +39,10 @@ async function translateText(text: string, languageCode: string): Promise<string
         if (response.translations && response.translations.length > 0 && response.translations[0].translatedText) {
             return response.translations[0].translatedText;
         }
-        return text; // Fallback to original text if translation is empty
+        return text; 
     } catch (error) {
         console.error(`Error during translation to ${targetLanguage}:`, error);
-        return text; // Fallback to original text on error
+        return text;
     }
 }
 
@@ -98,7 +86,7 @@ export async function translateAllRoutes(routes: TrainRoute[]): Promise<Translat
   for (const route of routes) {
       if (!route.id) continue;
       
-      const languagePromises = Object.keys(LANGUAGES).map(langCode => 
+      const languagePromises = LANGUAGES.map(langCode => 
         translateRouteFlow({route, languageCode: langCode})
       );
       

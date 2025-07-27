@@ -28,10 +28,10 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 const LANGUAGE_MAP: { [key: string]: string } = {
-  'en-IN': 'English (India)',
-  'mr-IN': 'Marathi (India)',
-  'hi-IN': 'Hindi (India)',
-  'gu-IN': 'Gujarati (India)',
+  'en': 'English',
+  'mr': 'Marathi',
+  'hi': 'Hindi',
+  'gu': 'Gujarati',
 };
 
 export default function AiDatabasePage() {
