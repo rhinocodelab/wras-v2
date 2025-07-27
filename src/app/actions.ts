@@ -3,6 +3,8 @@
 import { z } from 'zod';
 import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -25,6 +27,75 @@ export type FormState = {
     password?: string[];
   };
 };
+
+// --- Database Functions ---
+async function getDb() {
+  const db = await open({
+    filename: './database.db',
+    driver: sqlite3.Database,
+  });
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS train_routes (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      train_number TEXT,
+      train_name TEXT,
+      start_station TEXT,
+      start_code TEXT,
+      end_station TEXT,
+      end_code TEXT
+    )
+  `);
+  return db;
+}
+
+export type TrainRoute = {
+  id?: number;
+  'Train Number': string;
+  'Train Name': string;
+  'Start Station': string;
+  'Start Code': string;
+  'End Station': string;
+  'End Code': string;
+};
+
+export async function saveTrainRoutes(routes: TrainRoute[]) {
+  const db = await getDb();
+  await db.run('DELETE FROM train_routes'); // Clear existing routes
+  const stmt = await db.prepare(
+    'INSERT INTO train_routes (train_number, train_name, start_station, start_code, end_station, end_code) VALUES (?, ?, ?, ?, ?, ?)'
+  );
+  for (const route of routes) {
+    await stmt.run(
+      route['Train Number'],
+      route['Train Name'],
+      route['Start Station'],
+      route['Start Code'],
+      route['End Station'],
+      route['End Code']
+    );
+  }
+  await stmt.finalize();
+  await db.close();
+  // Revalidate path to refetch data on the client
+  const { revalidatePath } = await import('next/cache');
+  revalidatePath('/train-route-management');
+  return { message: `${routes.length} routes saved successfully.` };
+}
+
+export async function getTrainRoutes(): Promise<TrainRoute[]> {
+  try {
+    const db = await getDb();
+    const routes = await db.all('SELECT train_number as "Train Number", train_name as "Train Name", start_station as "Start Station", start_code as "Start Code", end_station as "End Station", end_code as "End Code" FROM train_routes');
+    await db.close();
+    return routes;
+  } catch (error) {
+    console.error('Failed to fetch train routes:', error);
+    return [];
+  }
+}
+
+
+// --- Auth Functions ---
 
 export async function login(
   prevState: FormState,

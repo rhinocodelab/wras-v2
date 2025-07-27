@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -23,15 +23,8 @@ import {
 } from '@/components/ui/dialog';
 import * as XLSX from 'xlsx';
 import { Upload } from 'lucide-react';
-
-type TrainRoute = {
-  'Train Number': string;
-  'Train Name': string;
-  'Start Station': string;
-  'Start Code': string;
-  'End Station': string;
-  'End Code': string;
-};
+import { saveTrainRoutes, getTrainRoutes, TrainRoute } from '@/app/actions';
+import { useToast } from '@/hooks/use-toast';
 
 const sampleData: TrainRoute[] = [
   {
@@ -57,28 +50,54 @@ export default function TrainRouteManagementPage() {
   const [fileName, setFileName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const { toast } = useToast();
 
+  useEffect(() => {
+    async function fetchRoutes() {
+      const routes = await getTrainRoutes();
+      setData(routes);
+    }
+    fetchRoutes();
+  }, []);
+  
   const processFile = (file: File) => {
     setFileName(file.name);
     const reader = new FileReader();
-    reader.onload = (evt) => {
-      const bstr = evt.target?.result;
-      const wb = XLSX.read(bstr, { type: 'binary' });
-      const wsname = wb.SheetNames[0];
-      const ws = wb.Sheets[wsname];
-      const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
-      const headers = json[0] as string[];
-      const routes: TrainRoute[] = (json.slice(1) as any[]).map(
-        (row: any[]) => {
-          const route: any = {};
-          headers.forEach((header, i) => {
-            route[header] = row[i];
-          });
-          return route as TrainRoute;
-        }
-      );
-      setData(routes);
-      setIsModalOpen(false); // Close modal after successful upload
+    reader.onload = async (evt) => {
+      try {
+        const bstr = evt.target?.result;
+        const wb = XLSX.read(bstr, { type: 'binary' });
+        const wsname = wb.SheetNames[0];
+        const ws = wb.Sheets[wsname];
+        const json = XLSX.utils.sheet_to_json(ws, { header: 1 });
+        const headers = json[0] as string[];
+        const routes: TrainRoute[] = (json.slice(1) as any[]).map(
+          (row: any[]) => {
+            const route: any = {};
+            headers.forEach((header, i) => {
+              route[header] = row[i];
+            });
+            return route as TrainRoute;
+          }
+        );
+
+        const result = await saveTrainRoutes(routes);
+        const latestRoutes = await getTrainRoutes();
+        setData(latestRoutes);
+        setIsModalOpen(false);
+        toast({
+          title: "Success",
+          description: result.message,
+        });
+
+      } catch (error) {
+        console.error("Failed to process or save file:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to import routes. Please check the file format and try again.",
+        });
+      }
     };
     reader.readAsBinaryString(file);
   };
@@ -97,6 +116,12 @@ export default function TrainRouteManagementPage() {
     const file = e.dataTransfer.files?.[0];
     if (file && file.name.endsWith('.xlsx')) {
       processFile(file);
+    } else {
+       toast({
+        variant: "destructive",
+        title: "Invalid File",
+        description: "Please drop a valid .xlsx file.",
+      });
     }
   };
 
@@ -129,7 +154,7 @@ export default function TrainRouteManagementPage() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Import Train Routes</DialogTitle>
             <DialogDescription>
@@ -141,14 +166,14 @@ export default function TrainRouteManagementPage() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md transition-colors
+            className={`flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-md transition-colors
               ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
           >
-            <Upload className="w-8 h-8 text-muted-foreground mb-3" />
-            <p className="text-sm text-muted-foreground mb-2">
+            <Upload className="w-6 h-6 text-muted-foreground mb-2" />
+            <p className="text-xs text-muted-foreground mb-2">
               Drag & drop your .xlsx file here
             </p>
-            <p className="text-xs text-muted-foreground mb-3">or</p>
+            <p className="text-xs text-muted-foreground mb-2">or</p>
             <Input
               type="file"
               id="file-upload"
@@ -169,18 +194,18 @@ export default function TrainRouteManagementPage() {
               Expected Excel Format:
             </h3>
             <div className="rounded-md border">
-              <Table className="text-xs">
+              <Table className="text-[10px]">
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="h-8 px-2">Train Number</TableHead>
-                    <TableHead className="h-8 px-2">Train Name</TableHead>
-                    <TableHead className="h-8 px-2">Start Station</TableHead>
-                    <TableHead className="h-8 px-2">End Station</TableHead>
+                    <TableHead className="h-7 px-2">Train Number</TableHead>
+                    <TableHead className="h-7 px-2">Train Name</TableHead>
+                    <TableHead className="h-7 px-2">Start Station</TableHead>
+                    <TableHead className="h-7 px-2">End Station</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {sampleData.slice(0, 1).map((row, index) => (
-                    <TableRow key={index}>
+                    <TableRow key={index} className="h-7">
                       <TableCell className="p-2">{row['Train Number']}</TableCell>
                       <TableCell className="p-2">{row['Train Name']}</TableCell>
                       <TableCell className="p-2">{row['Start Station']}</TableCell>
@@ -192,9 +217,9 @@ export default function TrainRouteManagementPage() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="mt-2">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" size="sm">Cancel</Button>
             </DialogClose>
           </DialogFooter>
         </DialogContent>
