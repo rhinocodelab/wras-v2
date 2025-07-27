@@ -17,8 +17,9 @@ const initialState: { message: string, errors?: any } = {
 function SubmitButton() {
   const { pending } = useFormStatus();
   return (
-    <Button type="submit" className="w-12 h-12 p-0" disabled={pending}>
-      {pending ? <Loader2 className="animate-spin" /> : <ArrowRight />}
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? <Loader2 className="animate-spin mr-2" /> : <ArrowRight className="mr-2" />}
+      Sign In
     </Button>
   );
 }
