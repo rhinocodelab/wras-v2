@@ -9,6 +9,7 @@
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
+import { gemini15Flash } from '@genkit-ai/googleai';
 
 // Define language codes
 const LANGUAGES = {
@@ -29,6 +30,7 @@ const TranslationOutputSchema = z.object({
 
 const translatePrompt = ai.definePrompt({
     name: 'translatePrompt',
+    model: gemini15Flash,
     input: { schema: TranslationInputSchema },
     output: { schema: TranslationOutputSchema },
     prompt: `Translate the following text to {{languageName}}: "{{text}}"`,
