@@ -20,6 +20,7 @@ import TrainRouteManagementPage from '@/app/train-route-management/page';
 import AiDatabasePage from '@/app/ai-database/page';
 import TranslationsPage from '@/app/ai-database/translations/page';
 import AudioPage from '@/app/ai-database/audio/page';
+import TemplateAudioPage from '@/app/ai-database/template-audio/page';
 import IslDatasetPage from '@/app/isl-dataset/page';
 import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
 
@@ -39,6 +40,8 @@ export default function HomePage() {
         return <TranslationsPage onViewChange={setActiveView} />;
       case 'audio':
         return <AudioPage onViewChange={setActiveView} />;
+      case 'template-audio':
+        return <TemplateAudioPage onViewChange={setActiveView} />;
       case 'isl-dataset':
         return <IslDatasetPage />;
       case 'announcement-templates':
@@ -50,7 +53,7 @@ export default function HomePage() {
 
   const getLinkClassName = (view: string) => {
     const baseClass = `flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary`;
-    const isActive = activeView === view || (view === 'ai-database' && (activeView === 'translations' || activeView === 'audio'));
+    const isActive = activeView === view || (view === 'ai-database' && (activeView === 'translations' || activeView === 'audio' || activeView === 'template-audio'));
     return `${baseClass} ${
       isActive
         ? 'bg-muted text-primary'
@@ -60,7 +63,7 @@ export default function HomePage() {
 
   const getMobileLinkClassName = (view: string) => {
     const baseClass = `flex cursor-pointer items-center gap-4 px-2.5 transition-all hover:text-foreground`;
-    const isActive = activeView === view || (view === 'ai-database' && (activeView === 'translations' || activeView === 'audio'));
+    const isActive = activeView === view || (view === 'ai-database' && (activeView === 'translations' || activeView === 'audio' || activeView === 'template-audio'));
     return `${baseClass} ${
       isActive
         ? 'text-foreground'

@@ -525,7 +525,7 @@ export async function saveAnnouncementTemplate(template: Omit<Template, 'id'>) {
     const db = await getDb();
     try {
         const stmt = await db.prepare(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
         );
         await stmt.run(template.category, template.language_code, template.template_text);
         await stmt.finalize();
@@ -561,6 +561,7 @@ export async function generateAndSaveTemplateAudio(category: string, lang: strin
             lang
         ]);
         
+        revalidatePath('/ai-database/template-audio');
         return { message: `Audio successfully generated for ${category} in ${lang}.` };
 
     } catch (error) {
@@ -592,7 +593,6 @@ export async function clearAllAnnouncementTemplates() {
     await db.close();
   }
 }
-
 
 export async function handleGenerateAnnouncement(input: AnnouncementInput): Promise<AnnouncementOutput> {
   return await generateAnnouncement(input);
@@ -653,8 +653,70 @@ export async function getSession() {
   }
 }
 
-    
+export type TemplateAudioRecord = {
+    language_code: string;
+    template_text: string;
+    template_audio_parts: (string | null)[];
+};
 
-    
+export type TemplateAudioInfo = {
+    category: string;
+    templates: TemplateAudioRecord[];
+};
 
-    
+export async function getTemplateAudioData(): Promise<TemplateAudioInfo[]> {
+    const db = await getDb();
+    try {
+        const results = await db.all(`
+            SELECT category, language_code, template_text, template_audio_parts
+            FROM announcement_templates
+            WHERE template_audio_parts IS NOT NULL
+            ORDER BY category, language_code
+        `);
+        
+        const groupedData: Record<string, TemplateAudioInfo> = {};
+
+        results.forEach(row => {
+            if (!groupedData[row.category]) {
+                groupedData[row.category] = {
+                    category: row.category.replace('_', ' '),
+                    templates: [],
+                };
+            }
+            groupedData[row.category].templates.push({
+                language_code: row.language_code,
+                template_text: row.template_text,
+                template_audio_parts: row.template_audio_parts ? JSON.parse(row.template_audio_parts) : [],
+            });
+        });
+
+        return Object.values(groupedData);
+    } catch (error) {
+        console.error('Failed to fetch template audio data:', error);
+        return [];
+    } finally {
+        await db.close();
+    }
+}
+
+export async function clearAllTemplateAudio() {
+    const db = await getDb();
+    try {
+        const templatesDir = path.join(process.cwd(), 'public', 'audio', 'templates');
+        await fs.rm(templatesDir, { recursive: true, force: true }).catch(err => {
+            if (err.code !== 'ENOENT') {
+                throw err;
+            }
+        });
+
+        await db.run('UPDATE announcement_templates SET template_audio_parts = NULL');
+        
+        revalidatePath('/ai-database/template-audio');
+        return { message: 'All template audio files have been deleted.' };
+    } catch (error) {
+        console.error('Failed to clear template audio:', error);
+        throw new Error('Failed to clear template audio.');
+    } finally {
+        await db.close();
+    }
+}

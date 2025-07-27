@@ -15,22 +15,28 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import { clearAllTranslations, getTrainRoutes, clearAllAudio } from '@/app/actions';
+import { clearAllTranslations, getTrainRoutes, clearAllAudio, getAnnouncementTemplates, clearAllTemplateAudio } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
 export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: string) => void }) {
   const [isClearing, setIsClearing] = useState(false);
   const [isClearingAudio, setIsClearingAudio] = useState(false);
+  const [isClearingTemplateAudio, setIsClearingTemplateAudio] = useState(false);
   const [routesExist, setRoutesExist] = useState(false);
+  const [templatesExist, setTemplatesExist] = useState(false);
   const { toast } = useToast();
 
   const handleViewTranslations = () => onViewChange('translations');
   const handleViewAudio = () => onViewChange('audio');
+  const handleViewTemplateAudio = () => onViewChange('template-audio');
   
   useEffect(() => {
     getTrainRoutes().then(routes => {
         setRoutesExist(routes.length > 0)
+    });
+    getAnnouncementTemplates().then(templates => {
+        setTemplatesExist(templates.length > 0)
     })
   }, [])
 
@@ -73,6 +79,26 @@ export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: 
         setIsClearingAudio(false);
     }
   };
+
+  const handleClearTemplateAudio = async () => {
+    setIsClearingTemplateAudio(true);
+    try {
+      const result = await clearAllTemplateAudio();
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to clear template audio data.',
+      });
+      console.error('Failed to clear template audio:', error);
+    } finally {
+        setIsClearingTemplateAudio(false);
+    }
+  }
 
 
   return (
@@ -152,6 +178,42 @@ export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: 
                 <AlertDialogFooter>
                   <AlertDialogCancel>Cancel</AlertDialogCancel>
                   <AlertDialogAction onClick={handleClearAudio}>
+                    Continue
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl">AI Template Audio</CardTitle>
+            <CardDescription>
+              Listen to AI-generated audio for each announcement template.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            <Button onClick={handleViewTemplateAudio} disabled={!templatesExist} size="sm">
+              View Audio
+            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" disabled={isClearingTemplateAudio || !templatesExist} size="sm">
+                    {isClearingTemplateAudio && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    {isClearingTemplateAudio ? 'Clearing...' : 'Clear All'}
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This action cannot be undone. This will permanently delete all
+                    generated audio for announcement templates.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction onClick={handleClearTemplateAudio}>
                     Continue
                   </AlertDialogAction>
                 </AlertDialogFooter>
