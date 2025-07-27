@@ -3,7 +3,6 @@
 
 import { ai } from '@/ai/genkit';
 import { z } from 'zod';
-import { TranslationServiceClient } from '@google-cloud/translate';
 import { generateSpeech } from './tts-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -18,36 +17,10 @@ export type TemplateTranslationInput = z.infer<typeof TemplateTranslationInputSc
 
 const TemplateTranslationOutputSchema = z.object({
     translatedText: z.string(),
+    audioFilePaths: z.array(z.string().nullable()),
 });
 export type TemplateTranslationOutput = z.infer<typeof TemplateTranslationOutputSchema>;
 
-
-async function translateText(text: string, targetLanguage: string): Promise<string> {
-    if (!text || targetLanguage === 'en') {
-        return text;
-    }
-    const translationClient = new TranslationServiceClient();
-    const projectId = (await translationClient.getProjectId());
-
-    try {
-        const [response] = await translationClient.translateText({
-            parent: `projects/${projectId}/locations/global`,
-            contents: [text],
-            mimeType: 'text/plain',
-            sourceLanguageCode: 'en',
-            targetLanguageCode: targetLanguage,
-        });
-
-        if (response.translations && response.translations.length > 0 && response.translations[0].translatedText) {
-            return response.translations[0].translatedText;
-        }
-        
-        return text; 
-    } catch (error) {
-        console.error(`Error during translation from 'en' to '${targetLanguage}':`, error);
-        return text;
-    }
-}
 
 export const translateTemplateFlow = ai.defineFlow(
     {
@@ -58,20 +31,38 @@ export const translateTemplateFlow = ai.defineFlow(
     async ({ template, languageCode, category }) => {
         const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
         
-        // 1. Translate the text parts of the template
         const parts = template.split(placeholderRegex);
-        
-        const translatedTextParts = await Promise.all(
-            parts.map(part => {
-                if (placeholderRegex.test(part) || part.trim().length === 0) {
-                    return Promise.resolve(part);
-                }
-                return translateText(part, languageCode);
-            })
-        );
-        
-        const translatedText = translatedTextParts.join('');
+        const audioFilePaths: (string | null)[] = [];
 
-        return { translatedText };
+        const audioDir = path.join(process.cwd(), 'public', 'audio', 'templates', category, languageCode);
+        await fs.mkdir(audioDir, { recursive: true });
+
+        for (let i = 0; i < parts.length; i++) {
+            const part = parts[i];
+            if (placeholderRegex.test(part) || part.trim().length === 0) {
+                 // For placeholders or empty strings, we push null and continue
+                 audioFilePaths.push(null);
+            } else {
+                try {
+                    const audioContent = await generateSpeech(part, languageCode);
+                    if (audioContent) {
+                        const filePath = path.join(audioDir, `part_${i}.wav`);
+                        await fs.writeFile(filePath, audioContent, 'binary');
+                        // Store the relative path for web access
+                        const relativePath = path.join('/audio', 'templates', category, languageCode, `part_${i}.wav`).replace(/\\/g, '/');
+                        audioFilePaths.push(relativePath);
+                    } else {
+                        audioFilePaths.push(null);
+                    }
+                    // Add a delay to avoid rate limiting
+                    await new Promise(resolve => setTimeout(resolve, 1000));
+                } catch(e) {
+                     console.error(`Error generating speech for part "${part}"`, e);
+                     audioFilePaths.push(null);
+                }
+            }
+        }
+        
+        return { translatedText: template, audioFilePaths };
     }
 );

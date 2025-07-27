@@ -19,7 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogDescription as DialogDescriptionComponent, // Renaming to avoid conflict with CardDescription
+  DialogDescription,
 } from '@/components/ui/dialog';
 import {
     AlertDialog,
@@ -33,8 +33,8 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ClipboardList } from 'lucide-react';
-import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
+import { Upload, Loader2, ClipboardList, Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates, runTemplateFlow } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Gujarati'];
@@ -57,6 +57,7 @@ export default function AnnouncementTemplatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [isClearing, setIsClearing] = useState(false);
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const { toast } = useToast();
@@ -221,6 +222,43 @@ export default function AnnouncementTemplatesPage() {
     }
   };
 
+  const handleGenerateAudioForCategory = async (category: string) => {
+    setIsGeneratingAudio(category);
+    toast({ title: `Starting audio generation for ${category}` });
+
+    for (const langCode of Object.values(LANGUAGE_CODES)) {
+        toast({ title: `Processing ${LANGUAGE_MAP[langCode]}...` });
+        try {
+            const result = await runTemplateFlow(category, langCode);
+            if (result.success) {
+                toast({
+                    title: `Success for ${LANGUAGE_MAP[langCode]}`,
+                    description: `Audio generated successfully.`,
+                });
+            } else {
+                throw new Error(result.message);
+            }
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: `Error processing ${LANGUAGE_MAP[langCode]}`,
+                description: error.message || 'An unknown error occurred.',
+            });
+            setIsGeneratingAudio(null);
+            return; // Stop processing if one language fails
+        }
+    }
+    
+    await fetchTemplates(); // Refresh data to show audio status
+    setIsGeneratingAudio(null);
+    toast({ title: 'Completed', description: `All audio generated for ${category}.` });
+  };
+  
+  const hasAudio = (category: string, lang: string) => {
+     const template = getTemplate(category, lang);
+     return template && template.template_audio_parts && JSON.parse(template.template_audio_parts).some((p: any) => p !== null);
+  }
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">
@@ -245,7 +283,7 @@ export default function AnnouncementTemplatesPage() {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete all
-                announcement templates from the database.
+                announcement templates and their generated audio from the database.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -326,29 +364,44 @@ export default function AnnouncementTemplatesPage() {
                             <TableRow>
                                 <TableHead>Category</TableHead>
                                 {LANGUAGES.map(lang => (
-                                    <TableHead key={lang}>{lang}</TableHead>
+                                    <TableHead key={lang} className="text-center">{lang}</TableHead>
                                 ))}
+                                <TableHead className="text-center">Audio</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
                             {ANNOUNCEMENT_CATEGORIES.map(category => (
                                 <TableRow key={category}>
                                 <TableCell className="font-medium">{category.replace('_', ' ')}</TableCell>
-                                <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
-                                <TableCell>
+                                <TableCell className="text-center">
+                                    <DialogTrigger asChild>
+                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'English'))} disabled={!getTemplate(category, 'English')}>EN</Button>
+                                    </DialogTrigger>
+                                </TableCell>
+                                <TableCell className="text-center">
                                     <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
                                     </DialogTrigger>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="text-center">
                                      <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))} disabled={!getTemplate(category, 'Marathi')}>MR</Button>
                                     </DialogTrigger>
                                 </TableCell>
-                                <TableCell>
+                                <TableCell className="text-center">
                                      <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
                                     </DialogTrigger>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                     <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => handleGenerateAudioForCategory(category)}
+                                        disabled={isGeneratingAudio === category}
+                                     >
+                                        {isGeneratingAudio === category ? <Loader2 className="h-4 w-4 animate-spin"/> : <Volume2 className="h-4 w-4" />}
+                                     </Button>
                                 </TableCell>
                                 </TableRow>
                             ))}
@@ -385,9 +438,9 @@ export default function AnnouncementTemplatesPage() {
             <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Processing Templates</DialogTitle>
-                    <DialogDescriptionComponent>
+                    <Description>
                         Please wait while templates are being saved. This should only take a moment.
-                    </DialogDescriptionComponent>
+                    </Description>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 items-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -397,5 +450,3 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
-
-    
