@@ -215,7 +215,7 @@ const Sidebar = React.forwardRef<
     return (
       <aside
         ref={ref}
-        className={cn("group hidden sm:flex flex-col text-sidebar-foreground fixed inset-y-0 h-full z-10 border-r bg-background",
+        className={cn("group fixed inset-y-0 left-0 z-10 hidden h-full flex-col border-r bg-background sm:flex",
           "transition-all duration-300 ease-in-out",
           state === 'expanded' ? 'w-56' : 'w-14',
            className
