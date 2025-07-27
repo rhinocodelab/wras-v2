@@ -419,13 +419,32 @@ export async function clearAllAudio() {
 }
 
 export async function getIslVideos(): Promise<string[]> {
-  const videoDir = path.join(process.cwd(), 'public', 'isl_dataset');
+  const baseDir = path.join(process.cwd(), 'public');
+  const videoDir = path.join(baseDir, 'isl_dataset');
+
+  const findVideos = async (dir: string): Promise<string[]> => {
+    let videoFiles: string[] = [];
+    try {
+      const entries = await fs.readdir(dir, { withFileTypes: true });
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          videoFiles = videoFiles.concat(await findVideos(fullPath));
+        } else if (entry.isFile() && entry.name.endsWith('.mp4')) {
+          // Return the path relative to the 'public' directory
+          const relativePath = path.relative(baseDir, fullPath);
+          videoFiles.push(`/${relativePath.replace(/\\/g, '/')}`);
+        }
+      }
+    } catch (error) {
+       console.warn(`Could not read directory ${dir}:`, error);
+    }
+    return videoFiles;
+  };
+
   try {
     await fs.access(videoDir);
-    const files = await fs.readdir(videoDir);
-    return files
-      .filter(file => file.endsWith('.mp4'))
-      .map(file => `/isl_dataset/${file}`);
+    return await findVideos(videoDir);
   } catch (error) {
     console.warn('ISL dataset directory does not exist or is not accessible.');
     return [];
@@ -486,3 +505,5 @@ export async function getSession() {
     return null;
   }
 }
+
+    
