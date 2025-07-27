@@ -158,34 +158,20 @@ export default function AnnouncementTemplatesPage() {
   };
 
   const handleUseSample = async () => {
-    const sampleContent = {
-      "Arriving": {
-        "en": "Attention please. Train number {train_number}, {train_name} from {start_station} to {end_station} is arriving shortly on platform number {platform}.",
-        "hi": "कृपया ध्यान दें। ट्रेन नंबर {train_number}, {train_name} {start_station} से {end_station} तक, प्लेटफॉर्म नंबर {platform} पर शीघ्र ही आ रही है।",
-        "mr": "कृपया लक्ष द्या. गाडी क्रमांक {train_number}, {train_name} {start_station} पासून {end_station} पर्यंत, प्लॅटफॉर्म क्रमांक {platform} वर लवकरच येत आहे.",
-        "gu": "કૃપા કરીને ધ્યાન આપો. ટ્રેન નંબર {train_number}, {train_name} {start_station} થી {end_station} સુધી, પ્લેટફોર્મ નંબર {platform} પર ટૂંક સમયમાં આવી રહી છે."
-      },
-      "Delay": {
-        "en": "Attention please. Train number {train_number}, {train_name} from {start_station} to {end_station} is running late.",
-        "hi": "कृपया ध्यान दें। ट्रेन नंबर {train_number}, {train_name} {start_station} से {end_station} तक, देरी से चल रही है।",
-        "mr": "कृपया लक्ष द्या. गाडी क्रमांक {train_number}, {train_name} {start_station} पासून {end_station} पर्यंत, उशिराने धावत आहे.",
-        "gu": "કૃપા કરીને ધ્યાન આપો. ટ્રેન નંબર {train_number}, {train_name} {start_station} થી {end_station} સુધી, મોડી ચાલી રહી છે."
-      },
-      "Cancelled": {
-        "en": "Attention please. Train number {train_number}, {train_name} from {start_station} to {end_station} has been cancelled.",
-        "hi": "कृपया ध्यान दें। ट्रेन नंबर {train_number}, {train_name} {start_station} से {end_station} तक, रद्द कर दी गई है।",
-        "mr": "कृपया लक्ष द्या. गाडी क्रमांक {train_number}, {train_name} {start_station} पासून {end_station} पर्यंत, रद्द करण्यात आली आहे.",
-        "gu": "કૃપા કરીને ધ્યાન આપો. ટ્રેન નંબર {train_number}, {train_name} {start_station} થી {end_station} સુધી, રદ કરવામાં આવી છે."
-      },
-      "Platform_Change": {
-        "en": "Attention please. The platform for train number {train_number}, {train_name} has been changed to platform number {platform}.",
-        "hi": "कृपया ध्यान दें। ट्रेन नंबर {train_number}, {train_name} के लिए प्लेटफॉर्म को बदलकर प्लेटफॉर्म नंबर {platform} कर दिया गया है।",
-        "mr": "कृपया लक्ष द्या. गाडी क्रमांक {train_number}, {train_name} साठी प्लॅટफॉर्म बदलून प्लॅटफॉर्म क्रमांक {platform} करण्यात आला आहे.",
-        "gu": "કૃપા કરીને ધ્યાન આપો. ટ્રેન નંબર {train_number}, {train_name} માટે પ્લેટફોર્મ બદલીને પ્લેટફોર્મ નંબર {platform} કરવામાં આવ્યો છે."
-      }
-    };
-    
-    await processFileContent(JSON.stringify(sampleContent));
+    try {
+        const response = await fetch('/sample_annoucement_template/announcement_templates.json');
+        if (!response.ok) {
+            throw new Error(`Failed to fetch sample file: ${response.statusText}`);
+        }
+        const content = await response.text();
+        await processFileContent(content);
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Error',
+            description: `Could not load sample data: ${error.message}`,
+        });
+    }
   }
 
   const handleClearAll = async () => {
@@ -446,5 +432,3 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
-
-    

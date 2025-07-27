@@ -1,3 +1,4 @@
+
 {
   "Arriving": {
     "en": "Attention please. Train number {train_number}, {train_name} from {start_station} to {end_station} is arriving shortly on platform number {platform}.",
