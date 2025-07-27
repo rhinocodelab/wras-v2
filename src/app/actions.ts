@@ -490,7 +490,6 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
     const db = await getDb();
     try {
         await db.run('DELETE FROM announcement_templates');
-        // Use INSERT OR REPLACE to avoid unique constraint errors and simplify the logic.
         const stmt = await db.prepare(
             'INSERT INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)'
         );
@@ -513,22 +512,13 @@ export async function runTemplateFlow(input: TemplateTranslationInput) {
         const result = await translateTemplateFlow(input);
         
         const db = await getDb();
-        if (input.generateAudio) {
-            await db.run(
-                'UPDATE announcement_templates SET template_audio_parts = ? WHERE category = ? AND language_code = ?',
-                JSON.stringify(result.audioParts),
-                input.category,
-                input.languageCode
-            );
-        } else {
-             await db.run(
-                'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)',
-                input.category,
-                input.languageCode,
-                result.translatedText,
-                JSON.stringify(result.audioParts)
-            );
-        }
+        await db.run(
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)',
+            input.category,
+            input.languageCode,
+            result.translatedText,
+            JSON.stringify(result.audioParts)
+        );
        
         await db.close();
         revalidatePath('/announcement-templates');

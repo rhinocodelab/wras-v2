@@ -128,11 +128,11 @@ export default function AnnouncementTemplatesPage() {
                 category,
                 language_code: 'en',
                 template_text: englishTemplates[category],
-                template_audio_parts: null
+                template_audio_parts: JSON.stringify([]),
             });
         }
-
-        // Process translations sequentially for other languages
+        
+        // Process translations for other languages
         for (const langCode of ['hi', 'mr', 'gu']) {
             for (const category of ANNOUNCEMENT_CATEGORIES) {
                 const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
@@ -210,20 +210,21 @@ export default function AnnouncementTemplatesPage() {
     const handleGenerateAudioForCategory = async (category: string) => {
         setIsGeneratingAudio(category);
         try {
+            const englishTemplate = templates.find(t => t.category === category && t.language_code === 'en');
+            if (!englishTemplate) {
+                 toast({
+                    variant: 'destructive',
+                    title: 'Missing Template',
+                    description: `Could not find the base English template for the '${category}' category.`,
+                });
+                setIsGeneratingAudio(null);
+                return;
+            }
+
             const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
             for (const langCode of languagesToProcess) {
-                const template = templates.find(t => t.category === category && t.language_code === langCode);
-                if (!template) {
-                    toast({
-                        variant: 'destructive',
-                        title: 'Missing Template',
-                        description: `Could not find template for ${category} in ${LANGUAGE_MAP[langCode]}.`,
-                    });
-                    continue;
-                }
-
                 await runTemplateFlow({
-                    template: template.template_text,
+                    template: englishTemplate.template_text,
                     languageCode: langCode,
                     category: category,
                     generateAudio: true,
@@ -485,4 +486,3 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
-

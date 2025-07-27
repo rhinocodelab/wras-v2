@@ -62,31 +62,22 @@ export const translateTemplateFlow = ai.defineFlow(
         
         // 1. Translate the text parts of the template
         const parts = template.split(placeholderRegex);
-        const textToTranslate = parts.filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
-
-        const translatedParts = await Promise.all(
-            textToTranslate.map(part => translateText(part, languageCode))
+        
+        const translatedTextParts = await Promise.all(
+            parts.map(part => {
+                if (placeholderRegex.test(part) || part.trim().length === 0) {
+                    return Promise.resolve(part);
+                }
+                return translateText(part, languageCode);
+            })
         );
         
-        let translatedText = '';
-        let translatedIndex = 0;
-        const placeholders = template.match(placeholderRegex) || [];
-        let placeholderIndex = 0;
-
-        for (const part of parts) {
-            if (placeholderRegex.test(part)) {
-                translatedText += placeholders[placeholderIndex++];
-            } else if (part.trim().length > 0){
-                translatedText += translatedParts[translatedIndex++];
-            } else {
-                translatedText += part;
-            }
-        }
+        const translatedText = translatedTextParts.join('');
         
         // 2. Generate audio for the now-translated static parts if requested
         const audioParts: string[] = [];
         if (generateAudio) {
-            const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
+            const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => part.trim().length > 0);
             const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
             await fs.mkdir(audioDir, { recursive: true });
 
