@@ -158,6 +158,7 @@ export default function AnnouncementTemplatesPage() {
   };
 
   const handleUseSample = async () => {
+    setIsProcessing(true);
     try {
         const response = await fetch('/sample_annoucement_template/announcement_templates.json');
         if (!response.ok) {
@@ -171,6 +172,8 @@ export default function AnnouncementTemplatesPage() {
             title: 'Error',
             description: `Could not load sample data: ${error.message}`,
         });
+    } finally {
+        setIsProcessing(false);
     }
   }
 
@@ -331,16 +334,18 @@ export default function AnnouncementTemplatesPage() {
                                 <TableRow key={category}>
                                 <TableCell className="font-medium">{category.replace('_', ' ')}</TableCell>
                                 <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
-                                <TableCell className="text-center space-x-1">
-                                    <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
-                                    </DialogTrigger>
-                                     <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))} disabled={!getTemplate(category, 'Marathi')}>MR</Button>
-                                    </DialogTrigger>
-                                     <DialogTrigger asChild>
-                                        <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
-                                    </DialogTrigger>
+                                <TableCell className="text-center">
+                                    <div className="flex gap-1 justify-center">
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="xs" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
+                                        </DialogTrigger>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="xs" onClick={() => handleOpenModal(getTemplate(category, 'Marathi'))} disabled={!getTemplate(category, 'Marathi')}>MR</Button>
+                                        </DialogTrigger>
+                                        <DialogTrigger asChild>
+                                            <Button variant="outline" size="xs" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
+                                        </DialogTrigger>
+                                    </div>
                                 </TableCell>
                                 </TableRow>
                             ))}
