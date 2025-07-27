@@ -17,6 +17,8 @@ export function Dashboard() {
   const [allRoutes, setAllRoutes] = useState<TrainRoute[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<TrainRoute[]>([]);
   const [displayedRoutes, setDisplayedRoutes] = useState<TrainRoute[]>([]);
+  const [searchNumber, setSearchNumber] = useState('');
+  const [searchName, setSearchName] = useState('');
 
   useEffect(() => {
     async function fetchRoutes() {
@@ -40,25 +42,39 @@ export function Dashboard() {
     setDisplayedRoutes(selectedRoutes);
     setIsModalOpen(false);
   };
+  
+  const handleSearchByNumber = () => {
+    const results = allRoutes.filter(route =>
+      route['Train Number'].includes(searchNumber)
+    );
+    setDisplayedRoutes(results);
+  };
+
+  const handleSearchByName = () => {
+    const results = allRoutes.filter(route =>
+      route['Train Name'].toLowerCase().includes(searchName.toLowerCase())
+    );
+    setDisplayedRoutes(results);
+  };
+
+  const clearSearch = () => {
+    setSearchNumber('');
+    setSearchName('');
+    setDisplayedRoutes([]);
+    setSelectedRoutes([]);
+  }
 
   return (
     <>
-      <div className="flex items-center">
-        <h1 className="text-lg font-semibold md:text-2xl">
-          Dashboard
-        </h1>
-      </div>
-      
-      <Card className="mt-4">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
+           <CardTitle className="flex items-center gap-2">
             <Accessibility className="h-6 w-6 text-primary" />
             Welcome to the WRAS-DHH
           </CardTitle>
         </CardHeader>
         <CardContent>
              <div className="mt-2">
-                <h2 className="text-md font-semibold">Train Search</h2>
                 <p className="text-muted-foreground mb-4 text-sm">
                 Search for trains by number or name to quickly find a route.
                 </p>
@@ -75,9 +91,12 @@ export function Dashboard() {
                             <Input
                             placeholder="Search by train number..."
                             className="pl-10"
+                            value={searchNumber}
+                            onChange={(e) => setSearchNumber(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchByNumber()}
                             />
                         </div>
-                        <Button>Search</Button>
+                        <Button onClick={handleSearchByNumber}>Search</Button>
                         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                             <DialogTrigger asChild>
                                 <Button variant="secondary" onClick={() => setSelectedRoutes(displayedRoutes)}>Pick Route</Button>
@@ -124,7 +143,7 @@ export function Dashboard() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
-                        <Button variant="ghost">Clear</Button>
+                        <Button variant="ghost" onClick={clearSearch}>Clear</Button>
                         </div>
                     </TabsContent>
                     <TabsContent value="train-name">
@@ -134,10 +153,13 @@ export function Dashboard() {
                             <Input
                             placeholder="Search by train name..."
                             className="pl-10"
+                            value={searchName}
+                            onChange={(e) => setSearchName(e.target.value)}
+                            onKeyDown={(e) => e.key === 'Enter' && handleSearchByName()}
                             />
                         </div>
-                        <Button>Search</Button>
-                         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+                        <Button onClick={handleSearchByName}>Search</Button>
+                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant="secondary" onClick={() => setSelectedRoutes(displayedRoutes)}>Pick Route</Button>
                             </DialogTrigger>
@@ -183,7 +205,7 @@ export function Dashboard() {
                                 </DialogFooter>
                             </DialogContent>
                         </Dialog>
-                        <Button variant="ghost">Clear</Button>
+                        <Button variant="ghost" onClick={clearSearch}>Clear</Button>
                         </div>
                     </TabsContent>
                     </Tabs>
