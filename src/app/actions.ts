@@ -8,13 +8,13 @@ const SESSION_COOKIE_NAME = 'session';
 
 // In a real app, this would come from a database and passwords would be hashed.
 const DUMMY_USER = {
-  email: 'user@example.com',
-  password: 'password123',
+  email: 'admin',
+  password: 'wras@dhh',
   name: 'Railway Employee',
 };
 
 const loginSchema = z.object({
-  email: z.string().email({ message: 'Please enter a valid email.' }),
+  email: z.string().min(1, { message: 'Username cannot be empty.' }),
   password: z.string().min(1, { message: 'Password cannot be empty.' }),
 });
 
@@ -55,7 +55,7 @@ export async function login(
     return redirect('/');
   } else {
     return {
-      message: 'Invalid email or password. Please try again.',
+      message: 'Invalid username or password. Please try again.',
     };
   }
 }
