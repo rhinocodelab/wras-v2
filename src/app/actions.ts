@@ -41,6 +41,8 @@ export async function getDb() {
     filename: './database.db',
     driver: sqlite3.Database,
   });
+
+  // Train Routes Table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS train_routes (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,6 +54,8 @@ export async function getDb() {
       end_code TEXT
     )
   `);
+
+  // Translations Table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS train_route_translations (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -63,7 +67,9 @@ export async function getDb() {
         end_station_translation TEXT,
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
-    `);
+  `);
+
+  // Audio Table
   await db.exec(`
     CREATE TABLE IF NOT EXISTS train_route_audio (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -75,19 +81,36 @@ export async function getDb() {
         end_station_audio_path TEXT,
         FOREIGN KEY (route_id) REFERENCES train_routes(id) ON DELETE CASCADE
     )
-    `);
-    await db.exec(`
+  `);
+
+  // Announcement Templates Table
+  await db.exec(`
     CREATE TABLE IF NOT EXISTS announcement_templates (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         category TEXT NOT NULL,
         language_code TEXT NOT NULL,
         template_text TEXT NOT NULL,
-        template_audio_parts TEXT,
         UNIQUE(category, language_code)
     )
+  `);
+
+  // --- Safe Schema Migration for announcement_templates ---
+  // Check if the template_audio_parts column exists
+  const tableInfo = await db.all("PRAGMA table_info(announcement_templates)");
+  const columnExists = tableInfo.some(col => col.name === 'template_audio_parts');
+
+  // If the column doesn't exist, add it
+  if (!columnExists) {
+    await db.exec(`
+      ALTER TABLE announcement_templates
+      ADD COLUMN template_audio_parts TEXT
     `);
+  }
+  // --- End Migration ---
+
   return db;
 }
+
 
 export type TrainRoute = {
   id?: number;
@@ -502,7 +525,7 @@ export async function saveAnnouncementTemplate(template: Omit<Template, 'id'>) {
     const db = await getDb();
     try {
         const stmt = await db.prepare(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
         );
         await stmt.run(template.category, template.language_code, template.template_text);
         await stmt.finalize();
@@ -629,6 +652,8 @@ export async function getSession() {
     return null;
   }
 }
+
+    
 
     
 
