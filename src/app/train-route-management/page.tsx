@@ -56,9 +56,7 @@ export default function TrainRouteManagementPage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-muted/40">
-      <div className="flex min-h-screen w-full max-w-7xl flex-col">
-        <main className="flex-1 p-4 sm:p-6">
+    <div className="w-full">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-lg font-semibold md:text-2xl">
@@ -78,7 +76,7 @@ export default function TrainRouteManagementPage() {
               />
               <label
                 htmlFor="file-upload"
-                className="inline-flex items-center justify-center whitespace-nowrap text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 cursor-pointer"
+                className="inline-flex cursor-pointer items-center justify-center whitespace-nowrap rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground ring-offset-background transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
               >
                 <Upload className="mr-2 h-4 w-4" />
                 Upload .xlsx
@@ -126,8 +124,6 @@ export default function TrainRouteManagementPage() {
               </TableBody>
             </Table>
           </div>
-        </main>
-      </div>
     </div>
   );
 }
