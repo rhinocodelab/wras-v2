@@ -129,7 +129,7 @@ export default function TrainRouteManagementPage() {
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Import Train Routes</DialogTitle>
             <DialogDescription>
@@ -141,14 +141,14 @@ export default function TrainRouteManagementPage() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            className={`flex flex-col items-center justify-center p-10 border-2 border-dashed rounded-lg transition-colors
+            className={`flex flex-col items-center justify-center p-6 border-2 border-dashed rounded-md transition-colors
               ${isDragging ? 'border-primary bg-primary/10' : 'border-border hover:border-primary/50'}`}
           >
-            <Upload className="w-10 h-10 text-muted-foreground mb-4" />
-            <p className="text-muted-foreground mb-2">
+            <Upload className="w-8 h-8 text-muted-foreground mb-3" />
+            <p className="text-sm text-muted-foreground mb-2">
               Drag & drop your .xlsx file here
             </p>
-            <p className="text-xs text-muted-foreground mb-4">or</p>
+            <p className="text-xs text-muted-foreground mb-3">or</p>
             <Input
               type="file"
               id="file-upload"
@@ -158,37 +158,33 @@ export default function TrainRouteManagementPage() {
             />
             <label
               htmlFor="file-upload"
-              className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
+              className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-8 px-3 bg-primary text-primary-foreground hover:bg-primary/90"
             >
               Browse File
             </label>
           </div>
 
-          <div className="mt-4">
-            <h3 className="text-sm font-medium text-foreground mb-2">
+          <div className="mt-2">
+            <h3 className="text-xs font-medium text-foreground mb-1">
               Expected Excel Format:
             </h3>
-            <div className="rounded-lg border">
-              <Table>
+            <div className="rounded-md border">
+              <Table className="text-xs">
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Train Number</TableHead>
-                    <TableHead>Train Name</TableHead>
-                    <TableHead>Start Station</TableHead>
-                    <TableHead>Start Code</TableHead>
-                    <TableHead>End Station</TableHead>
-                    <TableHead>End Code</TableHead>
+                    <TableHead className="h-8 px-2">Train Number</TableHead>
+                    <TableHead className="h-8 px-2">Train Name</TableHead>
+                    <TableHead className="h-8 px-2">Start Station</TableHead>
+                    <TableHead className="h-8 px-2">End Station</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {sampleData.map((row, index) => (
+                  {sampleData.slice(0, 1).map((row, index) => (
                     <TableRow key={index}>
-                      <TableCell>{row['Train Number']}</TableCell>
-                      <TableCell>{row['Train Name']}</TableCell>
-                      <TableCell>{row['Start Station']}</TableCell>
-                      <TableCell>{row['Start Code']}</TableCell>
-                      <TableCell>{row['End Station']}</TableCell>
-                      <TableCell>{row['End Code']}</TableCell>
+                      <TableCell className="p-2">{row['Train Number']}</TableCell>
+                      <TableCell className="p-2">{row['Train Name']}</TableCell>
+                      <TableCell className="p-2">{row['Start Station']}</TableCell>
+                      <TableCell className="p-2">{row['End Station']}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
