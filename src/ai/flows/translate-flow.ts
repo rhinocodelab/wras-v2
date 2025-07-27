@@ -45,16 +45,24 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
 }
 
 const hindiDigitMap: { [key: string]: string } = {
-    '0': 'शून्य',
-    '1': 'एक',
-    '2': 'दो',
-    '3': 'तीन',
-    '4': 'चार',
-    '5': 'पांच',
-    '6': 'छह',
-    '7': 'सात',
-    '8': 'आठ',
-    '9': 'नौ'
+    '0': 'शून्य', '1': 'एक', '2': 'दो', '3': 'तीन', '4': 'चार',
+    '5': 'पांच', '6': 'छह', '7': 'सात', '8': 'आठ', '9': 'नौ'
+};
+
+const marathiDigitMap: { [key: string]: string } = {
+    '0': 'शून्य', '1': 'एक', '2': 'दोन', '3': 'तीन', '4': 'चार',
+    '5': 'पाच', '6': 'सहा', '7': 'सात', '8': 'आठ', '9': 'नऊ'
+};
+
+const gujaratiDigitMap: { [key: string]: string } = {
+    '0': 'શૂન્ય', '1': 'એક', '2': 'બે', '3': 'ત્રણ', '4': 'ચાર',
+    '5': 'પાંચ', '6': 'છ', '7': 'સાત', '8': 'આઠ', '9': 'નવ'
+};
+
+const digitMaps: { [key: string]: { [key: string]: string } } = {
+    'hi': hindiDigitMap,
+    'mr': marathiDigitMap,
+    'gu': gujaratiDigitMap
 };
 
 const translateRouteFlow = ai.defineFlow(
@@ -67,9 +75,9 @@ const translateRouteFlow = ai.defineFlow(
         
         let trainNumberTranslation: string;
         
-        if (languageCode === 'hi') {
+        if (digitMaps[languageCode]) {
             const trainNumberStr = String(route['Train Number'] || '');
-            trainNumberTranslation = trainNumberStr.split('').map(digit => hindiDigitMap[digit] || digit).join(' ');
+            trainNumberTranslation = trainNumberStr.split('').map(digit => digitMaps[languageCode][digit] || digit).join(' ');
         } else {
             trainNumberTranslation = await translateText(String(route['Train Number'] || ''), languageCode);
         }
