@@ -33,9 +33,8 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ClipboardList } from 'lucide-react';
-import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
-import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
+import { Upload, Loader2, ClipboardList, Volume2 } from 'lucide-react';
+import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates, runTemplateFlow } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Gujarati'];
@@ -57,8 +56,8 @@ export default function AnnouncementTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingStep, setProcessingStep] = useState('');
   const [processingItem, setProcessingItem] = useState('');
+  const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -109,42 +108,38 @@ export default function AnnouncementTemplatesPage() {
   
   const processFileContent = async (content: string) => {
     setIsProcessing(true);
-    setProcessingStep('Processing templates...');
 
     try {
         const parsedTemplates = JSON.parse(content);
         const englishTemplates: { [key: string]: string } = {};
 
-        // Validate input JSON
+        // Validate input JSON and create English templates
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
             }
             englishTemplates[category] = parsedTemplates[category];
+            await saveAnnouncementTemplates([{ 
+                category, 
+                language_code: 'en', 
+                template_text: parsedTemplates[category], 
+                template_audio_parts: null 
+            }]);
         }
 
-        const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
+        const languagesToProcess = ['hi', 'mr', 'gu'];
         
         for (const category in englishTemplates) {
             for (const langCode of languagesToProcess) {
                 const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
-                setProcessingItem(`Processing: ${langName} '${category.replace('_', ' ')}'`);
-
-                // This single call will handle both translation and audio generation
-                const result = await translateTemplateFlow({
+                setProcessingItem(`Translating: ${langName} '${category.replace('_', ' ')}'`);
+                
+                await runTemplateFlow({
                     template: englishTemplates[category],
                     languageCode: langCode,
                     category,
+                    generateAudio: false, // Only generate text
                 });
-
-                const templateToSave: Template = {
-                    category,
-                    language_code: langCode,
-                    template_text: result.translatedText,
-                    template_audio_parts: JSON.stringify(result.audioParts)
-                };
-
-                await saveAnnouncementTemplates([templateToSave]);
             }
         }
         
@@ -152,7 +147,7 @@ export default function AnnouncementTemplatesPage() {
 
         toast({
           title: 'Processing Complete',
-          description: 'Templates have been translated and audio has been generated successfully.',
+          description: 'Templates have been translated successfully. You can now generate audio for each category.',
         });
 
     } catch (error: any) {
@@ -163,7 +158,6 @@ export default function AnnouncementTemplatesPage() {
         });
     } finally {
         setIsProcessing(false);
-        setProcessingStep('');
         setProcessingItem('');
     }
   }
@@ -179,7 +173,6 @@ export default function AnnouncementTemplatesPage() {
   };
 
   const handleUseSample = async () => {
-    setIsProcessing(true);
     try {
         const response = await fetch('/sample_annoucement_template/announcement_templates.json');
         if (!response.ok) {
@@ -193,10 +186,47 @@ export default function AnnouncementTemplatesPage() {
           title: 'Error',
           description: error.message,
         });
-    } finally {
-        setIsProcessing(false);
     }
   }
+
+    const handleGenerateAudioForCategory = async (category: string) => {
+        setIsGeneratingAudio(category);
+        try {
+            const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
+            for (const langCode of languagesToProcess) {
+                const template = templates.find(t => t.category === category && t.language_code === langCode);
+                if (!template) {
+                    toast({
+                        variant: 'destructive',
+                        title: 'Missing Template',
+                        description: `Could not find template for ${category} in ${LANGUAGE_MAP[langCode]}.`,
+                    });
+                    continue;
+                }
+
+                await runTemplateFlow({
+                    template: template.template_text,
+                    languageCode: langCode,
+                    category: category,
+                    generateAudio: true,
+                });
+            }
+            await fetchTemplates();
+            toast({
+                title: 'Audio Generated',
+                description: `Audio successfully generated for the '${category.replace('_', ' ')}' category.`,
+            });
+        } catch (error: any) {
+            toast({
+                variant: 'destructive',
+                title: 'Audio Generation Failed',
+                description: error.message,
+            });
+        } finally {
+            setIsGeneratingAudio(null);
+        }
+    };
+
 
   const handleClearAll = async () => {
     setIsClearing(true);
@@ -284,7 +314,7 @@ export default function AnnouncementTemplatesPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Upload Templates</CardTitle>
-                    <CardDescription>Upload a JSON file or use our sample templates to get started.</CardDescription>
+                    <CardDescription>Upload a JSON file. Text translation will be generated automatically.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div
@@ -309,11 +339,11 @@ export default function AnnouncementTemplatesPage() {
                             />
                             <label
                             htmlFor="file-upload"
-                            className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
+                            className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 py-2 bg-primary text-primary-foreground hover:bg-primary/90"
                             >
                             Browse File
                             </label>
-                            <Button variant="secondary" onClick={handleUseSample} className="h-9">Use Sample</Button>
+                            <Button variant="secondary" onClick={handleUseSample} className="h-9 px-4 py-2">Use Sample</Button>
                         </div>
                     </div>
                      <div className="mt-4 text-xs text-muted-foreground">
@@ -349,6 +379,7 @@ export default function AnnouncementTemplatesPage() {
                                 {LANGUAGES.map(lang => (
                                     <TableHead key={lang}>{lang}</TableHead>
                                 ))}
+                                <TableHead>Actions</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -370,6 +401,21 @@ export default function AnnouncementTemplatesPage() {
                                      <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
                                     </DialogTrigger>
+                                </TableCell>
+                                <TableCell>
+                                    <Button 
+                                        variant="outline" 
+                                        size="sm" 
+                                        onClick={() => handleGenerateAudioForCategory(category)}
+                                        disabled={isGeneratingAudio === category || !getTemplate(category, 'English')}
+                                    >
+                                        {isGeneratingAudio === category ? (
+                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        ) : (
+                                            <Volume2 className="mr-2 h-4 w-4" />
+                                        )}
+                                        Audio
+                                    </Button>
                                 </TableCell>
                                 </TableRow>
                             ))}
@@ -407,13 +453,12 @@ export default function AnnouncementTemplatesPage() {
                 <DialogHeader>
                     <DialogTitle>Processing Templates</DialogTitle>
                     <DialogDescription>
-                        Please wait while templates are being processed. This may take some time.
+                        Please wait while templates are being translated. This should only take a moment.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 items-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
                     <div className="text-center">
-                        <p className="text-sm font-medium text-foreground">{processingStep}</p>
                         <p className="text-sm text-muted-foreground">{processingItem}</p>
                     </div>
                 </div>

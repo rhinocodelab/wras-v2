@@ -12,6 +12,7 @@ const TemplateTranslationInputSchema = z.object({
     template: z.string(),
     languageCode: z.string(),
     category: z.string(),
+    generateAudio: z.boolean().default(true), // Control audio generation
 });
 export type TemplateTranslationInput = z.infer<typeof TemplateTranslationInputSchema>;
 
@@ -56,7 +57,7 @@ export const translateTemplateFlow = ai.defineFlow(
         inputSchema: TemplateTranslationInputSchema,
         outputSchema: TemplateTranslationOutputSchema,
     },
-    async ({ template, languageCode, category }) => {
+    async ({ template, languageCode, category, generateAudio }) => {
         const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
         
         // 1. Translate the text parts of the template
@@ -82,23 +83,25 @@ export const translateTemplateFlow = ai.defineFlow(
             }
         }
         
-        // 2. Generate audio for the now-translated static parts
+        // 2. Generate audio for the now-translated static parts if requested
         const audioParts: string[] = [];
-        const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
-        const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
-        await fs.mkdir(audioDir, { recursive: true });
+        if (generateAudio) {
+            const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
+            const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
+            await fs.mkdir(audioDir, { recursive: true });
 
-        for (let i = 0; i < translatedStaticParts.length; i++) {
-            const part = translatedStaticParts[i];
-            const audioContent = await generateSpeech(part, languageCode);
-            if (audioContent) {
-                const audioPath = path.join(audioDir, `part_${i}.wav`);
-                await fs.writeFile(audioPath, audioContent, 'binary');
-                const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
-                audioParts.push(publicPath);
+            for (let i = 0; i < translatedStaticParts.length; i++) {
+                const part = translatedStaticParts[i];
+                const audioContent = await generateSpeech(part, languageCode);
+                if (audioContent) {
+                    const audioPath = path.join(audioDir, `part_${i}.wav`);
+                    await fs.writeFile(audioPath, audioContent, 'binary');
+                    const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
+                    audioParts.push(publicPath);
+                }
+                // Add a delay to avoid rate-limiting issues with the TTS API
+                await new Promise(resolve => setTimeout(resolve, 1000));
             }
-            // Add a delay to avoid rate-limiting issues with the TTS API
-            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         return { translatedText, audioParts };

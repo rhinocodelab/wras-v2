@@ -9,7 +9,7 @@ import sqlite3 from 'sqlite3';
 import { revalidatePath } from 'next/cache';
 import { translateAllRoutes } from '@/ai/flows/translate-flow';
 import { generateSpeech } from '@/ai/flows/tts-flow';
-import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
+import { translateTemplateFlow, TemplateTranslationInput } from '@/ai/flows/translate-template-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateAnnouncement, AnnouncementInput, AnnouncementOutput } from '@/ai/flows/announcement-flow';
@@ -466,6 +466,7 @@ export async function getIslVideos(): Promise<string[]> {
 }
 
 export type Template = {
+  id?: number;
   category: string;
   language_code: string;
   template_text: string;
@@ -475,7 +476,7 @@ export type Template = {
 export async function getAnnouncementTemplates(): Promise<Template[]> {
     const db = await getDb();
     try {
-        const templates = await db.all('SELECT category, language_code, template_text, template_audio_parts FROM announcement_templates');
+        const templates = await db.all('SELECT id, category, language_code, template_text, template_audio_parts FROM announcement_templates');
         return templates;
     } catch (error) {
         console.error('Failed to fetch announcement templates:', error);
@@ -504,6 +505,30 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
         await db.close();
     }
 }
+
+
+export async function runTemplateFlow(input: TemplateTranslationInput) {
+    try {
+        const result = await translateTemplateFlow(input);
+        
+        const db = await getDb();
+        await db.run(
+            'UPDATE announcement_templates SET template_text = ?, template_audio_parts = ? WHERE category = ? AND language_code = ?',
+            result.translatedText,
+            JSON.stringify(result.audioParts),
+            input.category,
+            input.languageCode
+        );
+        await db.close();
+        revalidatePath('/announcement-templates');
+
+        return { success: true, ...result };
+    } catch (error) {
+        console.error(`Failed to run template flow for ${input.category} in ${input.languageCode}`, error);
+        throw new Error('Template processing failed.');
+    }
+}
+
 
 export async function clearAllAnnouncementTemplates() {
   const db = await getDb();
@@ -579,5 +604,3 @@ export async function getSession() {
     return null;
   }
 }
-
-    
