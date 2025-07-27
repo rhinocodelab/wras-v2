@@ -12,8 +12,6 @@ const TemplateTranslationInputSchema = z.object({
     template: z.string(),
     languageCode: z.string(),
     category: z.string(),
-    generateAudio: z.boolean().optional().default(true),
-    isTextTranslated: z.boolean().optional().default(false),
 });
 export type TemplateTranslationInput = z.infer<typeof TemplateTranslationInputSchema>;
 
@@ -58,57 +56,51 @@ export const translateTemplateFlow = ai.defineFlow(
         inputSchema: TemplateTranslationInputSchema,
         outputSchema: TemplateTranslationOutputSchema,
     },
-    async ({ template, languageCode, category, generateAudio, isTextTranslated }) => {
+    async ({ template, languageCode, category }) => {
         const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
-        let translatedText = template;
+        
+        // 1. Translate the text parts of the template
+        const parts = template.split(placeholderRegex);
+        const textToTranslate = parts.filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
 
-        // 1. Translate the full text template if it hasn't been already
-        if (!isTextTranslated) {
-            const parts = template.split(placeholderRegex);
-            const textToTranslate = parts.filter(part => !placeholderRegex.test(part));
-    
-            const translatedParts = await Promise.all(
-                textToTranslate.map(part => translateText(part, languageCode))
-            );
-            
-            let tempTranslatedText = '';
-            let translatedIndex = 0;
-            let placeholderIndex = 0;
-            const placeholders = template.match(placeholderRegex) || [];
-    
-            for(const part of parts) {
-                if(placeholderRegex.test(part)) {
-                    tempTranslatedText += placeholders[placeholderIndex++];
-                } else {
-                    tempTranslatedText += translatedParts[translatedIndex++];
-                }
+        const translatedParts = await Promise.all(
+            textToTranslate.map(part => translateText(part, languageCode))
+        );
+        
+        let translatedText = '';
+        let translatedIndex = 0;
+        const placeholders = template.match(placeholderRegex) || [];
+        let placeholderIndex = 0;
+
+        for (const part of parts) {
+            if (placeholderRegex.test(part)) {
+                translatedText += placeholders[placeholderIndex++];
+            } else if (part.trim().length > 0){
+                translatedText += translatedParts[translatedIndex++];
+            } else {
+                translatedText += part;
             }
-            translatedText = tempTranslatedText;
         }
         
-        // 2. Generate audio for static parts if requested
+        // 2. Generate audio for the now-translated static parts
         const audioParts: string[] = [];
-        if (generateAudio) {
-            const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
-            const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
-            await fs.mkdir(audioDir, { recursive: true });
-    
-            for (let i = 0; i < translatedStaticParts.length; i++) {
-                const part = translatedStaticParts[i];
-                const audioContent = await generateSpeech(part, languageCode);
-                if (audioContent) {
-                    const audioPath = path.join(audioDir, `part_${i}.wav`);
-                    await fs.writeFile(audioPath, audioContent, 'binary');
-                    const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
-                    audioParts.push(publicPath);
-                }
-                // Add a delay to avoid rate-limiting issues with the TTS API
-                await new Promise(resolve => setTimeout(resolve, 1000));
+        const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => !placeholderRegex.test(part) && part.trim().length > 0);
+        const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
+        await fs.mkdir(audioDir, { recursive: true });
+
+        for (let i = 0; i < translatedStaticParts.length; i++) {
+            const part = translatedStaticParts[i];
+            const audioContent = await generateSpeech(part, languageCode);
+            if (audioContent) {
+                const audioPath = path.join(audioDir, `part_${i}.wav`);
+                await fs.writeFile(audioPath, audioContent, 'binary');
+                const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
+                audioParts.push(publicPath);
             }
+            // Add a delay to avoid rate-limiting issues with the TTS API
+            await new Promise(resolve => setTimeout(resolve, 1000));
         }
 
         return { translatedText, audioParts };
     }
 );
-
-    

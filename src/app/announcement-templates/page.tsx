@@ -109,6 +109,8 @@ export default function AnnouncementTemplatesPage() {
   
   const processFileContent = async (content: string) => {
     setIsProcessing(true);
+    setProcessingStep('Processing templates...');
+
     try {
         const parsedTemplates = JSON.parse(content);
         const englishTemplates: { [key: string]: string } = {};
@@ -123,47 +125,30 @@ export default function AnnouncementTemplatesPage() {
 
         const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
         
-        // Phase 1: Translate all text first
-        setProcessingStep('Step 1 of 2: Translating Templates...');
-        const templatesToProcess: Template[] = [];
-
         for (const category in englishTemplates) {
             for (const langCode of languagesToProcess) {
                 const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
                 setProcessingItem(`Processing: ${langName} '${category.replace('_', ' ')}'`);
 
-                const result = await translateTemplateFlow({ template: englishTemplates[category], languageCode: langCode, category, generateAudio: false });
+                // This single call will handle both translation and audio generation
+                const result = await translateTemplateFlow({
+                    template: englishTemplates[category],
+                    languageCode: langCode,
+                    category,
+                });
+
                 const templateToSave: Template = {
                     category,
                     language_code: langCode,
                     template_text: result.translatedText,
-                    template_audio_parts: JSON.stringify([]) // Initially empty
+                    template_audio_parts: JSON.stringify(result.audioParts)
                 };
+
                 await saveAnnouncementTemplates([templateToSave]);
-                templatesToProcess.push(templateToSave);
             }
         }
         
-        await fetchTemplates(); // Show text translations in UI immediately
-
-        // Phase 2: Generate all audio sequentially
-        setProcessingStep('Step 2 of 2: Generating Audio...');
-        
-        for (const template of templatesToProcess) {
-            const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === template.language_code) || template.language_code;
-            setProcessingItem(`Processing: ${langName} '${template.category.replace('_', ' ')}'`);
-            
-            // Call flow again, this time to generate audio
-            const result = await translateTemplateFlow({ template: template.template_text, languageCode: template.language_code, category: template.category, generateAudio: true, isTextTranslated: true });
-            
-            const updatedTemplate: Template = {
-                ...template,
-                template_audio_parts: JSON.stringify(result.audioParts)
-            };
-            await saveAnnouncementTemplates([updatedTemplate]);
-        }
-        
-        await fetchTemplates(); // Refresh with audio paths
+        await fetchTemplates();
 
         toast({
           title: 'Processing Complete',
@@ -437,5 +422,3 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
-
-    
