@@ -4,8 +4,8 @@
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Search } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Search, GitFork, Languages, Video, Accessibility } from 'lucide-react';
 
 export function Dashboard() {
   return (
@@ -18,8 +18,32 @@ export function Dashboard() {
       
       <Card className="mt-4">
         <CardHeader>
-          <CardTitle>Welcome to the WRAS-DHH!</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <Accessibility className="h-6 w-6 text-primary" />
+            Welcome to the WRAS-DHH Dashboard!
+          </CardTitle>
+          <CardDescription>
+            This is the Western Railway Announcement System for the Deaf and Hard of Hearing. 
+            This application is designed to generate announcements in Indian Sign Language (ISL) video format.
+          </CardDescription>
         </CardHeader>
+        <CardContent>
+            <h3 className="text-md font-semibold mb-2">Key Features:</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                    <GitFork className="h-5 w-5 text-muted-foreground" />
+                    <span>Manage train routes and schedules.</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                    <Languages className="h-5 w-5 text-muted-foreground" />
+                    <span>Generate multilingual text and audio translations.</span>
+                </div>
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted">
+                    <Video className="h-5 w-5 text-muted-foreground" />
+                    <span>Create ISL video announcements.</span>
+                </div>
+            </div>
+        </CardContent>
       </Card>
 
       <div className="mt-8">
