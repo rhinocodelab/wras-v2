@@ -29,9 +29,14 @@ async function translateText(text: string, languageCode: string): Promise<string
         throw new Error(`Language code '${languageCode}' not supported.`);
     }
 
+    // Don't translate if the target is English, just return the original text
+    if (targetLanguage === 'en') {
+        return text;
+    }
+
     // Use the Google Cloud Translation API
     try {
-        const [translation] = await translateClient.translate(text, targetLanguage);
+        const [translation] = await translateClient.translate(text, { to: targetLanguage, from: 'en' });
         return translation;
     } catch (error) {
         console.error('Error during translation:', error);
