@@ -109,7 +109,7 @@ export default function AnnouncementTemplatesPage() {
     setIsProcessing(true);
     try {
         const parsedData = JSON.parse(content);
-        const allNewTemplates: Omit<Template, 'id'>[] = [];
+        const allNewTemplates: Omit<Template, 'id' | 'template_audio_parts'>[] = [];
 
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if (!parsedData[category]) {
@@ -129,8 +129,7 @@ export default function AnnouncementTemplatesPage() {
         }
         
         await saveAnnouncementTemplates(allNewTemplates);
-        
-        await fetchTemplates();
+        await fetchTemplates(); // Refresh data after saving
 
         toast({
           title: 'Processing Complete',
@@ -436,3 +435,5 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+    

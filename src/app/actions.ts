@@ -486,13 +486,13 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
     }
 }
 
-export async function saveAnnouncementTemplates(templates: Omit<Template, 'id'>[]) {
+export async function saveAnnouncementTemplates(templates: Omit<Template, 'id' | 'template_audio_parts'>[]) {
     const db = await getDb();
     try {
         await db.run('BEGIN TRANSACTION');
         
         const stmt = await db.prepare(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
         );
         for (const template of templates) {
             await stmt.run(template.category, template.language_code, template.template_text);
@@ -621,3 +621,5 @@ export async function getSession() {
     return null;
   }
 }
+
+    
