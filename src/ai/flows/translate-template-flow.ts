@@ -44,7 +44,10 @@ export const translateTemplateFlow = ai.defineFlow(
                  audioFilePaths.push(null);
             } else {
                 try {
-                    const audioContent = await generateSpeech(part, languageCode);
+                    // Remove punctuation before generating speech
+                    const cleanedPart = part.replace(/[.,]/g, '');
+                    
+                    const audioContent = await generateSpeech(cleanedPart, languageCode);
                     if (audioContent) {
                         const filePath = path.join(audioDir, `part_${i}.wav`);
                         await fs.writeFile(filePath, audioContent, 'binary');
