@@ -12,7 +12,6 @@ import { generateSpeech } from '@/ai/flows/tts-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateAnnouncement, AnnouncementInput, AnnouncementOutput } from '@/ai/flows/announcement-flow';
-import { translateTemplateFlow } from '@/ai/flows/translate-template-flow';
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -83,7 +82,6 @@ export async function getDb() {
         category TEXT NOT NULL,
         language_code TEXT NOT NULL,
         template_text TEXT NOT NULL,
-        template_audio_parts TEXT,
         UNIQUE(category, language_code)
     )
     `);
@@ -470,13 +468,12 @@ export type Template = {
   category: string;
   language_code: string;
   template_text: string;
-  template_audio_parts?: string | null;
 };
 
 export async function getAnnouncementTemplates(): Promise<Template[]> {
     const db = await getDb();
     try {
-        const templates = await db.all('SELECT id, category, language_code, template_text, template_audio_parts FROM announcement_templates');
+        const templates = await db.all('SELECT id, category, language_code, template_text FROM announcement_templates');
         return templates;
     } catch (error) {
         console.error('Failed to fetch announcement templates:', error);
@@ -486,11 +483,11 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
     }
 }
 
-export async function saveAnnouncementTemplates(template: Omit<Template, 'id' | 'template_audio_parts'>) {
+export async function saveAnnouncementTemplates(template: Omit<Template, 'id'>) {
     const db = await getDb();
     try {
         const stmt = await db.prepare(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
         );
         await stmt.run(template.category, template.language_code, template.template_text);
         await stmt.finalize();
@@ -503,50 +500,13 @@ export async function saveAnnouncementTemplates(template: Omit<Template, 'id' | 
     }
 }
 
-export async function runTemplateFlow(category: string, languageCode: string): Promise<{ success: boolean; message: string }> {
-    const db = await getDb();
-    try {
-        const template = await db.get('SELECT template_text FROM announcement_templates WHERE category = ? AND language_code = ?', category, languageCode);
-        if (!template) {
-            throw new Error(`Template not found for ${category} - ${languageCode}`);
-        }
-
-        const { audioFilePaths } = await translateTemplateFlow({
-            template: template.template_text,
-            languageCode: languageCode,
-            category: category,
-        });
-
-        await db.run(
-            'UPDATE announcement_templates SET template_audio_parts = ? WHERE category = ? AND language_code = ?',
-            JSON.stringify(audioFilePaths),
-            category,
-            languageCode
-        );
-
-        return { success: true, message: `Successfully generated audio for ${languageCode}` };
-    } catch (error: any) {
-        console.error(`Error processing template for ${category} - ${languageCode}:`, error);
-        return { success: false, message: error.message || 'An unknown error occurred' };
-    } finally {
-        await db.close();
-    }
-}
-
-
 
 export async function clearAllAnnouncementTemplates() {
   const db = await getDb();
   try {
     await db.run('DELETE FROM announcement_templates');
-    const audioDir = path.join(process.cwd(), 'public', 'audio', 'templates');
-    await fs.rm(audioDir, { recursive: true, force: true }).catch(err => {
-      if (err.code !== 'ENOENT') { // Ignore error if directory doesn't exist
-        throw err;
-      }
-    });
     revalidatePath('/announcement-templates');
-    return { message: 'All announcement templates and their audio have been deleted.' };
+    return { message: 'All announcement templates have been deleted.' };
   } catch (error) {
     console.error('Failed to clear announcement templates:', error);
     throw new Error('Failed to clear templates.');
@@ -613,6 +573,3 @@ export async function getSession() {
     return null;
   }
 }
-
-    
-    
