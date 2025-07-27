@@ -19,6 +19,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription as DialogDescriptionComponent, // Renaming to avoid conflict with CardDescription
 } from '@/components/ui/dialog';
 import {
     AlertDialog,
@@ -384,9 +385,9 @@ export default function AnnouncementTemplatesPage() {
             <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Processing Templates</DialogTitle>
-                    <DialogDescription>
+                    <DialogDescriptionComponent>
                         Please wait while templates are being saved. This should only take a moment.
-                    </DialogDescription>
+                    </DialogDescriptionComponent>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 items-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
@@ -396,3 +397,5 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+    
