@@ -18,6 +18,7 @@ import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
 import { logout } from '@/app/actions';
 import { Dashboard } from '@/components/dashboard';
 import TrainRouteManagementPage from '@/app/train-route-management/page';
+import AiDatabasePage from '@/app/ai-database/page';
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -29,6 +30,8 @@ export default function HomePage() {
         return <Dashboard />;
       case 'route-management':
         return <TrainRouteManagementPage />;
+      case 'ai-database':
+        return <AiDatabasePage />;
       default:
         return <Dashboard />;
     }
@@ -104,8 +107,8 @@ export default function HomePage() {
                   Audio Templates
                 </div>
                 <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  onClick={() => setActiveView('ai-database')}
+                  className={getMobileLinkClassName('ai-database')}
                 >
                   <Database className="h-5 w-5" />
                   AI Database
@@ -166,8 +169,8 @@ export default function HomePage() {
                   Audio Templates
                 </div>
                 <div
-                  onClick={() => {}}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  onClick={() => setActiveView('ai-database')}
+                  className={getLinkClassName('ai-database')}
                 >
                   <Database className="h-4 w-4" />
                   AI Database

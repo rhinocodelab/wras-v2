@@ -170,6 +170,64 @@ export async function startTranslationProcess(routes: TrainRoute[]) {
   return { message: "Translation completed successfully." };
 }
 
+export type TranslationRecord = {
+  language_code: string;
+  train_number_translation: string;
+  train_name_translation: string;
+  start_station_translation: string;
+  end_station_translation: string;
+};
+
+export type FullTranslationInfo = {
+  train_number: string;
+  train_name: string;
+  translations: TranslationRecord[];
+};
+
+export async function getTranslations(): Promise<FullTranslationInfo[]> {
+  try {
+    const db = await getDb();
+    const results = await db.all(`
+      SELECT
+        tr.train_number,
+        tr.train_name,
+        trt.language_code,
+        trt.train_number_translation,
+        trt.train_name_translation,
+        trt.start_station_translation,
+        trt.end_station_translation
+      FROM train_routes tr
+      JOIN train_route_translations trt ON tr.id = trt.route_id
+      ORDER BY tr.train_number, trt.language_code
+    `);
+    await db.close();
+    
+    const groupedTranslations: Record<string, FullTranslationInfo> = {};
+
+    results.forEach(row => {
+      if (!groupedTranslations[row.train_number]) {
+        groupedTranslations[row.train_number] = {
+          train_number: row.train_number,
+          train_name: row.train_name,
+          translations: [],
+        };
+      }
+      groupedTranslations[row.train_number].translations.push({
+        language_code: row.language_code,
+        train_number_translation: row.train_number_translation,
+        train_name_translation: row.train_name_translation,
+        start_station_translation: row.start_station_translation,
+        end_station_translation: row.end_station_translation,
+      });
+    });
+
+    return Object.values(groupedTranslations);
+  } catch (error) {
+    console.error('Failed to fetch translations:', error);
+    return [];
+  }
+}
+
 // --- Auth Functions ---
 
 export async function login(
