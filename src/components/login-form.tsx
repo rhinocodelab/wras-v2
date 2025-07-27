@@ -18,8 +18,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending && <Loader2 className="animate-spin mr-2" />}
-      Sign In
+      {pending ? 'Signing In...' : 'Sign In'}
     </Button>
   );
 }
@@ -37,14 +36,13 @@ export function LoginForm() {
         <div>
             <Label htmlFor="email" className='text-xs font-medium text-gray-700 mb-1'>Username</Label>
             <div className="relative flex items-center">
-              <User className="absolute left-2 h-4 w-4 text-gray-400" />
               <Input
                 id="email"
                 name="email"
                 type="text"
                 placeholder="Enter username"
                 required
-                className="pl-8 w-full pr-3 py-2 text-sm border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
+                className="w-full pr-3 py-2 text-sm border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
                 aria-describedby="email-error"
               />
             </div>
@@ -55,14 +53,13 @@ export function LoginForm() {
         <div>
             <Label htmlFor="password"  className='text-xs font-medium text-gray-700 mb-1'>Password</Label>
             <div className="relative flex items-center">
-              <Lock className="absolute left-2 h-4 w-4 text-gray-400" />
               <Input
                 id="password"
                 name="password"
                 type="password"
                 placeholder="Enter password"
                 required
-                className="pl-8 w-full pr-3 py-2 text-sm border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
+                className="w-full pr-3 py-2 text-sm border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
                 aria-describedby="password-error"
               />
             </div>

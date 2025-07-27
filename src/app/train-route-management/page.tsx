@@ -280,7 +280,6 @@ export default function TrainRouteManagementPage() {
             </AlertDialogContent>
           </AlertDialog>
           <Button size="sm" onClick={() => setIsAddModalOpen(true)}>
-            <PlusCircle className="mr-2 h-4 w-4" />
             Add Route
           </Button>
           <Button size="sm" onClick={() => setIsImportModalOpen(true)}>
