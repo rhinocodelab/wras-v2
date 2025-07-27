@@ -15,23 +15,32 @@ import * as path from 'path';
 
 const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
 
-// Function to read the project ID from the JSON configuration file
-function getProjectId(): string {
+// Function to read the service account configuration
+function getTranslationConfig() {
     const configPath = path.join(process.cwd(), 'config', 'isl.json');
+    if (!fs.existsSync(configPath)) {
+        throw new Error("Service account file not found at 'config/isl.json'");
+    }
     const configFile = fs.readFileSync(configPath, 'utf8');
     const config = JSON.parse(configFile);
-    return config.project_id;
+    return {
+        projectId: config.project_id,
+        credentials: {
+            client_email: config.client_email,
+            private_key: config.private_key,
+        }
+    };
 }
 
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
-    if (targetLanguage === 'en') {
+    if (!text || targetLanguage === 'en') {
         return text;
     }
 
     try {
-        const projectId = getProjectId();
-        const translationClient = new TranslationServiceClient({ projectId });
+        const { projectId, credentials } = getTranslationConfig();
+        const translationClient = new TranslationServiceClient({ projectId, credentials });
         
         const request = {
             parent: `projects/${projectId}/locations/global`,
@@ -64,7 +73,7 @@ const translateRouteFlow = ai.defineFlow(
     },
     async ({ route, languageCode }) => {
         
-        const trainNumberFormatted = route['Train Number'].split('').join(' ');
+        const trainNumberFormatted = route['Train Number'].toString().split('').join(' ');
 
         const [
             trainNumberTranslation,
