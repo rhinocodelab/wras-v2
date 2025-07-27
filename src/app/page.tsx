@@ -34,6 +34,22 @@ export default function HomePage() {
     }
   };
 
+  const getLinkClassName = (view: string) => {
+    return `flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 transition-all hover:text-primary ${
+      activeView === view
+        ? 'bg-muted text-primary'
+        : 'text-muted-foreground'
+    }`;
+  };
+
+  const getMobileLinkClassName = (view: string) => {
+    return `flex cursor-pointer items-center gap-4 px-2.5 transition-all hover:text-foreground ${
+      activeView === view
+        ? 'text-foreground'
+        : 'text-muted-foreground'
+    }`;
+  };
+
   return (
     <div className="flex min-h-screen w-full flex-col items-center bg-muted/40">
       <div className="flex min-h-screen w-full max-w-7xl flex-col">
@@ -61,14 +77,14 @@ export default function HomePage() {
                 </Link>
                 <div
                   onClick={() => setActiveView('dashboard')}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                  className={getMobileLinkClassName('dashboard')}
                 >
                   <Home className="h-5 w-5" />
                   Dashboard
                 </div>
                 <div
                   onClick={() => setActiveView('route-management')}
-                  className="flex cursor-pointer items-center gap-4 px-2.5 text-foreground"
+                  className={getMobileLinkClassName('route-management')}
                 >
                   <GitFork className="h-5 w-5" />
                   Route Management
@@ -123,14 +139,14 @@ export default function HomePage() {
               <div className="grid items-start px-4 text-sm font-medium">
                 <div
                   onClick={() => setActiveView('dashboard')}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg bg-muted px-3 py-2 text-primary transition-all hover:text-primary"
+                  className={getLinkClassName('dashboard')}
                 >
                   <Home className="h-4 w-4" />
                   Dashboard
                 </div>
                 <div
                   onClick={() => setActiveView('route-management')}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                  className={getLinkClassName('route-management')}
                 >
                   <GitFork className="h-4 w-4" />
                   Route Management
