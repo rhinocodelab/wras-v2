@@ -9,14 +9,22 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter, DialogTrigger } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search, Accessibility } from 'lucide-react';
 import { getTrainRoutes, TrainRoute } from '@/app/actions';
+
+type DisplayRoute = TrainRoute & {
+  platform: string;
+  category: string;
+};
+
+const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 
 export function Dashboard() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [allRoutes, setAllRoutes] = useState<TrainRoute[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<TrainRoute[]>([]);
-  const [displayedRoutes, setDisplayedRoutes] = useState<TrainRoute[]>([]);
+  const [displayedRoutes, setDisplayedRoutes] = useState<DisplayRoute[]>([]);
   const [searchNumber, setSearchNumber] = useState('');
   const [searchName, setSearchName] = useState('');
 
@@ -39,7 +47,7 @@ export function Dashboard() {
   };
 
   const handleAddSelectedRoutes = () => {
-    setDisplayedRoutes(selectedRoutes);
+    setDisplayedRoutes(selectedRoutes.map(r => ({ ...r, platform: '1', category: 'Arriving' })));
     setIsModalOpen(false);
   };
   
@@ -47,14 +55,14 @@ export function Dashboard() {
     const results = allRoutes.filter(route =>
       route['Train Number'].includes(searchNumber)
     );
-    setDisplayedRoutes(results);
+    setDisplayedRoutes(results.map(r => ({ ...r, platform: '1', category: 'Arriving' })));
   };
 
   const handleSearchByName = () => {
     const results = allRoutes.filter(route =>
       route['Train Name'].toLowerCase().includes(searchName.toLowerCase())
     );
-    setDisplayedRoutes(results);
+    setDisplayedRoutes(results.map(r => ({ ...r, platform: '1', category: 'Arriving' })));
   };
 
   const clearSearch = () => {
@@ -63,6 +71,20 @@ export function Dashboard() {
     setDisplayedRoutes([]);
     setSelectedRoutes([]);
   }
+
+  const handlePlatformChange = (routeId: number | undefined, platform: string) => {
+    if (routeId === undefined) return;
+    setDisplayedRoutes(prev =>
+      prev.map(r => (r.id === routeId ? { ...r, platform } : r))
+    );
+  };
+
+  const handleCategoryChange = (routeId: number | undefined, category: string) => {
+    if (routeId === undefined) return;
+    setDisplayedRoutes(prev =>
+      prev.map(r => (r.id === routeId ? { ...r, category } : r))
+    );
+  };
 
   return (
     <>
@@ -99,7 +121,7 @@ export function Dashboard() {
                         <Button onClick={handleSearchByNumber}>Search</Button>
                         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
                             <DialogTrigger asChild>
-                                <Button variant="secondary" onClick={() => setSelectedRoutes(displayedRoutes)}>Pick Route</Button>
+                                <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-2xl">
                                 <DialogHeader>
@@ -161,7 +183,7 @@ export function Dashboard() {
                         <Button onClick={handleSearchByName}>Search</Button>
                          <Dialog>
                             <DialogTrigger asChild>
-                                <Button variant="secondary" onClick={() => setSelectedRoutes(displayedRoutes)}>Pick Route</Button>
+                                <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
                             </DialogTrigger>
                             <DialogContent className="sm:max-w-2xl">
                                 <DialogHeader>
@@ -228,6 +250,8 @@ export function Dashboard() {
                             <TableHead>Train Name</TableHead>
                             <TableHead>Start Station</TableHead>
                             <TableHead>End Station</TableHead>
+                            <TableHead className="w-[120px]">Platform</TableHead>
+                            <TableHead className="w-[200px]">Category</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -237,6 +261,31 @@ export function Dashboard() {
                                 <TableCell>{route['Train Name']}</TableCell>
                                 <TableCell>{route['Start Station']}</TableCell>
                                 <TableCell>{route['End Station']}</TableCell>
+                                <TableCell>
+                                    <Input
+                                        type="number"
+                                        value={route.platform}
+                                        onChange={(e) => handlePlatformChange(route.id, e.target.value)}
+                                        className="h-8"
+                                    />
+                                </TableCell>
+                                <TableCell>
+                                    <Select
+                                        value={route.category}
+                                        onValueChange={(value) => handleCategoryChange(route.id, value)}
+                                    >
+                                        <SelectTrigger className="h-8">
+                                            <SelectValue placeholder="Select category" />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {ANNOUNCEMENT_CATEGORIES.map(category => (
+                                                <SelectItem key={category} value={category}>
+                                                    {category.replace('_', ' ')}
+                                                </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                </TableCell>
                             </TableRow>
                         ))}
                     </TableBody>
