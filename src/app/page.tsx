@@ -31,9 +31,9 @@ export default async function HomePage() {
       <div className="w-full max-w-7xl">
         <div className="flex min-h-screen w-full flex-col">
           <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
-            <div className="flex items-center gap-2 font-semibold">
+            <div className="flex items-center gap-2 font-semibold text-primary">
               <TramFront className="h-6 w-6" />
-              <span>WRAS-DHH</span>
+              <span className="text-lg">WRAS-DHH</span>
             </div>
             <Sheet>
               <SheetTrigger asChild>
