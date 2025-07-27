@@ -22,9 +22,14 @@ const LANGUAGES: Record<string, string> = {
 const translationClient = new TranslationServiceClient();
 
 async function translateText(text: string, languageCode: string): Promise<string> {
-    const targetLanguage = LANGUAGES[languageCode];
-    if (!targetLanguage || targetLanguage === 'en') {
+    // Do not translate if the target language is English
+    if (languageCode === 'en-IN') {
         return text;
+    }
+
+    const targetLanguage = LANGUAGES[languageCode];
+    if (!targetLanguage) {
+        return text; // Fallback if language code is not found
     }
 
     const projectId = process.env.GCP_PROJECT_ID;
