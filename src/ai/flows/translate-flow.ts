@@ -58,13 +58,25 @@ const translateRouteFlow = ai.defineFlow(
     },
     async ({ route, languageCode }) => {
         
+        let trainNumberTranslation: string;
+
+        if (languageCode === 'hi') {
+            const numberToWordsPrompt = ai.definePrompt({
+                name: 'numberToWordsPrompt',
+                input: { schema: z.object({ number: z.string() }) },
+                output: { schema: z.string() },
+                prompt: `Convert the following number into Hindi words, with each digit spelled out. For example, '123' should be 'एक दो तीन'.\nNumber: {{{number}}}`,
+            });
+            trainNumberTranslation = await numberToWordsPrompt({ number: route['Train Number'] });
+        } else {
+            trainNumberTranslation = await translateText(route['Train Number'], languageCode);
+        }
+
         const [
-            trainNumberTranslation,
             trainNameTranslation,
             startStationTranslation,
             endStationTranslation
         ] = await Promise.all([
-            translateText(route['Train Number'], languageCode),
             translateText(route['Train Name'], languageCode),
             translateText(route['Start Station'], languageCode),
             translateText(route['End Station'], languageCode),
