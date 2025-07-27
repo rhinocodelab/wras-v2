@@ -124,30 +124,22 @@ export default function AnnouncementTemplatesPage() {
             englishTemplates[category] = parsedTemplates[category];
         }
         
-        const allTemplates: Template[] = [];
-
         for (const category in englishTemplates) {
             const englishTemplate = englishTemplates[category];
+            const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
             
-            // Process English template first
-            const englishResult = await translateTemplateFlow({ template: englishTemplate, languageCode: 'en', category });
-            allTemplates.push({ category, language_code: 'en', template_text: englishResult.translatedText, template_audio_parts: JSON.stringify(englishResult.audioParts) });
-            
-            // Process other languages
-            const otherLangs = ['hi', 'mr', 'gu'];
-            const translationPromises = otherLangs.map(langCode => 
-                translateTemplateFlow({ template: englishTemplate, languageCode: langCode, category })
-            );
-
-            const results = await Promise.all(translationPromises);
-
-            results.forEach((result, index) => {
-                const langCode = otherLangs[index];
-                allTemplates.push({ category, language_code: langCode, template_text: result.translatedText, template_audio_parts: JSON.stringify(result.audioParts) });
-            });
+            for (const langCode of languagesToProcess) {
+                const result = await translateTemplateFlow({ template: englishTemplate, languageCode: langCode, category });
+                const templateToSave: Template = {
+                    category,
+                    language_code: langCode,
+                    template_text: result.translatedText,
+                    template_audio_parts: JSON.stringify(result.audioParts)
+                };
+                 await saveAnnouncementTemplates([templateToSave]);
+            }
         }
         
-        await saveAnnouncementTemplates(allTemplates);
         await fetchTemplates();
 
         toast({
@@ -415,5 +407,7 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+    
 
     
