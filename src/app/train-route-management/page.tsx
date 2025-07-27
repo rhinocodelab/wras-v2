@@ -25,6 +25,7 @@ import * as XLSX from 'xlsx';
 import { Upload } from 'lucide-react';
 import { saveTrainRoutes, getTrainRoutes, TrainRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
+import { Badge } from '@/components/ui/badge';
 
 const sampleData: TrainRoute[] = [
   {
@@ -50,7 +51,14 @@ export default function TrainRouteManagementPage() {
   const [fileName, setFileName] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
   const { toast } = useToast();
+
+  const recordsPerPage = 7;
+  const indexOfLastRecord = currentPage * recordsPerPage;
+  const indexOfFirstRecord = indexOfLastRecord - recordsPerPage;
+  const currentRecords = data.slice(indexOfFirstRecord, indexOfLastRecord);
+  const nPages = Math.ceil(data.length / recordsPerPage);
 
   useEffect(() => {
     async function fetchRoutes() {
@@ -84,6 +92,7 @@ export default function TrainRouteManagementPage() {
         const result = await saveTrainRoutes(routes);
         const latestRoutes = await getTrainRoutes();
         setData(latestRoutes);
+        setCurrentPage(1); // Reset to first page after import
         setIsModalOpen(false);
         toast({
           title: "Success",
@@ -135,6 +144,18 @@ export default function TrainRouteManagementPage() {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
+  };
+  
+  const prevPage = () => {
+    if (currentPage !== 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const nextPage = () => {
+    if (currentPage !== nPages) {
+      setCurrentPage(currentPage + 1);
+    }
   };
 
   return (
@@ -239,26 +260,28 @@ export default function TrainRouteManagementPage() {
               <TableHead>Train Number</TableHead>
               <TableHead>Train Name</TableHead>
               <TableHead>Start Station</TableHead>
-              <TableHead>Start Code</TableHead>
               <TableHead>End Station</TableHead>
-              <TableHead>End Code</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {data.length > 0 ? (
-              data.map((row, index) => (
+            {currentRecords.length > 0 ? (
+              currentRecords.map((row, index) => (
                 <TableRow key={index}>
                   <TableCell>{row['Train Number']}</TableCell>
                   <TableCell>{row['Train Name']}</TableCell>
-                  <TableCell>{row['Start Station']}</TableCell>
-                  <TableCell>{row['Start Code']}</TableCell>
-                  <TableCell>{row['End Station']}</TableCell>
-                  <TableCell>{row['End Code']}</TableCell>
+                  <TableCell>
+                    <div>{row['Start Station']}</div>
+                    <Badge variant="secondary">{row['Start Code']}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <div>{row['End Station']}</div>
+                    <Badge variant="secondary">{row['End Code']}</Badge>
+                  </TableCell>
                 </TableRow>
               ))
             ) : (
               <TableRow>
-                <TableCell colSpan={6} className="text-center">
+                <TableCell colSpan={4} className="text-center">
                   No data available. Import an Excel file to see routes.
                 </TableCell>
               </TableRow>
@@ -266,6 +289,31 @@ export default function TrainRouteManagementPage() {
           </TableBody>
         </Table>
       </div>
+      
+      {data.length > recordsPerPage && (
+        <div className="flex items-center justify-end space-x-2 py-4">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={prevPage}
+            disabled={currentPage === 1}
+          >
+            Previous
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            Page {currentPage} of {nPages}
+          </span>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={nextPage}
+            disabled={currentPage === nPages}
+          >
+            Next
+          </Button>
+        </div>
+      )}
     </div>
   );
-}
+
+    
