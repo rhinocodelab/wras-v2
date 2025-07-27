@@ -24,8 +24,7 @@ const translationClient = new TranslationServiceClient();
 async function translateText(text: string, languageCode: string): Promise<string> {
     const targetLanguage = LANGUAGES[languageCode];
     
-    // Do not translate if the target language is English
-    if (targetLanguage === 'en') {
+    if (languageCode === 'en-IN') {
         return text;
     }
 
