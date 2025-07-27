@@ -20,7 +20,7 @@ export function Dashboard() {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Accessibility className="h-6 w-6 text-primary" />
-            Welcome to the WRAS-DHH Dashboard!
+            Welcome to the WRAS-DHH
           </CardTitle>
           <CardDescription>
             This is the Western Railway Announcement System for the Deaf and Hard of Hearing. 
@@ -28,52 +28,50 @@ export function Dashboard() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <p className='text-sm text-muted-foreground'>Use the features in the sidebar to manage routes, generate AI assets, and create video announcements.</p>
+             <div className="mt-2">
+                <h2 className="text-md font-semibold">Train Search</h2>
+                <p className="text-muted-foreground mb-4 text-sm">
+                Search for trains by number or name to quickly find a route.
+                </p>
+                <div className="w-full">
+                    <Tabs defaultValue="train-number">
+                    <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="train-number">Train Number</TabsTrigger>
+                        <TabsTrigger value="train-name">Train Name</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="train-number">
+                        <div className="flex items-center space-x-2 pt-4">
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                            placeholder="Search by train number..."
+                            className="pl-10"
+                            />
+                        </div>
+                        <Button>Search</Button>
+                        <Button variant="secondary">Pick Route</Button>
+                        <Button variant="ghost">Clear</Button>
+                        </div>
+                    </TabsContent>
+                    <TabsContent value="train-name">
+                        <div className="flex items-center space-x-2 pt-4">
+                        <div className="relative flex-grow">
+                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                            placeholder="Search by train name..."
+                            className="pl-10"
+                            />
+                        </div>
+                        <Button>Search</Button>
+                        <Button variant="secondary">Pick Route</Button>
+                        <Button variant="ghost">Clear</Button>
+                        </div>
+                    </TabsContent>
+                    </Tabs>
+                </div>
+            </div>
         </CardContent>
       </Card>
-
-      <div className="mt-8">
-        <h2 className="text-lg font-semibold">Train Search</h2>
-        <p className="text-muted-foreground mb-4">
-          Search for trains by number or name to quickly find a route.
-        </p>
-        <div className="w-full max-w-xl">
-            <Tabs defaultValue="train-number">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="train-number">Train Number</TabsTrigger>
-                <TabsTrigger value="train-name">Train Name</TabsTrigger>
-            </TabsList>
-            <TabsContent value="train-number">
-                <div className="flex items-center space-x-2 pt-4">
-                <div className="relative flex-grow">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                    placeholder="Search by train number..."
-                    className="pl-10"
-                    />
-                </div>
-                <Button>Search</Button>
-                <Button variant="secondary">Pick Route</Button>
-                <Button variant="ghost">Clear</Button>
-                </div>
-            </TabsContent>
-            <TabsContent value="train-name">
-                <div className="flex items-center space-x-2 pt-4">
-                <div className="relative flex-grow">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                    placeholder="Search by train name..."
-                    className="pl-10"
-                    />
-                </div>
-                <Button>Search</Button>
-                <Button variant="secondary">Pick Route</Button>
-                <Button variant="ghost">Clear</Button>
-                </div>
-            </TabsContent>
-            </Tabs>
-        </div>
-      </div>
     </>
   );
 }

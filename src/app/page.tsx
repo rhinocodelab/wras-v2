@@ -165,33 +165,6 @@ export default function HomePage() {
                   ISL Video Generation
                 </div>
               </div>
-              <Separator className="my-4" />
-              <div className="px-4 space-y-4">
-                <Card className="bg-muted">
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-sm font-semibold">Route Management</CardTitle>
-                        <CardDescription className="text-xs">
-                            Manage train routes for announcements.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-                <Card className="bg-muted">
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-sm font-semibold">AI Generation</CardTitle>
-                        <CardDescription className="text-xs">
-                            Generate translations and audio.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-                <Card className="bg-muted">
-                    <CardHeader className="p-4">
-                        <CardTitle className="text-sm font-semibold">ISL Video</CardTitle>
-                        <CardDescription className="text-xs">
-                            Create ISL video announcements.
-                        </CardDescription>
-                    </CardHeader>
-                </Card>
-              </div>
             </nav>
           </aside>
           <main className="flex-1 p-4 sm:p-6">{renderContent()}</main>
