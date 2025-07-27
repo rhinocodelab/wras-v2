@@ -18,7 +18,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog';
 import {
@@ -34,7 +33,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, ClipboardList } from 'lucide-react';
-import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates, runTemplateFlow } from '@/app/actions';
+import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Gujarati'];
@@ -56,7 +55,6 @@ export default function AnnouncementTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [processingItem, setProcessingItem] = useState('');
   const [isClearing, setIsClearing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -107,54 +105,34 @@ export default function AnnouncementTemplatesPage() {
   
   const processFileContent = async (content: string) => {
     setIsProcessing(true);
-    setProcessingItem('Parsing file...');
-
     try {
-        const parsedTemplates = JSON.parse(content);
-        const englishTemplates: { [key: string]: string } = {};
-        
+        const parsedData = JSON.parse(content);
+        const allNewTemplates: Omit<Template, 'id'>[] = [];
+
         for (const category of ANNOUNCEMENT_CATEGORIES) {
-            if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
-                throw new Error(`Template for category "${category}" is missing or invalid.`)
+            if (!parsedData[category]) {
+                throw new Error(`Category "${category}" not found in JSON file.`);
             }
-            englishTemplates[category] = parsedTemplates[category];
-        }
-        
-        const allNewTemplates: Template[] = [];
 
-        for (const category of ANNOUNCEMENT_CATEGORIES) {
-            allNewTemplates.push({
-                category,
-                language_code: 'en',
-                template_text: englishTemplates[category],
-            });
-
-            for (const langCode of ['hi', 'mr', 'gu']) {
-                const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
-                setProcessingItem(`Translating: ${langName} '${category.replace('_', ' ')}'`);
-                
-                const result = await runTemplateFlow({
-                    template: englishTemplates[category],
-                    languageCode: langCode,
-                    category: category,
-                });
-
+            for (const langCode of Object.values(LANGUAGE_CODES)) {
+                if (typeof parsedData[category][langCode] !== 'string') {
+                    throw new Error(`Template for category "${category}" and language "${langCode}" is missing or invalid.`);
+                }
                 allNewTemplates.push({
                     category,
                     language_code: langCode,
-                    template_text: result.translatedText,
+                    template_text: parsedData[category][langCode],
                 });
             }
         }
         
-        setProcessingItem('Saving all templates to database...');
         await saveAnnouncementTemplates(allNewTemplates);
         
         await fetchTemplates();
 
         toast({
           title: 'Processing Complete',
-          description: 'Text templates have been translated and saved successfully.',
+          description: 'Hardcoded templates have been saved successfully.',
         });
 
     } catch (error: any) {
@@ -165,7 +143,6 @@ export default function AnnouncementTemplatesPage() {
         });
     } finally {
         setIsProcessing(false);
-        setProcessingItem('');
     }
   }
 
@@ -252,7 +229,7 @@ export default function AnnouncementTemplatesPage() {
             Announcement Templates
           </h1>
           <p className="text-muted-foreground">
-            Upload and manage multilingual announcement templates.
+            Upload and manage multilingual announcement templates from a single JSON file.
           </p>
         </div>
         <AlertDialog>
@@ -285,7 +262,7 @@ export default function AnnouncementTemplatesPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Upload Templates</CardTitle>
-                    <CardDescription>Upload a JSON file. Text translation will be generated automatically.</CardDescription>
+                    <CardDescription>Upload a JSON file with all language translations.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div
@@ -318,9 +295,9 @@ export default function AnnouncementTemplatesPage() {
                         </div>
                     </div>
                      <div className="mt-4 text-xs text-muted-foreground">
-                        <p>The JSON file should be an object with keys for each category:</p>
+                        <p>The JSON file should be an object where each category key contains translations:</p>
                         <pre className="mt-2 p-2 bg-muted rounded-md text-xs">
-                            {`{\n  "Arriving": "...",\n  "Delay": "...",\n  "Cancelled": "...",\n  "Platform_Change": "..."\n}`}
+                            {`{\n  "Arriving": {\n    "en": "...",\n    "hi": "...",\n    "mr": "...",\n    "gu": "..."\n  },\n  "Delay": { ... }\n}`}
                         </pre>
                     </div>
                 </CardContent>
@@ -408,14 +385,11 @@ export default function AnnouncementTemplatesPage() {
                 <DialogHeader>
                     <DialogTitle>Processing Templates</DialogTitle>
                     <DialogDescription>
-                        Please wait while templates are being translated. This should only take a moment.
+                        Please wait while templates are being saved. This should only take a moment.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 items-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <div className="text-center">
-                        <p className="text-sm text-muted-foreground">{processingItem}</p>
-                    </div>
                 </div>
             </DialogContent>
         </Dialog>

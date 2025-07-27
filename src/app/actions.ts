@@ -9,7 +9,6 @@ import sqlite3 from 'sqlite3';
 import { revalidatePath } from 'next/cache';
 import { translateAllRoutes } from '@/ai/flows/translate-flow';
 import { generateSpeech } from '@/ai/flows/tts-flow';
-import { translateTemplateFlow, TemplateTranslationInput } from '@/ai/flows/translate-template-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateAnnouncement, AnnouncementInput, AnnouncementOutput } from '@/ai/flows/announcement-flow';
@@ -484,9 +483,10 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
     }
 }
 
-export async function saveAnnouncementTemplates(templates: Template[]) {
+export async function saveAnnouncementTemplates(templates: Omit<Template, 'id'>[]) {
     const db = await getDb();
     try {
+        await db.run('BEGIN TRANSACTION');
         await db.run('DELETE FROM announcement_templates');
         const stmt = await db.prepare(
             'INSERT INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
@@ -495,36 +495,14 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
             await stmt.run(template.category, template.language_code, template.template_text);
         }
         await stmt.finalize();
+        await db.run('COMMIT');
         revalidatePath('/announcement-templates');
     } catch (error) {
+        await db.run('ROLLBACK');
         console.error('Failed to save announcement templates:', error);
         throw new Error('Failed to save templates.');
     } finally {
         await db.close();
-    }
-}
-
-
-export async function runTemplateFlow(input: TemplateTranslationInput) {
-    try {
-        const result = await translateTemplateFlow(input);
-        
-        const db = await getDb();
-
-        await db.run(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)',
-            input.category,
-            input.languageCode,
-            result.translatedText
-        );
-       
-        await db.close();
-        revalidatePath('/announcement-templates');
-
-        return { success: true, ...result };
-    } catch (error) {
-        console.error(`Failed to run template flow for ${input.category} in ${input.languageCode}`, error);
-        throw new Error('Template processing failed.');
     }
 }
 
