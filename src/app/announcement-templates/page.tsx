@@ -33,7 +33,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ClipboardList, Volume2, CheckCircle, XCircle } from 'lucide-react';
+import { Upload, Loader2, ClipboardList, Volume2 } from 'lucide-react';
 import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates, runTemplateFlow } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
@@ -254,11 +254,6 @@ export default function AnnouncementTemplatesPage() {
     toast({ title: 'Completed', description: `All audio generated for ${category}.` });
   };
   
-  const hasAudio = (category: string, lang: string) => {
-     const template = getTemplate(category, lang);
-     return template && template.template_audio_parts && JSON.parse(template.template_audio_parts).some((p: any) => p !== null);
-  }
-
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">
@@ -373,7 +368,7 @@ export default function AnnouncementTemplatesPage() {
                                 <TableRow key={category}>
                                 <TableCell className="font-medium">{category.replace('_', ' ')}</TableCell>
                                 <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
-                                <TableCell className="text-center">
+                                <TableCell className="text-center space-x-1">
                                     <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
                                     </DialogTrigger>
@@ -389,7 +384,7 @@ export default function AnnouncementTemplatesPage() {
                                         variant="ghost" 
                                         size="icon" 
                                         onClick={() => handleGenerateAudioForCategory(category)}
-                                        disabled={isGeneratingAudio === category}
+                                        disabled={isGeneratingAudio === category || !getTemplate(category, 'English')}
                                      >
                                         {isGeneratingAudio === category ? <Loader2 className="h-4 w-4 animate-spin"/> : <Volume2 className="h-4 w-4" />}
                                      </Button>
@@ -441,5 +436,3 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
-
-    
