@@ -277,18 +277,23 @@ export function Dashboard() {
             audioPlayer.src = audioPlaylist[currentAudioIndex];
             audioPlayer.play();
           }
+          
+          function startPlayback() {
+             if (videoPlaylist.length > 0) {
+                videoElement.src = videoPlaylist[0];
+                videoElement.play();
+             }
+             if (audioPlaylist.length > 0) {
+                audioPlayer.src = audioPlaylist[0];
+                audioPlayer.play();
+             }
+          }
 
           videoElement.addEventListener('ended', playNextVideo);
-          videoElement.addEventListener('canplay', () => videoElement.play());
           audioPlayer.addEventListener('ended', playNextAudio);
-          audioPlayer.addEventListener('canplay', () => audioPlayer.play());
 
-          if (videoPlaylist.length > 0) {
-            videoElement.src = videoPlaylist[0];
-          }
-          if (audioPlaylist.length > 0) {
-            audioPlayer.src = audioPlaylist[0];
-          }
+          // Start everything once the page is loaded
+          window.addEventListener('load', startPlayback);
         <\/script>
       </body>
       </html>
@@ -297,7 +302,6 @@ export function Dashboard() {
     const blob = new Blob([htmlContent], { type: 'text/html' });
     const url = URL.createObjectURL(blob);
     window.open(url, '_blank');
-    URL.revokeObjectURL(url); // Clean up the object URL
   };
 
   return (
@@ -593,5 +597,3 @@ export function Dashboard() {
     </>
   );
 }
-
-    
