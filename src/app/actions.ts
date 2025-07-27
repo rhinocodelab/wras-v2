@@ -597,8 +597,56 @@ export async function clearAllAnnouncementTemplates() {
   }
 }
 
+export async function getIslVideoPlaylist(text: string): Promise<string[]> {
+    if (!text) return [];
+
+    const allVideoPaths = await getIslVideos();
+    const videoMap = new Map<string, string>();
+    allVideoPaths.forEach(p => {
+        const fileName = p.split('/').pop()?.replace('.mp4', '').replace(/_/g, ' ') ?? '';
+        if (fileName) {
+            videoMap.set(fileName.toLowerCase(), p);
+        }
+    });
+
+    const words = text.toLowerCase().replace(/[.,]/g, '').split(/\s+/);
+    const playlist: string[] = [];
+    let i = 0;
+    while (i < words.length) {
+        // Check for multi-word phrases first (e.g., "mumbai central")
+        let foundMatch = false;
+        // Check for phrases up to 3 words long
+        for (let j = Math.min(i + 2, words.length - 1); j >= i; j--) {
+            const phrase = words.slice(i, j + 1).join(' ');
+            if (videoMap.has(phrase)) {
+                playlist.push(videoMap.get(phrase)!);
+                i = j + 1;
+                foundMatch = true;
+                break;
+            }
+        }
+        if (!foundMatch) {
+            // If no phrase match, check for single word
+            if (videoMap.has(words[i])) {
+                playlist.push(videoMap.get(words[i])!);
+            }
+            i++;
+        }
+    }
+    return playlist;
+}
+
 export async function handleGenerateAnnouncement(input: AnnouncementInput): Promise<AnnouncementOutput> {
-  return await generateAnnouncement(input);
+  const announcementData = await generateAnnouncement(input);
+  
+  const englishAnnouncement = announcementData.announcements.find(a => a.language_code === 'en');
+  if (englishAnnouncement && englishAnnouncement.text) {
+      announcementData.isl_video_playlist = await getIslVideoPlaylist(englishAnnouncement.text);
+  } else {
+      announcementData.isl_video_playlist = [];
+  }
+
+  return announcementData;
 }
 
 

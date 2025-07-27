@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,7 +16,8 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { Search, Volume2, Accessibility, Loader2 } from 'lucide-react';
+import { Separator } from '@/components/ui/separator';
+import { Search, Volume2, Accessibility, Loader2, Video } from 'lucide-react';
 import { getTrainRoutes, TrainRoute, handleGenerateAnnouncement } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,12 +32,74 @@ type Announcement = {
     audio_path: string | null;
 }
 
+type FullAnnouncement = {
+    announcements: Announcement[];
+    isl_video_playlist: string[];
+}
+
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 const LANGUAGE_MAP: { [key: string]: string } = {
   'en': 'English',
   'mr': 'Marathi',
   'hi': 'Hindi',
   'gu': 'Gujarati',
+};
+
+
+const IslVideoPlayer = ({ playlist }: { playlist: string[] }) => {
+    const [currentVideo, setCurrentVideo] = useState(0);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        // Reset to first video when playlist changes
+        setCurrentVideo(0);
+    }, [playlist]);
+
+    const handleVideoEnd = () => {
+        if (currentVideo < playlist.length - 1) {
+            setCurrentVideo(currentVideo + 1);
+        }
+    };
+
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.play();
+        }
+    }, [currentVideo]);
+
+    if (!playlist || playlist.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-4">
+                <Video className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">ISL Announcement</h3>
+                <p className="text-sm text-muted-foreground text-center">No matching ISL videos found for this announcement.</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="flex flex-col h-full">
+            <video
+                ref={videoRef}
+                key={playlist[currentVideo]}
+                className="w-full rounded-t-lg"
+                controls={false}
+                autoPlay
+                muted
+                onEnded={handleVideoEnd}
+            >
+                <source src={playlist[currentVideo]} type="video/mp4" />
+                Your browser does not support the video tag.
+            </video>
+            <div className="flex-grow p-4 bg-muted rounded-b-lg">
+                <h3 className="font-semibold text-sm mb-2">ISL Video Sequence</h3>
+                <p className="text-xs text-muted-foreground">Playing video {currentVideo + 1} of {playlist.length}</p>
+                 <div className="mt-2 text-xs text-muted-foreground break-all">
+                   Current: {playlist[currentVideo].split('/').pop()?.replace('.mp4', '').replace(/_/g, ' ')}
+                </div>
+            </div>
+        </div>
+    );
 };
 
 
@@ -47,7 +110,7 @@ export function Dashboard() {
   const [allRoutes, setAllRoutes] = useState<TrainRoute[]>([]);
   const [selectedRoutes, setSelectedRoutes] = useState<TrainRoute[]>([]);
   const [displayedRoutes, setDisplayedRoutes] = useState<DisplayRoute[]>([]);
-  const [generatedAnnouncements, setGeneratedAnnouncements] = useState<Announcement[]>([]);
+  const [generatedData, setGeneratedData] = useState<FullAnnouncement | null>(null);
   const [searchNumber, setSearchNumber] = useState('');
   const [searchName, setSearchName] = useState('');
   const { toast } = useToast();
@@ -119,7 +182,7 @@ export function Dashboard() {
             platform: route.platform,
             category: route.category
         });
-        setGeneratedAnnouncements(result.announcements);
+        setGeneratedData(result);
         setIsAnnouncementModalOpen(true);
     } catch(error) {
         console.error("Announcement generation failed:", error);
@@ -361,7 +424,7 @@ export function Dashboard() {
             <DialogHeader>
                 <DialogTitle>Generating Announcement</DialogTitle>
                 <DialogDescription>
-                    Please wait while the text and audio are being generated. This may take a moment.
+                    Please wait while the text, audio, and video are being generated. This may take a moment.
                 </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-4 py-4 items-center">
@@ -372,42 +435,49 @@ export function Dashboard() {
       </Dialog>
       
       <Dialog open={isAnnouncementModalOpen} onOpenChange={setIsAnnouncementModalOpen}>
-        <DialogContent className="sm:max-w-2xl">
+        <DialogContent className="max-w-4xl h-[80vh]">
             <DialogHeader>
                 <DialogTitle>Generated Announcement</DialogTitle>
                  <DialogDescription>
-                    Review the generated text and audio for each language.
+                    Review the generated text, audio, and ISL video for the announcement.
                 </DialogDescription>
             </DialogHeader>
-            <div className="max-h-[60vh] overflow-y-auto p-1">
-                <div className="space-y-4">
-                    {generatedAnnouncements.map(ann => (
-                       <Card key={ann.language_code}>
-                           <CardHeader>
-                               <CardTitle className="text-lg">{LANGUAGE_MAP[ann.language_code]}</CardTitle>
-                           </CardHeader>
-                           <CardContent className="space-y-4">
-                                <div>
-                                    <h4 className="font-semibold text-sm mb-1">Generated Text:</h4>
-                                    <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">{ann.text}</p>
-                                </div>
-                                <div>
-                                     <h4 className="font-semibold text-sm mb-1">Generated Audio:</h4>
-                                     {ann.audio_path ? (
-                                        <audio controls className="w-full h-10" key={ann.audio_path}>
-                                            <source src={ann.audio_path} type="audio/wav" />
-                                            Your browser does not support the audio element.
-                                        </audio>
-                                     ) : (
-                                        <p className="text-sm text-destructive">Audio generation failed. Ensure all source audio files exist.</p>
-                                     )}
-                                </div>
-                           </CardContent>
-                       </Card>
-                    ))}
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 h-full overflow-hidden pt-2">
+                <div className="flex flex-col h-full">
+                    <div className="max-h-full overflow-y-auto space-y-4 pr-4">
+                        {generatedData?.announcements.map(ann => (
+                           <Card key={ann.language_code}>
+                               <CardHeader>
+                                   <CardTitle className="text-lg">{LANGUAGE_MAP[ann.language_code]}</CardTitle>
+                               </CardHeader>
+                               <CardContent className="space-y-4">
+                                    <div>
+                                        <h4 className="font-semibold text-sm mb-1">Generated Text:</h4>
+                                        <p className="text-sm text-muted-foreground p-2 border rounded-md bg-muted/50">{ann.text}</p>
+                                    </div>
+                                    <div>
+                                         <h4 className="font-semibold text-sm mb-1">Generated Audio:</h4>
+                                         {ann.audio_path ? (
+                                            <audio controls className="w-full h-10" key={ann.audio_path}>
+                                                <source src={ann.audio_path} type="audio/wav" />
+                                                Your browser does not support the audio element.
+                                            </audio>
+                                         ) : (
+                                            <p className="text-sm text-destructive">Audio generation failed. Ensure all source audio files exist.</p>
+                                         )}
+                                    </div>
+                               </CardContent>
+                           </Card>
+                        ))}
+                    </div>
                 </div>
-            </div>
-            <DialogFooter>
+
+                <div className="h-full overflow-hidden">
+                     {generatedData && <IslVideoPlayer playlist={generatedData.isl_video_playlist} />}
+                </div>
+
+             </div>
+            <DialogFooter className="mt-4">
                 <Button onClick={() => setIsAnnouncementModalOpen(false)}>Close</Button>
             </DialogFooter>
         </DialogContent>

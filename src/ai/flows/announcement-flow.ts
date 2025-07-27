@@ -23,6 +23,7 @@ const AnnouncementOutputSchema = z.object({
         text: z.string(),
         audio_path: z.string().nullable(),
     })),
+    isl_video_playlist: z.array(z.string()),
 });
 
 export type AnnouncementOutput = z.infer<typeof AnnouncementOutputSchema>;
@@ -200,7 +201,7 @@ const generateAnnouncementFlow = ai.defineFlow(
         announcements.push({ language_code: lang, text, audio_path: finalAudioPath });
     }
     
-    return { announcements };
+    return { announcements, isl_video_playlist: [] };
   }
 );
 
