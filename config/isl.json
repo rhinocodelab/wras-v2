@@ -1,0 +1,14 @@
+{
+    "type": "service_account",
+    "project_id": "amiable-bonus-462911-c8",
+    "private_key_id": "16b03f723c30f5a5d76ac93ab0f2b45616ce9539",
+    "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEuwIBADANBgkqhkiG9w0BAQEFAASCBKUwggShAgEAAoIBAQCZuOYWG7RPv9Aw\n7fCY7G72IbAVlViZ0VQ3lbdditvYbv0ZBqTrpJdpJxx+G6S7rn2RVS200uIt3zJx\nDk9ymRIanXH3SOYb16kiLTj3uRTZlRdQFIptqcp4iN6Wlf6rSEncuHjZ/J7dmReD\nLmUb9rcsyeCGBDFTqJhUwuAbpSgKouv0RC7p2hlbJTIHUYeJAVmINYJnV1VognPM\ncPxgshM+8FBDP3J1RFaseFtKXYPol321FgNcKfaE4YwaddM4MzUpiSphQxV22iTT\nS6HNmzZU9Hd3d7soEGV4RWLyQe0f6/gH0iVVLzd8UlUvxS8/fiBmcHxBBzyVnBDc\nPkZdjL1/AgMBAAECgf9+5iRgG9QTVu/cHzsprVnsgI2GmRiLN5hOSp8UmYzjHrx7\n7FWOMabMfNJd8x61JgEtTc5td6k/ilbEUwvtjm9jiUCLjaJoBErwlmRwxlkamqP5\nd6YkNrDuJWRFljf7LbHL2Sfqy/Wu+V0aQzKJ4yFT1/4r+UoUcG6lijoh7Yp15sEl\negE0HElvpwa5n2gbHQc+kmfkthUuYgXn/RJspzMOsi1zZru5ANRUsdqltKmt0vHe\nAynkx4GeVyLKOTyAMYqHo5O863aYc5I/cXlAVvHEkuqRI0667VU0e1lMTJ4nBWnj\n1D92GSpZ2Kz+A7AZgKqPJPqVE1eN0cVEFpCr6TECgYEAzZ9W39lAkZIRYPvf/qJ8\nq9qLENjNBcRj0szd+Xteo83kNwFk0SwHKhe2A3By/sbDt150xMmjRSiK+niwcOAb\nLDzmUfYhW9sSuJWNuOPZKI1dd7msAbjLL7vxjsAdPl/57Eoq2O3KBJ/2EJ4yxT7G\nX7elaeqMtl+6OmbsYEl+OaMCgYEAv2JgNGYQDZV3ZS4wxP1Oz/hyVlfjLDz+e3/2\nxdPkcjcHX1aNsBNza5Ia87OvmHOcGrMmDWyjr0N9OdpE8tRXyEAAZOIM42G8uOvB\nej34u0b2RWz5GbIDuGbzDpuNxNCIx5vYZK7ZiYjDM2a+AbAiO1vXvq5wHhQsJRfQ\nFZzEYnUCgYAK6yMZz9d142O42qcSRl6IYZpw0pJQdBU45FgFH1/vIsezhAdudAAN\nZCTuGdKBZNyPqBxbNrnMulJm6nG0DLJkrvcr8v3ieseLtaVI5BBr7tW/vcQ8cyuW\n5Uv2YI0s+ruyqF2OF1Ja3IOcbkoT3zl5a68E6MeAB6VD5KM4ma5yMQKBgQC0a/KU\nE0+47ppDOZtiagbdirOHcI1KTCoAlW83qn1nqzb5CujCAGREGdXsvw2gJAUbKp6J\n80wQUwh//KQZZFNpBeUZNf2+copurlqUek29h7VtV8EyFx7ova0PrVemHo2D2AjV\nSfzsapDTKV2gy8JJwViPe3VY9d10DpHtff+pbQKBgARWRIUPpHJNwAS8ut6mXXTO\nH+sjrPLqzOGpaQ1dg/AXzso1fBUnF2qLy00SR1dJaCxp7X0NZvjE0wGMye8/COvX\n6YdsV3DjIsrjUj8ydQi44pzznvHg3cjDmAitiW6r4jaaEIMFQu3GKBXOenYoskk8\nm1bMS80SK8nfdII30JZx\n-----END PRIVATE KEY-----\n",
+    "client_email": "aipower-translations@amiable-bonus-462911-c8.iam.gserviceaccount.com",
+    "client_id": "107633417206242163639",
+    "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+    "token_uri": "https://oauth2.googleapis.com/token",
+    "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+    "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/aipower-translations%40amiable-bonus-462911-c8.iam.gserviceaccount.com",
+    "universe_domain": "googleapis.com"
+  }
+  

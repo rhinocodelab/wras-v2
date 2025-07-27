@@ -1,4 +1,3 @@
-
 'use server';
 
 /**
@@ -11,8 +10,19 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
+import * as fs from 'fs';
+import * as path from 'path';
 
 const LANGUAGES = ['en', 'mr', 'hi', 'gu'];
+
+// Function to read the project ID from the JSON configuration file
+function getProjectId(): string {
+    const configPath = path.join(process.cwd(), 'config', 'isl.json');
+    const configFile = fs.readFileSync(configPath, 'utf8');
+    const config = JSON.parse(configFile);
+    return config.project_id;
+}
+
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (targetLanguage === 'en') {
@@ -20,8 +30,8 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
     }
 
     try {
-        const translationClient = new TranslationServiceClient();
-        const projectId = await translationClient.getProjectId();
+        const projectId = getProjectId();
+        const translationClient = new TranslationServiceClient({ projectId });
         
         const request = {
             parent: `projects/${projectId}/locations/global`,
@@ -40,6 +50,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         return text; 
     } catch (error) {
         console.error(`Error during translation from 'en' to '${targetLanguage}':`, error);
+        // In case of an error, return the original text to avoid breaking the flow
         return text;
     }
 }
