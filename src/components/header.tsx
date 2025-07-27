@@ -13,24 +13,8 @@ type HeaderProps = {
 
 export function Header({ session }: HeaderProps) {
   return (
-    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6">
-      <div className="sm:hidden">
-        <SidebarTrigger />
-      </div>
-      <Link
-        href="#"
-        className="flex items-center gap-2 text-lg font-semibold md:text-base"
-      >
-        <div className="flex h-10 w-10 items-center justify-center bg-primary">
-          <TramFront className="h-6 w-6 text-primary-foreground" />
-        </div>
-        <div>
-          <div className="font-bold">WRAS-DHH</div>
-          <div className="text-xs text-muted-foreground">
-            Western Railway Announcement System
-          </div>
-        </div>
-      </Link>
+    <header className="sticky top-0 z-30 flex h-14 items-center gap-4 border-b bg-background px-4 sm:static sm:h-auto sm:border-0 sm:bg-transparent sm:px-6 sm:py-4">
+      <SidebarTrigger className="sm:hidden" />
       <div className="flex items-center gap-4 ml-auto">
         {session && (
           <div className="flex items-center gap-2 text-sm">
@@ -39,9 +23,9 @@ export function Header({ session }: HeaderProps) {
           </div>
         )}
         <form action={logout}>
-          <Button variant="outline" size="sm" type="submit">
-            <LogOut className="mr-2 h-4 w-4" />
-            Sign Out
+          <Button variant="outline" size="icon" type="submit" className='w-10 h-10'>
+            <LogOut className="h-4 w-4" />
+            <span className="sr-only">Sign Out</span>
           </Button>
         </form>
       </div>
