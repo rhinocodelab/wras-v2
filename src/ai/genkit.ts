@@ -9,8 +9,6 @@ import {googleAI} from '@genkit-ai/googleai';
 // authentication, which will be automatically discovered by the plugin.
 export const ai = genkit({
   plugins: [
-    googleAI({
-      apiClient: 'vertex',
-    }),
+    googleAI(),
   ],
 });
