@@ -32,12 +32,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
-import {
-    Tooltip,
-    TooltipContent,
-    TooltipProvider,
-    TooltipTrigger,
-} from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, ClipboardList } from 'lucide-react';
 import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
@@ -63,6 +57,8 @@ export default function AnnouncementTemplatesPage() {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [processingStep, setProcessingStep] = useState('');
+  const [processingItem, setProcessingItem] = useState('');
   const [isClearing, setIsClearing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -112,50 +108,81 @@ export default function AnnouncementTemplatesPage() {
   };
   
   const processFileContent = async (content: string) => {
-      setIsProcessing(true);
-      try {
+    setIsProcessing(true);
+    try {
         const parsedTemplates = JSON.parse(content);
         const englishTemplates: { [key: string]: string } = {};
 
+        // Validate input JSON
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if(!parsedTemplates[category] || typeof parsedTemplates[category] !== 'string'){
                 throw new Error(`Template for category "${category}" is missing or invalid.`)
             }
             englishTemplates[category] = parsedTemplates[category];
         }
+
+        const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
         
+        // Phase 1: Translate all text first
+        setProcessingStep('Step 1 of 2: Translating Templates...');
+        const templatesToProcess: Template[] = [];
+
         for (const category in englishTemplates) {
-            const englishTemplate = englishTemplates[category];
-            const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
-            
             for (const langCode of languagesToProcess) {
-                const result = await translateTemplateFlow({ template: englishTemplate, languageCode: langCode, category });
+                const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === langCode) || langCode;
+                setProcessingItem(`Processing: ${langName} '${category.replace('_', ' ')}'`);
+
+                const result = await translateTemplateFlow({ template: englishTemplates[category], languageCode: langCode, category, generateAudio: false });
                 const templateToSave: Template = {
                     category,
                     language_code: langCode,
                     template_text: result.translatedText,
-                    template_audio_parts: JSON.stringify(result.audioParts)
+                    template_audio_parts: JSON.stringify([]) // Initially empty
                 };
-                 await saveAnnouncementTemplates([templateToSave]);
+                await saveAnnouncementTemplates([templateToSave]);
+                templatesToProcess.push(templateToSave);
             }
         }
         
-        await fetchTemplates();
+        await fetchTemplates(); // Show text translations in UI immediately
+
+        // Phase 2: Generate all audio sequentially
+        setProcessingStep('Step 2 of 2: Generating Audio...');
+        
+        for (const template of templatesToProcess) {
+            const langName = Object.keys(LANGUAGE_CODES).find(key => LANGUAGE_CODES[key] === template.language_code) || template.language_code;
+            setProcessingItem(`Processing: ${langName} '${template.category.replace('_', ' ')}'`);
+            
+            // Call flow again, this time to generate audio
+            const result = await translateTemplateFlow({ template: template.template_text, languageCode: template.language_code, category: template.category, generateAudio: true, isTextTranslated: true });
+            
+            const updatedTemplate: Template = {
+                ...template,
+                template_audio_parts: JSON.stringify(result.audioParts)
+            };
+            await saveAnnouncementTemplates([updatedTemplate]);
+        }
+        
+        await fetchTemplates(); // Refresh with audio paths
 
         toast({
           title: 'Processing Complete',
-          description: 'Templates have been translated and saved successfully.',
+          description: 'Templates have been translated and audio has been generated successfully.',
         });
-      } catch (error: any) {
+
+    } catch (error: any) {
         toast({
           variant: 'destructive',
           title: 'File Error',
           description: `Failed to process file: ${error.message}`,
         });
-      } finally {
+    } finally {
         setIsProcessing(false);
-      }
+        setProcessingStep('');
+        setProcessingItem('');
+    }
   }
+
 
   const processFile = (file: File) => {
     const reader = new FileReader();
@@ -391,23 +418,24 @@ export default function AnnouncementTemplatesPage() {
       </div>
       
        <Dialog open={isProcessing}>
-            <DialogContent className="sm:max-w-md">
+            <DialogContent className="sm:max-w-md" onInteractOutside={(e) => e.preventDefault()}>
                 <DialogHeader>
                     <DialogTitle>Processing Templates</DialogTitle>
                     <DialogDescription>
-                        Please wait while templates are being translated and saved.
+                        Please wait while templates are being processed. This may take some time.
                     </DialogDescription>
                 </DialogHeader>
                 <div className="flex flex-col gap-4 py-4 items-center">
                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                    <p className="text-sm text-muted-foreground">Processing...</p>
+                    <div className="text-center">
+                        <p className="text-sm font-medium text-foreground">{processingStep}</p>
+                        <p className="text-sm text-muted-foreground">{processingItem}</p>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
     </div>
   );
 }
-
-    
 
     
