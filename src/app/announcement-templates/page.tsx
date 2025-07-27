@@ -62,11 +62,8 @@ export default function AnnouncementTemplatesPage() {
     }
   };
   
-  const processFile = (file: File) => {
-    const reader = new FileReader();
-    reader.onload = async (event) => {
+  const processFileContent = async (content: string) => {
       try {
-        const content = event.target?.result as string;
         const parsedTemplates = JSON.parse(content);
 
         // Basic validation
@@ -102,9 +99,33 @@ export default function AnnouncementTemplatesPage() {
       } finally {
         setIsProcessing(false);
       }
+  }
+
+  const processFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      const content = event.target?.result as string;
+      await processFileContent(content);
     };
     reader.readAsText(file);
   };
+
+  const handleUseSample = async () => {
+    try {
+        const response = await fetch('/sample_annoucement_template/announcement_templates.json');
+        if (!response.ok) {
+            throw new Error('Failed to load sample templates.');
+        }
+        const content = await response.text();
+        await processFileContent(content);
+    } catch (error: any) {
+         toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: error.message,
+        });
+    }
+  }
 
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -143,7 +164,7 @@ export default function AnnouncementTemplatesPage() {
             <Card>
                 <CardHeader>
                     <CardTitle>Upload Templates</CardTitle>
-                    <CardDescription>Upload a JSON file with your English announcement templates.</CardDescription>
+                    <CardDescription>Upload a JSON file or use our sample templates to get started.</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div
@@ -158,19 +179,22 @@ export default function AnnouncementTemplatesPage() {
                         Drag & drop your .json file here
                         </p>
                         <p className="text-sm text-muted-foreground mb-4">or</p>
-                        <Input
-                        type="file"
-                        id="file-upload"
-                        className="hidden"
-                        accept=".json"
-                        onChange={handleFileUpload}
-                        />
-                        <label
-                        htmlFor="file-upload"
-                        className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
-                        >
-                        Browse File
-                        </label>
+                         <div className="flex gap-2">
+                            <Input
+                            type="file"
+                            id="file-upload"
+                            className="hidden"
+                            accept=".json"
+                            onChange={handleFileUpload}
+                            />
+                            <label
+                            htmlFor="file-upload"
+                            className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium h-9 px-4 bg-primary text-primary-foreground hover:bg-primary/90"
+                            >
+                            Browse File
+                            </label>
+                            <Button variant="secondary" onClick={handleUseSample}>Use Sample</Button>
+                        </div>
                     </div>
                      <div className="mt-4 text-xs text-muted-foreground">
                         <p>The JSON file should be an object with keys for each category:</p>
@@ -221,7 +245,7 @@ export default function AnnouncementTemplatesPage() {
                     ) : (
                         <div className="text-center text-muted-foreground p-12 border rounded-md">
                             <p>No templates loaded.</p>
-                            <p className='text-sm'>Upload a JSON file to get started.</p>
+                            <p className='text-sm'>Upload a JSON file or use the sample to get started.</p>
                         </div>
                     )}
                 </CardContent>
