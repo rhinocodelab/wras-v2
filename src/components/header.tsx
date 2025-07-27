@@ -18,7 +18,7 @@ export function Header({ session }: HeaderProps) {
           href="#"
           className="flex items-center gap-2 text-lg font-semibold md:text-base"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+          <div className="flex h-10 w-10 items-center justify-center bg-primary">
             <TramFront className="h-6 w-6 text-primary-foreground" />
           </div>
           <div>

@@ -10,7 +10,7 @@ const SESSION_COOKIE_NAME = 'session';
 const DUMMY_USER = {
   email: 'admin',
   password: 'wras@dhh',
-  name: 'Railway Employee',
+  name: 'Admin',
 };
 
 const loginSchema = z.object({
