@@ -95,11 +95,17 @@ async function concatenateAudio(filePaths: (string | null | undefined)[], output
     const audioData: Buffer[] = [];
 
     for (const filePath of validFiles) {
-        const content = await fsPromises.readFile(filePath);
-        const data = content.slice(headerLength);
-        audioData.push(data);
-        totalLength += data.length;
+        try {
+            const content = await fsPromises.readFile(filePath);
+            const data = content.slice(headerLength);
+            audioData.push(data);
+            totalLength += data.length;
+        } catch (error) {
+            console.warn(`Could not read audio file: ${filePath}`, error);
+        }
     }
+
+    if (audioData.length === 0) return null;
     
     const firstFileContent = await fsPromises.readFile(validFiles[0]);
     const header = firstFileContent.slice(0, headerLength);
@@ -145,13 +151,14 @@ const generateAnnouncementFlow = ai.defineFlow(
         
         // 2. Generate Audio
         let finalAudioPath: string | null = null;
-        if(audioData) {
+        if(audioData && template.audio_parts) {
             const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
-            const parts = template.text.split(placeholderRegex);
+            const textParts = template.text.split(placeholderRegex).filter(p => p.length > 0);
+            
             const audioSnippets: (string | null)[] = [];
             let staticAudioIndex = 0;
             
-            for (const part of parts) {
+            for (const part of textParts) {
                 if (placeholderRegex.test(part)) {
                     const placeholder = part.slice(1, -1); // remove {}
                     switch(placeholder) {
@@ -172,13 +179,14 @@ const generateAnnouncementFlow = ai.defineFlow(
                             break;
                     }
                 } else if (part.trim().length > 0) {
-                     if (template.audio_parts && template.audio_parts[staticAudioIndex]) {
-                        audioSnippets.push(path.join(process.cwd(), 'public', template.audio_parts[staticAudioIndex]));
-                        staticAudioIndex++;
-                    }
+                     const staticAudioPart = template.audio_parts.find((p: string | null) => p?.includes(`part_${staticAudioIndex}.wav`));
+                     if (staticAudioPart) {
+                        audioSnippets.push(path.join(process.cwd(), 'public', staticAudioPart));
+                     }
+                     staticAudioIndex++;
                 }
             }
-
+            
             const outputFileName = `announcement_${route.train_number}_${category}_${lang}_${Date.now()}.wav`;
             finalAudioPath = await concatenateAudio(audioSnippets, outputFileName);
             
@@ -232,12 +240,9 @@ const generateTemplateAudioFlow = ai.defineFlow({
             audioFilePaths.push(null);
         } else if (part.trim().length > 0) {
             // It's a static text part
-            const cleanText = part.replace(/[.,]/g, ' '); // Remove punctuation
+            const cleanText = part.replace(/[.,]/g, ' ').trim(); 
             
-            if (cleanText.trim().length === 0) {
-                // If after removing punctuation, the string is empty, we don't generate audio
-                 audioFilePaths.push(null); // Pushing null to maintain index, though this part is effectively empty
-                 staticPartIndex++; // Still need to increment index
+            if (cleanText.length === 0) {
                  continue;
             }
             
@@ -259,5 +264,3 @@ const generateTemplateAudioFlow = ai.defineFlow({
 export async function generateTemplateAudio(input: z.infer<typeof TemplateAudioInputSchema>): Promise<(string | null)[]> {
     return await generateTemplateAudioFlow(input);
 }
-
-    

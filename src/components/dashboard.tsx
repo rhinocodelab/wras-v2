@@ -126,7 +126,7 @@ export function Dashboard() {
         toast({
             variant: "destructive",
             title: "Error",
-            description: "Failed to generate announcement. Please ensure translations and audio are generated for this route."
+            description: "Failed to generate announcement. Please ensure translations and audio are generated for this route and its template."
         })
     } finally {
         setIsGenerating(false);
@@ -399,7 +399,7 @@ export function Dashboard() {
                                             Your browser does not support the audio element.
                                         </audio>
                                      ) : (
-                                        <p className="text-sm text-destructive">Audio generation failed.</p>
+                                        <p className="text-sm text-destructive">Audio generation failed. Ensure all source audio files exist.</p>
                                      )}
                                 </div>
                            </CardContent>

@@ -447,11 +447,11 @@ export async function clearAllAudio() {
     const db = await getDb();
     try {
         const audioDir = path.join(process.cwd(), 'public', 'audio');
-        // Clear all subdirectories except 'templates'
+        // Clear all subdirectories except 'templates' and '_announcements'
         const entries = await fs.readdir(audioDir, { withFileTypes: true });
         for (const entry of entries) {
             const fullPath = path.join(audioDir, entry.name);
-            if (entry.isDirectory() && entry.name !== 'templates') {
+            if (entry.isDirectory() && entry.name !== 'templates' && entry.name !== '_announcements') {
                 await fs.rm(fullPath, { recursive: true, force: true });
             }
         }
@@ -524,6 +524,9 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
 export async function saveAnnouncementTemplate(template: Omit<Template, 'id'>) {
     const db = await getDb();
     try {
+        // Use INSERT OR REPLACE to either insert a new record or replace an existing one
+        // based on the UNIQUE constraint on (category, language_code).
+        // Also, explicitly set template_audio_parts to NULL to clear old audio paths.
         const stmt = await db.prepare(
             'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
         );
@@ -679,7 +682,7 @@ export async function getTemplateAudioData(): Promise<TemplateAudioInfo[]> {
         results.forEach(row => {
             if (!groupedData[row.category]) {
                 groupedData[row.category] = {
-                    category: row.category.replace('_', ' '),
+                    category: row.category.replace(/_/g, ' '),
                     templates: [],
                 };
             }
