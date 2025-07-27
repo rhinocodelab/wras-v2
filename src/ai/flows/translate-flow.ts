@@ -11,23 +11,30 @@ import { ai } from '@/ai/genkit';
 import { z } from 'zod';
 import { TrainRoute, Translation } from '@/app/actions';
 import { TranslationServiceClient } from '@google-cloud/translate';
-import * as path from 'path';
-import * as fs from 'fs';
 import { googleAI } from '@genkit-ai/googleai';
 
-const keyFilename = path.join(process.cwd(), 'config', 'isl.json');
+function getCredentials() {
+    if (!process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON) {
+        throw new Error("GOOGLE_APPLICATION_CREDENTIALS_JSON environment variable not set.");
+    }
+    try {
+        return JSON.parse(process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON);
+    } catch (e) {
+        throw new Error("Failed to parse GOOGLE_APPLICATION_CREDENTIALS_JSON.");
+    }
+}
 
 async function translateText(text: string, targetLanguage: string): Promise<string> {
     if (!text || targetLanguage === 'en') {
         return text;
     }
     
-    const credentials = JSON.parse(fs.readFileSync(keyFilename, 'utf8'));
+    const credentials = getCredentials();
     const projectId = credentials.project_id;
 
     const translationClient = new TranslationServiceClient({
         projectId,
-        keyFilename,
+        credentials,
     });
 
     try {
@@ -72,12 +79,12 @@ const translateRouteFlow = ai.defineFlow(
     async ({ route, languageCode }) => {
         
         let trainNumberTranslation: string;
-
+        
         if (languageCode === 'hi') {
-            const trainNumberStr = String(route['Train Number']);
+            const trainNumberStr = String(route['Train Number'] || '');
             trainNumberTranslation = trainNumberStr.split('').map(digit => hindiDigitMap[digit] || digit).join(' ');
         } else {
-            trainNumberTranslation = await translateText(String(route['Train Number']), languageCode);
+            trainNumberTranslation = await translateText(String(route['Train Number'] || ''), languageCode);
         }
 
         const [
