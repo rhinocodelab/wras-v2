@@ -40,7 +40,7 @@ import {
 } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, Loader2, ClipboardList, Volume2 } from 'lucide-react';
-import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
+import { getAnnouncementTemplates, saveAnnouncementTemplate, Template, clearAllAnnouncementTemplates, generateAndSaveTemplateAudio } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
 const LANGUAGES = ['English', 'Hindi', 'Marathi', 'Gujarati'];
@@ -65,6 +65,7 @@ export default function AnnouncementTemplatesPage() {
   const [isClearing, setIsClearing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
+  const [generatingAudioCategory, setGeneratingAudioCategory] = useState<string | null>(null);
   const { toast } = useToast();
 
   const fetchTemplates = async () => {
@@ -114,6 +115,7 @@ export default function AnnouncementTemplatesPage() {
     setIsProcessing(true);
     try {
         const parsedData = JSON.parse(content);
+        let templatesSaved = 0;
         
         for (const category of ANNOUNCEMENT_CATEGORIES) {
             if (!parsedData[category]) {
@@ -127,20 +129,28 @@ export default function AnnouncementTemplatesPage() {
                     console.warn(`Template for category "${category}" and language "${langCode}" is missing or invalid. Skipping.`);
                     continue;
                 }
-                await saveAnnouncementTemplates({
+                await saveAnnouncementTemplate({
                     category,
                     language_code: langCode,
                     template_text: parsedData[category][langCode],
                 });
+                templatesSaved++;
             }
         }
         
-        await fetchTemplates();
-
-        toast({
-          title: 'Processing Complete',
-          description: 'Hardcoded templates have been saved successfully.',
-        });
+        if (templatesSaved > 0) {
+            await fetchTemplates();
+            toast({
+              title: 'Success',
+              description: 'Announcement templates have been saved successfully.',
+            });
+        } else {
+             toast({
+              variant: 'destructive',
+              title: 'No Templates Saved',
+              description: 'The JSON file did not contain any valid templates.',
+            });
+        }
 
     } catch (error: any) {
         toast({
@@ -226,6 +236,48 @@ export default function AnnouncementTemplatesPage() {
         setSelectedTemplate(template);
     }
   };
+
+  const handleGenerateAudioForCategory = async (category: string) => {
+    setGeneratingAudioCategory(category);
+    try {
+      let successCount = 0;
+      for (const lang of LANGUAGES) {
+        const langCode = LANGUAGE_CODES[lang];
+        if (getTemplate(category, lang)) {
+          toast({
+            title: 'Processing...',
+            description: `Generating audio for ${category} in ${LANGUAGE_MAP[langCode]}.`,
+          });
+          await generateAndSaveTemplateAudio(category, langCode);
+          successCount++;
+          // Add delay between API calls
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+      }
+
+      if (successCount > 0) {
+        toast({
+          title: 'Success!',
+          description: `Audio generation complete for the ${category} category.`,
+        });
+      } else {
+         toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: `No templates found for category: ${category}.`,
+        });
+      }
+
+    } catch (error: any) {
+        toast({
+            variant: 'destructive',
+            title: 'Audio Generation Failed',
+            description: error.message || `An unexpected error occurred.`
+        });
+    } finally {
+        setGeneratingAudioCategory(null);
+    }
+  }
   
   return (
     <div className="w-full">
@@ -251,7 +303,7 @@ export default function AnnouncementTemplatesPage() {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete all
-                announcement templates from the database.
+                announcement templates and their generated audio from the database.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -342,7 +394,7 @@ export default function AnnouncementTemplatesPage() {
                                 <TableCell className="font-medium">{category.replace('_', ' ')}</TableCell>
                                 <TableCell className="text-xs">{getTemplate(category, 'English')?.template_text || 'N/A'}</TableCell>
                                 <TableCell className="text-center">
-                                    <div className="flex gap-1 justify-center">
+                                   <div className="flex gap-1 justify-center">
                                         <DialogTrigger asChild>
                                             <Button variant="outline" size="xs" onClick={() => handleOpenModal(getTemplate(category, 'Hindi'))} disabled={!getTemplate(category, 'Hindi')}>HI</Button>
                                         </DialogTrigger>
@@ -358,12 +410,21 @@ export default function AnnouncementTemplatesPage() {
                                     <TooltipProvider>
                                         <Tooltip>
                                             <TooltipTrigger asChild>
-                                                <Button variant="ghost" size="icon">
-                                                    <Volume2 className="h-4 w-4" />
+                                                <Button 
+                                                    variant="ghost" 
+                                                    size="icon"
+                                                    onClick={() => handleGenerateAudioForCategory(category)}
+                                                    disabled={generatingAudioCategory === category || !getTemplate(category, 'English')}
+                                                >
+                                                    {generatingAudioCategory === category ? (
+                                                        <Loader2 className="h-4 w-4 animate-spin" />
+                                                    ) : (
+                                                        <Volume2 className="h-4 w-4" />
+                                                    )}
                                                 </Button>
                                             </TooltipTrigger>
                                             <TooltipContent>
-                                                <p>Generate Audio</p>
+                                                <p>Generate audio for this category</p>
                                             </TooltipContent>
                                         </Tooltip>
                                     </TooltipProvider>
@@ -415,3 +476,6 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
+
+
+    

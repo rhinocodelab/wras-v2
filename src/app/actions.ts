@@ -11,7 +11,7 @@ import { translateAllRoutes } from '@/ai/flows/translate-flow';
 import { generateSpeech } from '@/ai/flows/tts-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { generateAnnouncement, AnnouncementInput, AnnouncementOutput } from '@/ai/flows/announcement-flow';
+import { generateAnnouncement, AnnouncementInput, AnnouncementOutput, generateTemplateAudio } from '@/ai/flows/announcement-flow';
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -82,6 +82,7 @@ export async function getDb() {
         category TEXT NOT NULL,
         language_code TEXT NOT NULL,
         template_text TEXT NOT NULL,
+        template_audio_parts TEXT,
         UNIQUE(category, language_code)
     )
     `);
@@ -423,18 +424,26 @@ export async function clearAllAudio() {
     const db = await getDb();
     try {
         const audioDir = path.join(process.cwd(), 'public', 'audio');
-        await fs.rm(audioDir, { recursive: true, force: true });
+        // Clear all subdirectories except 'templates'
+        const entries = await fs.readdir(audioDir, { withFileTypes: true });
+        for (const entry of entries) {
+            const fullPath = path.join(audioDir, entry.name);
+            if (entry.isDirectory() && entry.name !== 'templates') {
+                await fs.rm(fullPath, { recursive: true, force: true });
+            }
+        }
         await db.run('DELETE FROM train_route_audio');
         await db.close();
         revalidatePath('/ai-database/audio');
         revalidatePath('/ai-database/translations');
-        return { message: 'All audio files and records deleted successfully.' };
+        return { message: 'All route audio files and records deleted successfully.' };
     } catch (error) {
         await db.close();
         console.error('Failed to clear all audio:', error);
         throw new Error('Failed to clear all audio files.');
     }
 }
+
 
 export async function getIslVideos(): Promise<string[]> {
   const baseDir = path.join(process.cwd(), 'public');
@@ -489,11 +498,11 @@ export async function getAnnouncementTemplates(): Promise<Template[]> {
     }
 }
 
-export async function saveAnnouncementTemplates(template: Omit<Template, 'id'>) {
+export async function saveAnnouncementTemplate(template: Omit<Template, 'id'>) {
     const db = await getDb();
     try {
         const stmt = await db.prepare(
-            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, NULL)'
         );
         await stmt.run(template.category, template.language_code, template.template_text);
         await stmt.finalize();
@@ -506,13 +515,53 @@ export async function saveAnnouncementTemplates(template: Omit<Template, 'id'>) 
     }
 }
 
+export async function generateAndSaveTemplateAudio(category: string, lang: string) {
+    const db = await getDb();
+    try {
+        // 1. Get the template text
+        const templateRecord = await db.get('SELECT template_text FROM announcement_templates WHERE category = ? AND language_code = ?', [category, lang]);
+        if (!templateRecord) {
+            throw new Error(`Template not found for ${category} - ${lang}`);
+        }
+
+        // 2. Call the AI flow to generate audio
+        const audioParts = await generateTemplateAudio({
+            templateText: templateRecord.template_text,
+            category,
+            languageCode: lang,
+        });
+
+        // 3. Save the returned paths to the database
+        await db.run('UPDATE announcement_templates SET template_audio_parts = ? WHERE category = ? AND language_code = ?', [
+            JSON.stringify(audioParts),
+            category,
+            lang
+        ]);
+        
+        return { message: `Audio successfully generated for ${category} in ${lang}.` };
+
+    } catch (error) {
+        console.error(`Error processing template audio for ${category} - ${lang}:`, error);
+        throw error;
+    } finally {
+        await db.close();
+    }
+}
+
 
 export async function clearAllAnnouncementTemplates() {
   const db = await getDb();
   try {
+    const templatesDir = path.join(process.cwd(), 'public', 'audio', 'templates');
+    await fs.rm(templatesDir, { recursive: true, force: true }).catch(err => {
+        if (err.code !== 'ENOENT') { // Ignore error if directory doesn't exist
+            throw err;
+        }
+    });
+
     await db.run('DELETE FROM announcement_templates');
     revalidatePath('/announcement-templates');
-    return { message: 'All announcement templates have been deleted.' };
+    return { message: 'All announcement templates and their audio have been deleted.' };
   } catch (error) {
     console.error('Failed to clear announcement templates:', error);
     throw new Error('Failed to clear templates.');
@@ -520,6 +569,7 @@ export async function clearAllAnnouncementTemplates() {
     await db.close();
   }
 }
+
 
 export async function handleGenerateAnnouncement(input: AnnouncementInput): Promise<AnnouncementOutput> {
   return await generateAnnouncement(input);
@@ -579,5 +629,7 @@ export async function getSession() {
     return null;
   }
 }
+
+    
 
     

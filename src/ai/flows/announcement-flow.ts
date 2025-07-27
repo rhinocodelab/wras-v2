@@ -201,4 +201,63 @@ export async function generateAnnouncement(input: AnnouncementInput): Promise<An
   return await generateAnnouncementFlow(input);
 }
 
+
+// --- New Flow for Template Audio Generation ---
+
+const TemplateAudioInputSchema = z.object({
+    templateText: z.string(),
+    category: z.string(),
+    languageCode: z.string(),
+});
+
+const TemplateAudioOutputSchema = z.array(z.string().nullable());
+
+const generateTemplateAudioFlow = ai.defineFlow({
+    name: 'generateTemplateAudioFlow',
+    inputSchema: TemplateAudioInputSchema,
+    outputSchema: TemplateAudioOutputSchema,
+}, async ({ templateText, category, languageCode }) => {
+    
+    const placeholderRegex = /({[a-zA-Z0-9_]+})/g;
+    const parts = templateText.split(placeholderRegex);
+    const audioFilePaths: (string | null)[] = [];
+    
+    const audioDir = path.join(process.cwd(), 'public', 'audio', 'templates', category, languageCode);
+    await fsPromises.mkdir(audioDir, { recursive: true });
+
+    let staticPartIndex = 0;
+    for (const part of parts) {
+        if (placeholderRegex.test(part)) {
+            // It's a placeholder like {train_name}, push null and continue
+            audioFilePaths.push(null);
+        } else if (part.trim().length > 0) {
+            // It's a static text part
+            const cleanText = part.replace(/[.,]/g, ' '); // Remove punctuation
+            
+            if (cleanText.trim().length === 0) {
+                // If after removing punctuation, the string is empty, we don't generate audio
+                 audioFilePaths.push(null); // Pushing null to maintain index, though this part is effectively empty
+                 staticPartIndex++; // Still need to increment index
+                 continue;
+            }
+            
+            const audioContent = await generateSpeech(cleanText, languageCode);
+            if (audioContent) {
+                const filePath = path.join(audioDir, `part_${staticPartIndex}.wav`);
+                await fsPromises.writeFile(filePath, audioContent);
+                audioFilePaths.push(filePath.replace(path.join(process.cwd(), 'public'), ''));
+            } else {
+                audioFilePaths.push(null);
+            }
+            staticPartIndex++;
+        }
+    }
+    
+    return audioFilePaths;
+});
+
+export async function generateTemplateAudio(input: z.infer<typeof TemplateAudioInputSchema>): Promise<(string | null)[]> {
+    return await generateTemplateAudioFlow(input);
+}
+
     
