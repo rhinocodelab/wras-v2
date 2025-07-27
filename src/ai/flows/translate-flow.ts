@@ -49,7 +49,7 @@ const translateRouteFlow = ai.defineFlow(
     },
     async ({ route, languageCode }) => {
         
-        const trainNumberFormatted = route['Train Number'].toString().split('').join(' ');
+        const trainNumberFormatted = `Train number: ${route['Train Number']}`;
 
         const [
             trainNumberTranslation,
@@ -57,7 +57,7 @@ const translateRouteFlow = ai.defineFlow(
             startStationTranslation,
             endStationTranslation
         ] = await Promise.all([
-            translateText(trainNumberFormatted, languageCode),
+            translateText(trainNumberFormatted, languageCode).then(translated => translated.replace(/Train number: /i, '').replace(/ट्रेन नंबर: /i, '').trim()),
             translateText(route['Train Name'], languageCode),
             translateText(route['Start Station'], languageCode),
             translateText(route['End Station'], languageCode),
