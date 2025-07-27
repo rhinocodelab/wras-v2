@@ -275,14 +275,13 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
     for (const t of translations) {
         const lang = t.language_code;
 
-        const numAudio = await generateSpeech(t.train_number_translation);
-        await new Promise(resolve => setTimeout(resolve, 21000)); 
-        const nameAudio = await generateSpeech(t.train_name_translation);
-        await new Promise(resolve => setTimeout(resolve, 21000));
-        const startAudio = await generateSpeech(t.start_station_translation);
-        await new Promise(resolve => setTimeout(resolve, 21000));
-        const endAudio = await generateSpeech(t.end_station_translation);
-        await new Promise(resolve => setTimeout(resolve, 21000));
+        // Generate audio concurrently for a single language
+        const [numAudio, nameAudio, startAudio, endAudio] = await Promise.all([
+            generateSpeech(t.train_number_translation),
+            generateSpeech(t.train_name_translation),
+            generateSpeech(t.start_station_translation),
+            generateSpeech(t.end_station_translation),
+        ]);
         
         const numPath = numAudio ? await saveAudioFile(numAudio, path.join(audioDir, `train_number_${lang}.wav`)) : '';
         const namePath = nameAudio ? await saveAudioFile(nameAudio, path.join(audioDir, `train_name_${lang}.wav`)) : '';
@@ -293,6 +292,9 @@ export async function generateAudioForRoute(routeId: number, trainNumber: string
             'INSERT INTO train_route_audio (route_id, language_code, train_number_audio_path, train_name_audio_path, start_station_audio_path, end_station_audio_path) VALUES (?, ?, ?, ?, ?, ?)',
             routeId, lang, numPath, namePath, startPath, endPath
         );
+
+        // Add a delay after processing each language to respect rate limits.
+        await new Promise(resolve => setTimeout(resolve, 21000)); 
     }
 
     await db.close();
@@ -353,5 +355,7 @@ export async function getSession() {
     return null;
   }
 }
+
+    
 
     
