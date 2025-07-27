@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -30,11 +30,11 @@ export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: 
     onViewChange('translations');
   };
   
-  useState(() => {
+  useEffect(() => {
     getTrainRoutes().then(routes => {
         setRoutesExist(routes.length > 0)
     })
-  })
+  }, [])
 
   const handleClearTranslations = async () => {
     setIsClearing(true);
@@ -82,7 +82,7 @@ export default function AiDatabasePage({ onViewChange }: { onViewChange: (view: 
             </Button>
             <AlertDialog>
               <AlertDialogTrigger asChild>
-                <Button variant="destructive" disabled={isClearing}>
+                <Button variant="destructive" disabled={isClearing || !routesExist}>
                     {isClearing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                     {isClearing ? 'Clearing...' : 'Clear All'}
                 </Button>
