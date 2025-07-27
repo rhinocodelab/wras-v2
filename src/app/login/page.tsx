@@ -1,9 +1,7 @@
 import { getSession } from '@/app/actions';
 import { redirect } from 'next/navigation';
 import { LoginForm } from '@/components/login-form';
-import { Card } from '@/components/ui/card';
-import { RailwayIcon } from '@/components/icons';
-import { Separator } from '@/components/ui/separator';
+import { TramFront } from 'lucide-react';
 
 export default async function LoginPage() {
   const session = await getSession();
@@ -12,24 +10,32 @@ export default async function LoginPage() {
   }
 
   return (
-    <main className="flex min-h-screen w-full items-center justify-center bg-background p-4 md:p-8">
-      <div className="w-full max-w-md">
-        <Card className="shadow-lg overflow-hidden rounded-lg border">
-          <div className="relative flex flex-col items-center justify-center text-center bg-primary p-12 text-white">
-            <div className='mb-8 flex items-center justify-center h-20 w-20 rounded-full bg-white/20'>
-              <RailwayIcon className="h-10 w-10 text-primary-foreground" />
+    <main className="flex min-h-screen w-full items-center justify-center bg-gray-100 p-4">
+      <div className="w-full max-w-3xl overflow-hidden rounded-lg bg-white shadow-2xl">
+        <div className="flex flex-col md:flex-row">
+          <div className="flex w-full flex-col items-center justify-center bg-gradient-to-br from-blue-600 to-blue-800 p-8 text-white md:w-1/2">
+            <div className="text-center">
+              <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-white/20">
+                <TramFront className="h-6 w-6 text-white" />
+              </div>
+              <h1 className="mb-2 text-lg font-bold">WRAS-DHH</h1>
+              <p className="mb-3 text-xs leading-relaxed text-blue-100">
+                Western Railway Announcement System
+                <br />
+                for Deaf and Hard of Hearing
+              </p>
+              <div className="mx-auto mb-3 h-0.5 w-12 bg-white/30"></div>
+              <p className="text-xs text-blue-100">
+                Empowering accessibility through
+                <br />
+                visual railway announcements
+              </p>
             </div>
-            <h2 className="text-3xl font-bold">WRAS-DHH</h2>
-            <p className="mt-2 text-base text-primary-foreground/80">
-              Western Railway Announcement System
-              <br />
-              for Deaf and Hard of Hearing
-            </p>
           </div>
-          <div className="p-8 md:p-10 flex flex-col justify-center">
+          <div className="flex w-full flex-col justify-center p-8 md:w-1/2">
             <LoginForm />
           </div>
-        </Card>
+        </div>
       </div>
     </main>
   );

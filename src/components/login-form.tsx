@@ -3,10 +3,9 @@
 import { useFormState, useFormStatus } from 'react-dom';
 import { login } from '@/app/actions';
 import { Button } from '@/components/ui/button';
-import { CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { User, Lock, Loader2, ArrowRight } from 'lucide-react';
+import { User, Lock, Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { AlertTriangle } from 'lucide-react';
 
@@ -18,7 +17,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
-      {pending ? <Loader2 className="animate-spin mr-2" /> : <ArrowRight className="mr-2" />}
+      {pending && <Loader2 className="animate-spin mr-2" />}
       Sign In
     </Button>
   );
@@ -28,59 +27,66 @@ export function LoginForm() {
   const [state, formAction] = useFormState(login, initialState);
 
   return (
-    <form action={formAction} className="flex flex-col h-full">
-      <CardHeader className="px-0 pt-0 text-center">
-        <CardTitle className="text-2xl font-bold">Sign In</CardTitle>
-        <CardDescription>To access your account</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4 mt-6 px-0">
-        <div className="space-y-2">
-          <Label htmlFor="email" className='sr-only'>Username</Label>
-          <div className="relative flex items-center">
-            <User className="absolute left-3 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="email"
-              name="email"
-              type="text"
-              placeholder="Username"
-              required
-              className="pl-10"
-              aria-describedby="email-error"
-            />
-          </div>
-          {state.errors?.email && (
-            <p id="email-error" className="text-sm text-destructive mt-1">{state.errors.email[0]}</p>
-          )}
+    <div className="flex h-full flex-col justify-center">
+       <div className="mb-4">
+        <h2 className="text-xl font-bold text-gray-800 mb-1">Welcome Back</h2>
+        <p className="text-gray-600 text-xs">Please sign in to your account</p>
+      </div>
+      <form action={formAction} className="space-y-3">
+        <div>
+            <Label htmlFor="email" className='text-xs font-medium text-gray-700 mb-1'>Username</Label>
+            <div className="relative flex items-center">
+              <User className="absolute left-2 h-4 w-4 text-gray-400" />
+              <Input
+                id="email"
+                name="email"
+                type="text"
+                placeholder="Enter username"
+                required
+                className="pl-8 w-full pr-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
+                aria-describedby="email-error"
+              />
+            </div>
+            {state.errors?.email && (
+              <p id="email-error" className="text-sm text-destructive mt-1">{state.errors.email[0]}</p>
+            )}
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="password" className='sr-only'>Password</Label>
-          <div className="relative flex items-center">
-            <Lock className="absolute left-3 h-5 w-5 text-muted-foreground" />
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="Password"
-              required
-              className="pl-10"
-              aria-describedby="password-error"
-            />
-          </div>
-           {state.errors?.password && (
-            <p id="password-error" className="text-sm text-destructive mt-1">{state.errors.password[0]}</p>
-          )}
+        <div>
+            <Label htmlFor="password"  className='text-xs font-medium text-gray-700 mb-1'>Password</Label>
+            <div className="relative flex items-center">
+              <Lock className="absolute left-2 h-4 w-4 text-gray-400" />
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="Enter password"
+                required
+                className="pl-8 w-full pr-3 py-2 text-sm border border-gray-300 focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none transition-all duration-200"
+                aria-describedby="password-error"
+              />
+            </div>
+            {state.errors?.password && (
+              <p id="password-error" className="text-sm text-destructive mt-1">{state.errors.password[0]}</p>
+            )}
         </div>
+        
         {state.message && !state.errors && (
-          <Alert variant="destructive">
-            <AlertTriangle className="h-4 w-4" />
-            <AlertTitle>Authentication Failed</AlertTitle>
-            <AlertDescription>{state.message}</AlertDescription>
-          </Alert>
+            <Alert variant="destructive" className="mt-4">
+                <AlertTriangle className="h-4 w-4" />
+                <AlertTitle>Authentication Failed</AlertTitle>
+                <AlertDescription>{state.message}</AlertDescription>
+            </Alert>
         )}
-      </CardContent>
-      <CardFooter className="flex flex-col items-center gap-4 px-0 pb-0 mt-4">
+
         <SubmitButton />
-      </CardFooter>
-    </form>
+      </form>
+      <div className="mt-3 p-2 bg-gray-50 rounded-md border">
+        <p className="text-xs text-gray-600 mb-1 font-medium">Default Credentials:</p>
+        <div className="space-y-1">
+            <p className="text-xs text-gray-600">Username: <span className="font-mono bg-white px-1 py-0.5 border text-xs rounded">admin</span></p>
+            <p className="text-xs text-gray-600">Password: <span className="font-mono bg-white px-1 py-0.5 border text-xs rounded">wras@dhh</span></p>
+        </div>
+      </div>
+    </div>
   );
 }
