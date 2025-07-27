@@ -18,7 +18,6 @@ export type TemplateTranslationInput = z.infer<typeof TemplateTranslationInputSc
 
 const TemplateTranslationOutputSchema = z.object({
     translatedText: z.string(),
-    audioParts: z.array(z.string()),
 });
 export type TemplateTranslationOutput = z.infer<typeof TemplateTranslationOutputSchema>;
 
@@ -72,26 +71,7 @@ export const translateTemplateFlow = ai.defineFlow(
         );
         
         const translatedText = translatedTextParts.join('');
-        
-        // 2. Generate audio for the now-translated static parts
-        const audioParts: string[] = [];
-        const translatedStaticParts = translatedText.split(placeholderRegex).filter(part => part.trim().length > 0 && !placeholderRegex.test(part));
-        const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts', category, languageCode);
-        await fs.mkdir(audioDir, { recursive: true });
 
-        for (let i = 0; i < translatedStaticParts.length; i++) {
-            const part = translatedStaticParts[i];
-            const audioContent = await generateSpeech(part, languageCode);
-            if (audioContent) {
-                const audioPath = path.join(audioDir, `part_${i}.wav`);
-                await fs.writeFile(audioPath, audioContent, 'binary');
-                const publicPath = audioPath.replace(path.join(process.cwd(), 'public'), '');
-                audioParts.push(publicPath);
-            }
-            // Add a delay to avoid rate-limiting issues with the TTS API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
-        return { translatedText, audioParts };
+        return { translatedText };
     }
 );

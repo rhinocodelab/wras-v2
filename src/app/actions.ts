@@ -83,7 +83,6 @@ export async function getDb() {
         category TEXT NOT NULL,
         language_code TEXT NOT NULL,
         template_text TEXT NOT NULL,
-        template_audio_parts TEXT,
         UNIQUE(category, language_code)
     )
     `);
@@ -470,13 +469,12 @@ export type Template = {
   category: string;
   language_code: string;
   template_text: string;
-  template_audio_parts: string | null;
 };
 
 export async function getAnnouncementTemplates(): Promise<Template[]> {
     const db = await getDb();
     try {
-        const templates = await db.all('SELECT id, category, language_code, template_text, template_audio_parts FROM announcement_templates');
+        const templates = await db.all('SELECT id, category, language_code, template_text FROM announcement_templates');
         return templates;
     } catch (error) {
         console.error('Failed to fetch announcement templates:', error);
@@ -491,10 +489,10 @@ export async function saveAnnouncementTemplates(templates: Template[]) {
     try {
         await db.run('DELETE FROM announcement_templates');
         const stmt = await db.prepare(
-            'INSERT INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)'
+            'INSERT INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)'
         );
         for (const template of templates) {
-            await stmt.run(template.category, template.language_code, template.template_text, template.template_audio_parts);
+            await stmt.run(template.category, template.language_code, template.template_text);
         }
         await stmt.finalize();
         revalidatePath('/announcement-templates');
@@ -512,25 +510,13 @@ export async function runTemplateFlow(input: TemplateTranslationInput) {
         const result = await translateTemplateFlow(input);
         
         const db = await getDb();
-        
-        // If generating audio, we UPDATE the existing record.
-        if (input.generateAudio) {
-             await db.run(
-                'UPDATE announcement_templates SET template_audio_parts = ? WHERE category = ? AND language_code = ?',
-                JSON.stringify(result.audioParts),
-                input.category,
-                input.languageCode
-            );
-        } else {
-            // Otherwise, we INSERT OR REPLACE the text template.
-            await db.run(
-                'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text, template_audio_parts) VALUES (?, ?, ?, ?)',
-                input.category,
-                input.languageCode,
-                result.translatedText,
-                JSON.stringify(result.audioParts)
-            );
-        }
+
+        await db.run(
+            'INSERT OR REPLACE INTO announcement_templates (category, language_code, template_text) VALUES (?, ?, ?)',
+            input.category,
+            input.languageCode,
+            result.translatedText
+        );
        
         await db.close();
         revalidatePath('/announcement-templates');
@@ -546,8 +532,6 @@ export async function runTemplateFlow(input: TemplateTranslationInput) {
 export async function clearAllAnnouncementTemplates() {
   const db = await getDb();
   try {
-    const audioDir = path.join(process.cwd(), 'public', 'audio', '_template_parts');
-    await fs.rm(audioDir, { recursive: true, force: true });
     await db.run('DELETE FROM announcement_templates');
     revalidatePath('/announcement-templates');
     return { message: 'All announcement templates have been deleted.' };

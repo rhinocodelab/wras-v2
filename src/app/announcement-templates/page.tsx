@@ -32,7 +32,7 @@ import {
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ClipboardList, Volume2 } from 'lucide-react';
+import { Upload, Loader2, ClipboardList } from 'lucide-react';
 import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates, runTemplateFlow } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
@@ -56,7 +56,6 @@ export default function AnnouncementTemplatesPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isProcessing, setIsProcessing] = useState(false);
   const [processingItem, setProcessingItem] = useState('');
-  const [isGeneratingAudio, setIsGeneratingAudio] = useState<string | null>(null);
   const [isClearing, setIsClearing] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
@@ -130,7 +129,6 @@ export default function AnnouncementTemplatesPage() {
                 category,
                 language_code: 'en',
                 template_text: englishTemplates[category],
-                template_audio_parts: JSON.stringify([]),
             });
 
             for (const langCode of ['hi', 'mr', 'gu']) {
@@ -141,14 +139,12 @@ export default function AnnouncementTemplatesPage() {
                     template: englishTemplates[category],
                     languageCode: langCode,
                     category: category,
-                    generateAudio: false, // Only generate text
                 });
 
                 allNewTemplates.push({
                     category,
                     language_code: langCode,
                     template_text: result.translatedText,
-                    template_audio_parts: JSON.stringify(result.audioParts),
                 });
             }
         }
@@ -204,78 +200,6 @@ export default function AnnouncementTemplatesPage() {
         setIsProcessing(false);
     }
   }
-
-  const handleGenerateAudioForCategory = async (category: string) => {
-    setIsGeneratingAudio(category);
-    toast({
-        title: `Starting Audio Generation`,
-        description: `Preparing to generate audio for the '${category.replace('_', ' ')}' category.`,
-    });
-
-    try {
-        const englishTemplate = templates.find(t => t.category === category && t.language_code === 'en');
-        
-        if (!englishTemplate || !englishTemplate.template_text) {
-             toast({
-                variant: 'destructive',
-                title: 'Missing English Template',
-                description: `Could not find the base English template for '${category}'. Cannot proceed.`,
-            });
-            setIsGeneratingAudio(null);
-            return;
-        }
-
-        const languagesToProcess = ['en', 'hi', 'mr', 'gu'];
-        for (const langCode of languagesToProcess) {
-            const langName = LANGUAGE_MAP[langCode];
-            try {
-                toast({
-                    title: `Processing: ${langName}`,
-                    description: `Generating audio for '${category.replace('_', ' ')}' template.`,
-                });
-                
-                await runTemplateFlow({
-                    template: englishTemplate.template_text,
-                    languageCode: langCode,
-                    category: category,
-                    generateAudio: true, // Generate audio this time
-                });
-
-                toast({
-                    title: `Success: ${langName}`,
-                    description: `Successfully generated audio for ${langName}.`,
-                });
-                
-                // Add a delay to avoid rate-limiting issues with the TTS API
-                await new Promise(resolve => setTimeout(resolve, 1000));
-            
-            } catch (error: any) {
-                 toast({
-                    variant: 'destructive',
-                    title: `Error processing ${langName}`,
-                    description: `Failed to generate audio for '${category}': ${error.message}`,
-                    duration: 9000,
-                });
-                // Stop the process if one language fails
-                throw new Error(`Failed on ${langName}: ${error.message}`);
-            }
-        }
-
-        await fetchTemplates(); // Refresh the data on the page
-
-        toast({
-            title: 'Audio Generation Complete',
-            description: `Successfully generated all audio for the '${category.replace('_', ' ')}' category.`,
-        });
-
-    } catch (error: any) {
-        // This will catch the re-thrown error from the inner loop
-        console.error('Audio generation process failed:', error);
-        // The specific error toast is already shown inside the loop
-    } finally {
-        setIsGeneratingAudio(null);
-    }
-  };
 
   const handleClearAll = async () => {
     setIsClearing(true);
@@ -345,7 +269,7 @@ export default function AnnouncementTemplatesPage() {
               <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
               <AlertDialogDescription>
                 This action cannot be undone. This will permanently delete all
-                announcement templates and their generated audio from the database.
+                announcement templates from the database.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
@@ -428,7 +352,6 @@ export default function AnnouncementTemplatesPage() {
                                 {LANGUAGES.map(lang => (
                                     <TableHead key={lang}>{lang}</TableHead>
                                 ))}
-                                <TableHead>Actions</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -450,21 +373,6 @@ export default function AnnouncementTemplatesPage() {
                                      <DialogTrigger asChild>
                                         <Button variant="outline" size="sm" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
                                     </DialogTrigger>
-                                </TableCell>
-                                <TableCell>
-                                    <Button 
-                                        variant="outline" 
-                                        size="sm" 
-                                        onClick={() => handleGenerateAudioForCategory(category)}
-                                        disabled={isGeneratingAudio === category || !getTemplate(category, 'English')}
-                                    >
-                                        {isGeneratingAudio === category ? (
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                        ) : (
-                                            <Volume2 className="mr-2 h-4 w-4" />
-                                        )}
-                                        Audio
-                                    </Button>
                                 </TableCell>
                                 </TableRow>
                             ))}
@@ -516,4 +424,3 @@ export default function AnnouncementTemplatesPage() {
     </div>
   );
 }
-
