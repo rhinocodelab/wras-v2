@@ -296,7 +296,9 @@ export default function TrainRouteManagementPage() {
                     <TableHead className="h-7 px-2">Train Number</TableHead>
                     <TableHead className="h-7 px-2">Train Name</TableHead>
                     <TableHead className="h-7 px-2">Start Station</TableHead>
+                    <TableHead className="h-7 px-2">Start Code</TableHead>
                     <TableHead className="h-7 px-2">End Station</TableHead>
+                    <TableHead className="h-7 px-2">End Code</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -305,7 +307,9 @@ export default function TrainRouteManagementPage() {
                       <TableCell className="p-2">{row['Train Number']}</TableCell>
                       <TableCell className="p-2">{row['Train Name']}</TableCell>
                       <TableCell className="p-2">{row['Start Station']}</TableCell>
+                      <TableCell className="p-2">{row['Start Code']}</TableCell>
                       <TableCell className="p-2">{row['End Station']}</TableCell>
+                      <TableCell className="p-2">{row['End Code']}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
