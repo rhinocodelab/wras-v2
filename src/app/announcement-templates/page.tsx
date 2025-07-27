@@ -32,8 +32,14 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
-import { Upload, Loader2, ClipboardList } from 'lucide-react';
+import { Upload, Loader2, ClipboardList, Volume2 } from 'lucide-react';
 import { getAnnouncementTemplates, saveAnnouncementTemplates, Template, clearAllAnnouncementTemplates } from '@/app/actions';
 
 const ANNOUNCEMENT_CATEGORIES = ['Arriving', 'Delay', 'Cancelled', 'Platform_Change'];
@@ -325,8 +331,9 @@ export default function AnnouncementTemplatesPage() {
                             <TableHeader>
                             <TableRow>
                                 <TableHead>Category</TableHead>
-                                <TableHead className="w-[50%]">English Template</TableHead>
+                                <TableHead className="w-[45%]">English Template</TableHead>
                                 <TableHead className="text-center">Translations</TableHead>
+                                <TableHead className="text-center">AI Audio</TableHead>
                             </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -346,6 +353,20 @@ export default function AnnouncementTemplatesPage() {
                                             <Button variant="outline" size="xs" onClick={() => handleOpenModal(getTemplate(category, 'Gujarati'))} disabled={!getTemplate(category, 'Gujarati')}>GU</Button>
                                         </DialogTrigger>
                                     </div>
+                                </TableCell>
+                                <TableCell className="text-center">
+                                    <TooltipProvider>
+                                        <Tooltip>
+                                            <TooltipTrigger asChild>
+                                                <Button variant="ghost" size="icon">
+                                                    <Volume2 className="h-4 w-4" />
+                                                </Button>
+                                            </TooltipTrigger>
+                                            <TooltipContent>
+                                                <p>Generate Audio</p>
+                                            </TooltipContent>
+                                        </Tooltip>
+                                    </TooltipProvider>
                                 </TableCell>
                                 </TableRow>
                             ))}
