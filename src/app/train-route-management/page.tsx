@@ -287,7 +287,6 @@ export default function TrainRouteManagementPage() {
   
   const handleTranslate = async () => {
     setIsTranslating(true);
-    setTranslationProgress(0);
     try {
         const routes = await getTrainRoutes();
         if(routes.length === 0){
@@ -300,7 +299,7 @@ export default function TrainRouteManagementPage() {
             return;
         }
 
-        const result = await startTranslationProcess(routes, setTranslationProgress);
+        const result = await startTranslationProcess(routes);
 
         toast({
             title: "Success",
@@ -354,7 +353,7 @@ export default function TrainRouteManagementPage() {
             </AlertDialogContent>
           </AlertDialog>
            <Button size="sm" onClick={handleTranslate} disabled={isTranslating || data.length === 0}>
-            Translate
+            {isTranslating ? 'Translating...' : 'Translate'}
           </Button>
           <Button size="sm" onClick={() => setIsAdding(true)} disabled={isAdding}>
             Add Route
@@ -440,12 +439,12 @@ export default function TrainRouteManagementPage() {
         </DialogContent>
       </Dialog>
 
-      <Dialog open={isTranslating} onOpenChange={setIsTranslating}>
+      <Dialog open={isTranslating && false} onOpenChange={setIsTranslating}>
         <DialogContent className="sm:max-w-md">
             <DialogHeader>
                 <DialogTitle>Translating Routes</DialogTitle>
                 <DialogDescription>
-                    Please wait while the train routes are being translated.
+                    Please wait while the train routes are being translated. This may take a moment.
                 </DialogDescription>
             </DialogHeader>
             <div className="flex flex-col gap-2 py-4">
@@ -455,7 +454,7 @@ export default function TrainRouteManagementPage() {
         </DialogContent>
     </Dialog>
       
-      <div className="mt-4 rounded-lg border">
+      <div className="mt-4 rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>

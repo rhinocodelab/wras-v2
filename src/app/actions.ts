@@ -164,19 +164,8 @@ export async function saveTranslations(translations: Translation[]) {
 }
 
 
-export async function startTranslationProcess(routes: TrainRoute[], onProgress: (progress: number) => void) {
-  const totalRoutes = routes.length;
-  let completedRoutes = 0;
-  
+export async function startTranslationProcess(routes: TrainRoute[]) {
   const translations = await translateAllRoutes(routes);
-  
-  // Simulate progress for now. In a real scenario, you'd get progress from the flow.
-  for(let i=0; i < totalRoutes; i++){
-    await new Promise(resolve => setTimeout(resolve, 100)); // simulate network delay
-    completedRoutes++;
-    onProgress(Math.round((completedRoutes / totalRoutes) * 100));
-  }
-  
   await saveTranslations(translations);
   return { message: "Translation completed successfully." };
 }
