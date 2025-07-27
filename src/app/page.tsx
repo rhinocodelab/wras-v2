@@ -11,6 +11,7 @@ import {
   PanelLeft,
   TramFront,
   FolderKanban,
+  ClipboardList,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -125,6 +126,13 @@ export default function HomePage() {
                   <Video className="h-5 w-5" />
                   ISL Video Generation
                 </div>
+                <div
+                  onClick={() => {}}
+                  className="flex cursor-pointer items-center gap-4 px-2.5 text-muted-foreground hover:text-foreground"
+                >
+                  <ClipboardList className="h-5 w-5" />
+                  Announcement Templates
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -179,6 +187,13 @@ export default function HomePage() {
                 >
                   <Video className="h-4 w-4" />
                   ISL Video Generation
+                </div>
+                <div
+                  onClick={() => {}}
+                  className="flex cursor-pointer items-center gap-3 rounded-lg px-3 py-2 text-muted-foreground transition-all hover:text-primary"
+                >
+                  <ClipboardList className="h-4 w-4" />
+                  Announcement Templates
                 </div>
               </div>
             </nav>
