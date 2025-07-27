@@ -15,13 +15,6 @@ import { generateAnnouncement, AnnouncementInput, AnnouncementOutput, generateTe
 
 const SESSION_COOKIE_NAME = 'session';
 
-// In a real app, this would come from a database and passwords would be hashed.
-const DUMMY_USER = {
-  email: 'admin',
-  password: 'wras@dhh',
-  name: 'Admin',
-};
-
 const loginSchema = z.object({
   email: z.string().min(1, { message: 'Username cannot be empty.' }),
   password: z.string().min(1, { message: 'Password cannot be empty.' }),
@@ -667,10 +660,14 @@ export async function login(
 
   const { email, password } = parsed.data;
 
-  if (email === DUMMY_USER.email && password === DUMMY_USER.password) {
+  // Use environment variables for credentials
+  const adminUser = process.env.ADMIN_USERNAME || 'admin';
+  const adminPassword = process.env.ADMIN_PASSWORD || 'wras@dhh';
+
+  if (email === adminUser && password === adminPassword) {
     const sessionData = {
-      email: DUMMY_USER.email,
-      name: DUMMY_USER.name,
+      email: adminUser,
+      name: 'Admin',
     };
     cookies().set(SESSION_COOKIE_NAME, JSON.stringify(sessionData), {
       httpOnly: true,
@@ -781,7 +778,4 @@ export async function clearAnnouncementsFolder() {
         return { message: 'Announcements folder cleared.' };
     } catch (error) {
         console.error('Failed to clear announcements folder:', error);
-        // It's not a critical failure if this doesn't work, so don't throw.
-        return { message: 'Could not clear announcements folder.' };
-    }
-}
+        // It's not a critical failure if this doesn't work, so don

@@ -18,6 +18,7 @@ function SubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
       {pending ? 'Signing In...' : 'Sign In'}
     </Button>
   );
@@ -79,11 +80,8 @@ export function LoginForm() {
         <SubmitButton />
       </form>
       <div className="mt-3 p-2 bg-gray-50 border">
-        <p className="text-xs text-gray-600 mb-1 font-medium">Default Credentials:</p>
-        <div className="space-y-1">
-            <p className="text-xs text-gray-600">Username: <span className="font-mono bg-white px-1 py-0.5 border text-xs">admin</span></p>
-            <p className="text-xs text-gray-600">Password: <span className="font-mono bg-white px-1 py-0.5 border text-xs">wras@dhh</span></p>
-        </div>
+        <p className="text-xs text-gray-600 mb-1 font-medium">Hint:</p>
+         <p className="text-xs text-gray-600">You can find the default credentials in the `.env` file.</p>
       </div>
     </div>
   );
