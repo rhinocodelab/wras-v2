@@ -32,11 +32,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipProvider,
+    TooltipTrigger,
+} from '@/components/ui/tooltip';
 import * as XLSX from 'xlsx';
-import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes, addTrainRoute, startTranslationProcess } from '@/app/actions';
+import { saveTrainRoutes, getTrainRoutes, TrainRoute, deleteTrainRoute, clearAllTrainRoutes, addTrainRoute, startTranslationProcess, translateSingleRoute } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Trash2, Languages, Loader2 } from 'lucide-react';
 
 const sampleData: TrainRoute[] = [
   {
@@ -75,6 +82,7 @@ export default function TrainRouteManagementPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [newRoute, setNewRoute] = useState(initialNewRouteState);
   const [isTranslating, setIsTranslating] = useState(false);
+  const [translatingRouteId, setTranslatingRouteId] = useState<number | null>(null);
   const [translationProgress, setTranslationProgress] = useState(0);
   const { toast } = useToast();
 
@@ -285,7 +293,7 @@ export default function TrainRouteManagementPage() {
     setNewRoute(initialNewRouteState);
   };
   
-  const handleTranslate = async () => {
+  const handleTranslateAll = async () => {
     setIsTranslating(true);
     try {
         const routes = await getTrainRoutes();
@@ -317,6 +325,27 @@ export default function TrainRouteManagementPage() {
         setIsTranslating(false);
     }
 };
+
+ const handleTranslateSingle = async (route: TrainRoute) => {
+    if (!route.id) return;
+    setTranslatingRouteId(route.id);
+    try {
+      const result = await translateSingleRoute(route);
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to translate route.',
+      });
+    } finally {
+      setTranslatingRouteId(null);
+    }
+  };
+
 
   return (
     <div className="w-full">
@@ -352,8 +381,8 @@ export default function TrainRouteManagementPage() {
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
-           <Button size="sm" onClick={handleTranslate} disabled={isTranslating || data.length === 0}>
-            {isTranslating ? 'Translating...' : 'Translate'}
+           <Button size="sm" onClick={handleTranslateAll} disabled={isTranslating || data.length === 0}>
+            {isTranslating ? 'Translating All...' : 'Translate All'}
           </Button>
           <Button size="sm" onClick={() => setIsAdding(true)} disabled={isAdding}>
             Add Route
@@ -502,30 +531,62 @@ export default function TrainRouteManagementPage() {
                     <Badge variant="secondary">{row['End Code']}</Badge>
                   </TableCell>
                    <TableCell>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon">
-                            Delete
-                          </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete the train route for{' '}
-                            <strong>{row['Train Name']} ({row['Train Number']})</strong>.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            onClick={() => handleDeleteRoute(row.id)}
-                          >
-                            Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                    <div className="flex items-center gap-2">
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleTranslateSingle(row)}
+                              disabled={translatingRouteId === row.id}
+                            >
+                              {translatingRouteId === row.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <Languages className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Translate this route</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                      <AlertDialog>
+                        <TooltipProvider>
+                           <Tooltip>
+                            <TooltipTrigger asChild>
+                              <AlertDialogTrigger asChild>
+                                 <Button variant="ghost" size="icon">
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                              </AlertDialogTrigger>
+                            </TooltipTrigger>
+                             <TooltipContent>
+                               <p>Delete this route</p>
+                             </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete the train route for{' '}
+                              <strong>{row['Train Name']} ({row['Train Number']})</strong>.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => handleDeleteRoute(row.id)}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))

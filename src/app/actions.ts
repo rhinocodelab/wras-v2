@@ -166,7 +166,13 @@ export type Translation = {
 
 export async function saveTranslations(translations: Translation[]) {
     const db = await getDb();
-    await db.run('DELETE FROM train_route_translations');
+    // Clear existing translations for the routes being updated
+    const routeIds = [...new Set(translations.map(t => t.route_id))];
+    if (routeIds.length > 0) {
+        const placeholders = routeIds.map(() => '?').join(',');
+        await db.run(`DELETE FROM train_route_translations WHERE route_id IN (${placeholders})`, ...routeIds);
+    }
+    
     const stmt = await db.prepare(
         'INSERT INTO train_route_translations (route_id, language_code, train_number_translation, train_name_translation, start_station_translation, end_station_translation) VALUES (?, ?, ?, ?, ?, ?)'
     );
@@ -183,6 +189,13 @@ export async function startTranslationProcess(routes: TrainRoute[]) {
   const translations = await translateAllRoutes(routes);
   await saveTranslations(translations);
   return { message: "Translation completed successfully." };
+}
+
+export async function translateSingleRoute(route: TrainRoute) {
+  const translations = await translateAllRoutes([route]);
+  await saveTranslations(translations);
+  revalidatePath('/ai-database/translations');
+  return { message: `Translation completed successfully for ${route['Train Name']}.` };
 }
 
 export type TranslationRecord = {
