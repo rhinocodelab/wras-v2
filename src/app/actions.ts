@@ -102,7 +102,7 @@ export async function saveTrainRoutes(routes: TrainRoute[]) {
 export async function getTrainRoutes(): Promise<TrainRoute[]> {
   try {
     const db = await getDb();
-    const routes = await db.all('SELECT id, train_number as "Train Number", train_name as "Train Name", start_station as "Start Station", start_code as "Start Code", end_station as "End Station", end_code as "End Code" FROM train_routes');
+    const routes = await db.all('SELECT id, train_number as "Train Number", train_name as "Train Name", start_station as "Start Station", start_code as "Start Code", end_station as "End Station", end_code as "End Code" FROM train_routes ORDER BY id DESC');
     await db.close();
     return routes;
   } catch (error) {

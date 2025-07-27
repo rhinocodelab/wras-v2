@@ -87,8 +87,11 @@ export default function TrainRouteManagementPage() {
   const fetchRoutes = async () => {
     const routes = await getTrainRoutes();
     setData(routes);
-     if (isAdding) {
-      // If we are adding, don't reset the page
+    
+    // After adding a new route, we want to be on the first page
+    // where the new route is now displayed.
+    if (isAdding) {
+      setCurrentPage(1);
     } else {
       const totalPages = Math.ceil(routes.length / recordsPerPage);
       if (currentPage > totalPages && totalPages > 0) {
@@ -257,9 +260,9 @@ export default function TrainRouteManagementPage() {
 
   const handleAddRoute = async () => {
     try {
+      setIsAdding(true);
       const result = await addTrainRoute(newRoute);
       setNewRoute(initialNewRouteState);
-      setIsAdding(false);
       await fetchRoutes();
       toast({
         title: "Success",
@@ -271,6 +274,8 @@ export default function TrainRouteManagementPage() {
         title: "Error",
         description: "Failed to add route.",
       });
+    } finally {
+        setIsAdding(false);
     }
   };
 
