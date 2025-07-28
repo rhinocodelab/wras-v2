@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, MicOff, Loader2, Languages, MessageSquare, Video } from 'lucide-react';
+import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { translateSpeechText } from '@/app/actions';
 
