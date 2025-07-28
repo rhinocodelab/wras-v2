@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -87,12 +87,39 @@ export default function SpeechToIslPage() {
     const [selectedLang, setSelectedLang] = useState('en-US');
     const [isRecording, setIsRecording] = useState(false);
     const [transcribedText, setTranscribedText] = useState('');
+    const [finalTranscribedText, setFinalTranscribedText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
     const [islPlaylist, setIslPlaylist] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
     const { toast } = useToast();
     const recognitionRef = useRef<any>(null);
+
+    const handleRealtimeTranslation = useCallback(async (textToTranslate: string) => {
+        if (!textToTranslate.trim()) return;
+
+        setIsProcessing(true);
+        try {
+            const formData = new FormData();
+            formData.append('text', textToTranslate);
+            formData.append('lang', selectedLang.split('-')[0]);
+
+            const result = await translateSpeechText(formData);
+            
+            setTranslatedText(result.translatedText);
+            setIslPlaylist(result.islPlaylist);
+
+        } catch (error) {
+            console.error("Translation failed:", error);
+            toast({
+                variant: "destructive",
+                title: "Translation Error",
+                description: "Failed to translate the text."
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    }, [selectedLang, toast]);
 
     useEffect(() => {
         // @ts-ignore
@@ -104,22 +131,31 @@ export default function SpeechToIslPage() {
             recognition.lang = selectedLang;
 
             recognition.onresult = (event: any) => {
-                let finalTranscript = '';
                 let interimTranscript = '';
+                let newFinalTranscript = '';
+
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
+                        newFinalTranscript += event.results[i][0].transcript + ' ';
                     } else {
                         interimTranscript += event.results[i][0].transcript;
                     }
                 }
-                setTranscribedText(finalTranscript + interimTranscript);
+                
+                if (newFinalTranscript) {
+                    const updatedFinalText = finalTranscribedText + newFinalTranscript;
+                    setFinalTranscribedText(updatedFinalText);
+                    setTranscribedText(updatedFinalText); // Update main view with final text
+                    handleRealtimeTranslation(updatedFinalText);
+                } else {
+                    setTranscribedText(finalTranscribedText + interimTranscript);
+                }
             };
 
             recognition.onerror = (event: any) => {
-                if (event.error === 'aborted') {
-                    console.log('Speech recognition aborted.');
-                    setIsRecording(false);
+                if (event.error === 'aborted' || event.error === 'no-speech') {
+                    console.log(`Speech recognition stopped: ${event.error}`);
+                    // Let the onend handler manage the recording state.
                     return;
                 }
                 
@@ -127,17 +163,17 @@ export default function SpeechToIslPage() {
                 toast({
                     variant: 'destructive',
                     title: 'Speech Recognition Error',
-                    description: `An error occurred: ${event.error}. Please ensure you have given microphone permissions.`
+                    description: `An error occurred: ${event.error}. Please ensure you have microphone permissions.`
                 });
                 setIsRecording(false);
             };
             
             recognition.onend = () => {
-                // The 'onend' event fires when recognition stops for any reason.
-                // We only want to auto-restart if the user hasn't manually stopped it.
                 if (recognitionRef.current && isRecording) {
-                   // recognition.start(); // This can cause rapid-fire restarts. Let's rely on user to restart.
-                   setIsRecording(false); // Update state if it stops on its own.
+                   // If it stops but we are supposed to be recording, restart it.
+                   recognition.start();
+                } else {
+                    setIsRecording(false);
                 }
             };
 
@@ -149,17 +185,23 @@ export default function SpeechToIslPage() {
                 description: 'Speech recognition is not supported by your browser.'
             });
         }
-    }, [selectedLang, toast, isRecording]);
+
+        // Cleanup function
+        return () => {
+            if (recognitionRef.current) {
+                recognitionRef.current.stop();
+            }
+        };
+
+    }, [selectedLang, toast, isRecording, finalTranscribedText, handleRealtimeTranslation]);
 
     const handleMicClick = () => {
         if (isRecording) {
             recognitionRef.current?.stop();
             setIsRecording(false);
-            if (transcribedText) {
-                handleTranslation();
-            }
         } else {
             setTranscribedText('');
+            setFinalTranscribedText('');
             setTranslatedText('');
             setIslPlaylist([]);
             setIsRecording(true);
@@ -167,35 +209,6 @@ export default function SpeechToIslPage() {
         }
     };
     
-    const handleTranslation = async () => {
-        if (!transcribedText.trim()) {
-            toast({ title: "Nothing to translate", description: "The transcribed text is empty." });
-            return;
-        }
-
-        setIsProcessing(true);
-        try {
-            const formData = new FormData();
-            formData.append('text', transcribedText);
-            formData.append('lang', selectedLang.split('-')[0]);
-
-            const result = await translateSpeechText(formData);
-            
-            setTranslatedText(result.translatedText);
-            setIslPlaylist(result.islPlaylist);
-        } catch (error) {
-            console.error("Translation failed:", error);
-            toast({
-                variant: "destructive",
-                title: "Translation Error",
-                description: "Failed to translate the text."
-            });
-        } finally {
-            setIsProcessing(false);
-        }
-    };
-
-
     return (
         <div className="w-full h-full flex flex-col">
             <div className="flex items-center justify-between">
@@ -265,7 +278,7 @@ export default function SpeechToIslPage() {
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="flex-grow">
-                         {isProcessing ? (
+                         {isProcessing && !translatedText ? (
                              <div className="flex items-center justify-center h-full">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
                              </div>
@@ -281,7 +294,7 @@ export default function SpeechToIslPage() {
                 </Card>
 
                 <div className="md:col-span-1 h-full min-h-[300px]">
-                     {isProcessing ? (
+                     {isProcessing && islPlaylist.length === 0 ? (
                          <div className="flex items-center justify-center h-full rounded-lg bg-muted">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                          </div>
@@ -292,4 +305,5 @@ export default function SpeechToIslPage() {
             </div>
         </div>
     );
-}
+
+    
