@@ -11,6 +11,7 @@ import {
   TramFront,
   FolderKanban,
   ClipboardList,
+  Speech,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -23,6 +24,15 @@ import AudioPage from '@/app/ai-database/audio/page';
 import TemplateAudioPage from '@/app/ai-database/template-audio/page';
 import IslDatasetPage from '@/app/isl-dataset/page';
 import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
+
+// Placeholder for the new component
+const SpeechToIslPage = () => (
+  <div className="flex items-center justify-center h-full">
+    <h1 className="text-2xl font-semibold text-muted-foreground">
+      Speech to ISL Page - Coming Soon
+    </h1>
+  </div>
+);
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -46,6 +56,8 @@ export default function HomePage() {
         return <IslDatasetPage />;
       case 'announcement-templates':
         return <AnnouncementTemplatesPage />;
+      case 'speech-to-isl':
+        return <SpeechToIslPage />;
       default:
         return <Dashboard />;
     }
@@ -131,6 +143,13 @@ export default function HomePage() {
                   <ClipboardList className="h-5 w-5" />
                   Announcement Templates
                 </div>
+                 <div
+                  onClick={() => setActiveView('speech-to-isl')}
+                  className={getMobileLinkClassName('speech-to-isl')}
+                >
+                  <Speech className="h-5 w-5" />
+                  Speech to ISL
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -185,6 +204,13 @@ export default function HomePage() {
                 >
                   <ClipboardList className="h-4 w-4" />
                   Announcement Templates
+                </div>
+                <div
+                  onClick={() => setActiveView('speech-to-isl')}
+                  className={getLinkClassName('speech-to-isl')}
+                >
+                  <Speech className="h-4 w-4" />
+                  Speech to ISL
                 </div>
               </div>
             </nav>
