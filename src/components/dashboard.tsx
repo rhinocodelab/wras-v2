@@ -316,141 +316,150 @@ export function Dashboard() {
           </CardTitle>
         </CardHeader>
         <CardContent>
-             <div className="mt-2">
-                <p className="text-muted-foreground mb-4 text-sm">
-                Search for trains by number or name to quickly find a route.
-                </p>
-                <div className="w-full">
-                    <Tabs defaultValue="train-number">
-                    <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="train-number">Train Number</TabsTrigger>
-                        <TabsTrigger value="train-name">Train Name</TabsTrigger>
-                    </TabsList>
-                    <TabsContent value="train-number">
-                        <div className="flex items-center space-x-2 pt-4">
-                        <div className="relative flex-grow">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                            placeholder="Search by train number..."
-                            className="pl-10"
-                            value={searchNumber}
-                            onChange={(e) => setSearchNumber(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchByNumber()}
-                            />
-                        </div>
-                        <Button onClick={handleSearchByNumber}>Search</Button>
-                        <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-2xl">
-                                <DialogHeader>
-                                <DialogTitle>Select Train Routes</DialogTitle>
-                                <DialogDescription>
-                                    Select one or more train routes to add to the dashboard.
-                                </DialogDescription>
-                                </DialogHeader>
-                                <div className="max-h-[60vh] overflow-y-auto">
-                                <Table>
-                                    <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]">Select</TableHead>
-                                        <TableHead>Train Number</TableHead>
-                                        <TableHead>Train Name</TableHead>
-                                        <TableHead>Start Station</TableHead>
-                                        <TableHead>End Station</TableHead>
-                                    </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                    {allRoutes.map(route => (
-                                        <TableRow key={route.id}>
-                                        <TableCell>
-                                            <Checkbox
-                                            checked={!!selectedRoutes.find(r => r.id === route.id)}
-                                            onCheckedChange={() => handleSelectRoute(route)}
-                                            />
-                                        </TableCell>
-                                        <TableCell>{route['Train Number']}</TableCell>
-                                        <TableCell>{route['Train Name']}</TableCell>
-                                        <TableCell>{route['Start Station']}</TableCell>
-                                        <TableCell>{route['End Station']}</TableCell>
+            <div className="space-y-4">
+                <div>
+                    <p className="text-muted-foreground text-sm">
+                    Search for trains by number or name to quickly find a route.
+                    </p>
+                    <div className="w-full">
+                        <Tabs defaultValue="train-number">
+                        <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="train-number">Train Number</TabsTrigger>
+                            <TabsTrigger value="train-name">Train Name</TabsTrigger>
+                        </TabsList>
+                        <TabsContent value="train-number">
+                            <div className="flex items-center space-x-2 pt-4">
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                placeholder="Search by train number..."
+                                className="pl-10"
+                                value={searchNumber}
+                                onChange={(e) => setSearchNumber(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchByNumber()}
+                                />
+                            </div>
+                            <Button onClick={handleSearchByNumber}>Search</Button>
+                            <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-2xl">
+                                    <DialogHeader>
+                                    <DialogTitle>Select Train Routes</DialogTitle>
+                                    <DialogDescription>
+                                        Select one or more train routes to add to the dashboard.
+                                    </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="max-h-[60vh] overflow-y-auto">
+                                    <Table>
+                                        <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[50px]">Select</TableHead>
+                                            <TableHead>Train Number</TableHead>
+                                            <TableHead>Train Name</TableHead>
+                                            <TableHead>Start Station</TableHead>
+                                            <TableHead>End Station</TableHead>
                                         </TableRow>
-                                    ))}
-                                    </TableBody>
-                                </Table>
-                                </div>
-                                <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsRouteModalOpen(false)}>Cancel</Button>
-                                <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                        <Button variant="ghost" onClick={clearSearch}>Clear</Button>
-                        </div>
-                    </TabsContent>
-                    <TabsContent value="train-name">
-                        <div className="flex items-center space-x-2 pt-4">
-                        <div className="relative flex-grow">
-                            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                            placeholder="Search by train name..."
-                            className="pl-10"
-                            value={searchName}
-                            onChange={(e) => setSearchName(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearchByName()}
-                            />
-                        </div>
-                        <Button onClick={handleSearchByName}>Search</Button>
-                         <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
-                            <DialogTrigger asChild>
-                                <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-2xl">
-                                <DialogHeader>
-                                <DialogTitle>Select Train Routes</DialogTitle>
-                                <DialogDescription>
-                                    Select one or more train routes to add to the dashboard.
-                                </DialogDescription>
-                                </DialogHeader>
-                                <div className="max-h-[60vh] overflow-y-auto">
-                                <Table>
-                                    <TableHeader>
-                                    <TableRow>
-                                        <TableHead className="w-[50px]">Select</TableHead>
-                                        <TableHead>Train Number</TableHead>
-                                        <TableHead>Train Name</TableHead>
-                                        <TableHead>Start Station</TableHead>
-                                        <TableHead>End Station</TableHead>
-                                    </TableRow>
-                                    </TableHeader>
-                                    <TableBody>
-                                    {allRoutes.map(route => (
-                                        <TableRow key={route.id}>
-                                        <TableCell>
-                                            <Checkbox
-                                            checked={!!selectedRoutes.find(r => r.id === route.id)}
-                                            onCheckedChange={() => handleSelectRoute(route)}
-                                            />
-                                        </TableCell>
-                                        <TableCell>{route['Train Number']}</TableCell>
-                                        <TableCell>{route['Train Name']}</TableCell>
-                                        <TableCell>{route['Start Station']}</TableCell>
-                                        <TableCell>{route['End Station']}</TableCell>
+                                        </TableHeader>
+                                        <TableBody>
+                                        {allRoutes.map(route => (
+                                            <TableRow key={route.id}>
+                                            <TableCell>
+                                                <Checkbox
+                                                checked={!!selectedRoutes.find(r => r.id === route.id)}
+                                                onCheckedChange={() => handleSelectRoute(route)}
+                                                />
+                                            </TableCell>
+                                            <TableCell>{route['Train Number']}</TableCell>
+                                            <TableCell>{route['Train Name']}</TableCell>
+                                            <TableCell>{route['Start Station']}</TableCell>
+                                            <TableCell>{route['End Station']}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                        </TableBody>
+                                    </Table>
+                                    </div>
+                                    <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsRouteModalOpen(false)}>Cancel</Button>
+                                    <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                            <Button variant="ghost" onClick={clearSearch}>Clear</Button>
+                            </div>
+                        </TabsContent>
+                        <TabsContent value="train-name">
+                            <div className="flex items-center space-x-2 pt-4">
+                            <div className="relative flex-grow">
+                                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                                <Input
+                                placeholder="Search by train name..."
+                                className="pl-10"
+                                value={searchName}
+                                onChange={(e) => setSearchName(e.target.value)}
+                                onKeyDown={(e) => e.key === 'Enter' && handleSearchByName()}
+                                />
+                            </div>
+                            <Button onClick={handleSearchByName}>Search</Button>
+                            <Dialog open={isRouteModalOpen} onOpenChange={setIsRouteModalOpen}>
+                                <DialogTrigger asChild>
+                                    <Button variant="secondary" onClick={() => setSelectedRoutes([])}>Pick Route</Button>
+                                </DialogTrigger>
+                                <DialogContent className="sm:max-w-2xl">
+                                    <DialogHeader>
+                                    <DialogTitle>Select Train Routes</DialogTitle>
+                                    <DialogDescription>
+                                        Select one or more train routes to add to the dashboard.
+                                    </DialogDescription>
+                                    </DialogHeader>
+                                    <div className="max-h-[60vh] overflow-y-auto">
+                                    <Table>
+                                        <TableHeader>
+                                        <TableRow>
+                                            <TableHead className="w-[50px]">Select</TableHead>
+                                            <TableHead>Train Number</TableHead>
+                                            <TableHead>Train Name</TableHead>
+                                            <TableHead>Start Station</TableHead>
+                                            <TableHead>End Station</TableHead>
                                         </TableRow>
-                                    ))}
-                                    </TableBody>
-                                </Table>
-                                </div>
-                                <DialogFooter>
-                                <Button variant="outline" onClick={() => setIsRouteModalOpen(false)}>Cancel</Button>
-                                <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                        <Button variant="ghost" onClick={clearSearch}>Clear</Button>
-                        </div>
-                    </TabsContent>
-                    </Tabs>
+                                        </TableHeader>
+                                        <TableBody>
+                                        {allRoutes.map(route => (
+                                            <TableRow key={route.id}>
+                                            <TableCell>
+                                                <Checkbox
+                                                checked={!!selectedRoutes.find(r => r.id === route.id)}
+                                                onCheckedChange={() => handleSelectRoute(route)}
+                                                />
+                                            </TableCell>
+                                            <TableCell>{route['Train Number']}</TableCell>
+                                            <TableCell>{route['Train Name']}</TableCell>
+                                            <TableCell>{route['Start Station']}</TableCell>
+                                            <TableCell>{route['End Station']}</TableCell>
+                                            </TableRow>
+                                        ))}
+                                        </TableBody>
+                                    </Table>
+                                    </div>
+                                    <DialogFooter>
+                                    <Button variant="outline" onClick={() => setIsRouteModalOpen(false)}>Cancel</Button>
+                                    <Button onClick={handleAddSelectedRoutes}>Add Selected</Button>
+                                    </DialogFooter>
+                                </DialogContent>
+                            </Dialog>
+                            <Button variant="ghost" onClick={clearSearch}>Clear</Button>
+                            </div>
+                        </TabsContent>
+                        </Tabs>
+                    </div>
+                </div>
+                <Separator className="my-4" />
+                <div>
+                    <h3 className="text-md font-semibold mb-2">About the Application</h3>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                        The Western Railway Divyangjan Announcement System is a web application designed to make travel more accessible for people who are deaf or hard of hearing. It delivers important train announcements using Indian Sign Language (ISL) videos, synchronized subtitles, and text notifications, ensuring equal access to real-time information at railway stations and on trains. This inclusive platform is built according to accessibility standards and aims to foster independence and confidence for Divyangjan passengers within the Western Railway network.
+                    </p>
                 </div>
             </div>
         </CardContent>
