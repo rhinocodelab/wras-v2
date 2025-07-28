@@ -86,7 +86,7 @@ export default function HomePage() {
 
   return (
     <div className="flex min-h-screen w-full flex-col items-center justify-center bg-muted/40 p-4">
-      <div className="flex w-full max-w-7xl flex-1 rounded-lg bg-background shadow-lg">
+      <div className="flex h-full w-full max-w-7xl flex-1 rounded-lg bg-background shadow-lg">
         <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
           <div className="flex h-16 items-center border-b px-6">
               <div className="flex items-center gap-2 font-semibold text-primary">
@@ -246,7 +246,12 @@ export default function HomePage() {
                 </div>
               )}
               <form action={logout}>
-                <Button variant="outline" size="sm" type="submit">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="submit"
+                  className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
+                >
                   Sign Out
                 </Button>
               </form>
