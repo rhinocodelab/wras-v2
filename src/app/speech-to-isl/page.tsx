@@ -160,19 +160,21 @@ export default function SpeechToIslPage() {
             recognition.onresult = (event: any) => {
                 let interimTranscript = '';
                 let newFinalTranscript = '';
+                let currentFinalTranscript = finalTranscribedText;
 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        newFinalTranscript += event.results[i][0].transcript.trim() + ' ';
+                         newFinalTranscript += event.results[i][0].transcript.trim() + ' ';
                     } else {
                         interimTranscript += event.results[i][0].transcript;
                     }
                 }
                 
-                setTranscribedText(finalTranscribedText + newFinalTranscript + interimTranscript);
                 if (newFinalTranscript) {
                     setFinalTranscribedText(prev => prev + newFinalTranscript);
+                    currentFinalTranscript += newFinalTranscript;
                 }
+                setTranscribedText(currentFinalTranscript + interimTranscript);
             };
 
             recognition.onerror = (event: any) => {
