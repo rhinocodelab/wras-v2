@@ -44,6 +44,88 @@ check_port() {
     fi
 }
 
+# Function to handle git operations
+handle_git_operations() {
+    print_status "Checking git repository status..."
+    
+    # Check if git is installed
+    if ! command_exists git; then
+        print_warning "Git is not installed. Skipping git operations."
+        return 0
+    fi
+    
+    # Check if this is a git repository
+    if [ ! -d ".git" ]; then
+        print_warning "This is not a git repository. Skipping git operations."
+        return 0
+    fi
+    
+    # Check current branch
+    local current_branch=$(git branch --show-current 2>/dev/null)
+    if [ -z "$current_branch" ]; then
+        print_warning "Could not determine current branch. Skipping git operations."
+        return 0
+    fi
+    
+    print_status "Current branch: $current_branch"
+    
+    # Check if there are uncommitted changes
+    if ! git diff-index --quiet HEAD -- 2>/dev/null; then
+        print_warning "You have uncommitted changes. Consider committing them before pulling."
+        read -p "Do you want to continue without committing? (y/N): " -n 1 -r
+        echo
+        if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+            print_status "Please commit your changes and run the script again."
+            exit 1
+        fi
+    fi
+    
+    # Fetch latest changes from remote
+    print_status "Fetching latest changes from remote..."
+    if git fetch origin 2>/dev/null; then
+        print_success "Fetched latest changes from remote."
+    else
+        print_warning "Failed to fetch from remote. Continuing with local version."
+        return 0
+    fi
+    
+    # Check if local branch is behind remote
+    local behind_count=$(git rev-list HEAD..origin/$current_branch --count 2>/dev/null)
+    if [ "$behind_count" -gt 0 ] 2>/dev/null; then
+        print_status "Local branch is $behind_count commits behind remote. Pulling changes..."
+        
+        # Set pull strategy to merge to handle divergent branches
+        git config pull.rebase false
+        
+        # Pull changes
+        if git pull origin $current_branch 2>/dev/null; then
+            print_success "Successfully pulled latest changes."
+        else
+            print_warning "Failed to pull changes automatically. You may need to resolve conflicts manually."
+            print_status "You can run 'git status' to see the current state."
+            read -p "Do you want to continue anyway? (y/N): " -n 1 -r
+            echo
+            if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+                print_status "Please resolve git conflicts and run the script again."
+                exit 1
+            fi
+        fi
+    else
+        print_success "Local branch is up to date with remote."
+    fi
+    
+    # Check if there are new dependencies in package.json
+    if git diff HEAD~1 --name-only 2>/dev/null | grep -q "package.json"; then
+        print_status "package.json has changed. Updating dependencies..."
+        npm install
+        if [ $? -eq 0 ]; then
+            print_success "Dependencies updated successfully."
+        else
+            print_warning "Failed to update dependencies. Continuing with existing ones."
+        fi
+    fi
+}
+
 # Function to wait for application to be ready
 wait_for_app() {
     local port=$1
@@ -91,6 +173,9 @@ main() {
     
     print_status "Node.js version: $(node --version)"
     print_status "npm version: $(npm --version)"
+    
+    # Handle git operations (pull latest changes)
+    handle_git_operations
     
     # Check if dependencies are installed
     if [ ! -d "node_modules" ]; then
