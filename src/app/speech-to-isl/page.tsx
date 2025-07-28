@@ -157,6 +157,17 @@ export default function SpeechToIslPage() {
             recognition.onerror = (event: any) => {
                  if (event.error === 'aborted' || event.error === 'no-speech') {
                     console.log(`Speech recognition stopped: ${event.error}`);
+                    if (recordingRef.current) {
+                        // Restart if it was aborted but we are still in recording mode
+                        try {
+                           recognition.start();
+                        } catch(e) {
+                           console.error("Error restarting recognition:", e)
+                           setIsRecording(false);
+                        }
+                    } else {
+                       setIsRecording(false);
+                    }
                     return;
                 }
                 
@@ -171,7 +182,12 @@ export default function SpeechToIslPage() {
             
             recognition.onend = () => {
                 if (recordingRef.current) {
-                   recognition.start();
+                   try {
+                     recognition.start();
+                   } catch(e) {
+                     console.error("Error restarting recognition onend:", e);
+                     setIsRecording(false);
+                   }
                 } else {
                     setIsRecording(false);
                 }
@@ -245,7 +261,12 @@ export default function SpeechToIslPage() {
 
                     <div className="flex-grow" />
 
-                    <Button onClick={handleMicClick} size="lg" className="rounded-full h-16 w-16">
+                    <Button 
+                        onClick={handleMicClick} 
+                        size="lg" 
+                        className="rounded-full h-16 w-16"
+                        variant={isRecording ? "destructive" : "default"}
+                    >
                         {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
                     </Button>
                     <p className="text-sm text-muted-foreground w-28 text-center">
