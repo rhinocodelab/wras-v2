@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech, Rocket, Film } from 'lucide-react';
+import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech, Rocket, Film, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { translateSpeechText, getIslVideoPlaylist } from '@/app/actions';
 
@@ -312,6 +312,18 @@ export default function SpeechToIslPage() {
         window.open(url, '_blank');
     };
 
+    const handleClearTranscription = () => {
+        setTranscribedText('');
+        setFinalTranscribedText('');
+        setTranslatedText('');
+        setIslPlaylist([]);
+    }
+
+    const handleClearTranslation = () => {
+        setTranslatedText('');
+        setIslPlaylist([]);
+    }
+
     return (
         <div className="w-full h-full flex flex-col">
             <div className="flex items-center justify-between">
@@ -367,11 +379,16 @@ export default function SpeechToIslPage() {
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
                 <div className="md:col-span-2 grid grid-rows-2 gap-6">
                     <Card className="flex flex-col row-span-1">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                            <MessageSquare className="h-5 w-5 text-primary" />
-                            Transcribed Text
-                            </CardTitle>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <div className="space-y-1.5">
+                                <CardTitle className="flex items-center gap-2">
+                                <MessageSquare className="h-5 w-5 text-primary" />
+                                Transcribed Text
+                                </CardTitle>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={handleClearTranscription} disabled={!transcribedText}>
+                                <X className="h-4 w-4" />
+                            </Button>
                         </CardHeader>
                         <CardContent className="flex-grow">
                             <Textarea
@@ -384,14 +401,19 @@ export default function SpeechToIslPage() {
                     </Card>
 
                     <Card className="flex flex-col row-span-1">
-                        <CardHeader>
-                            <CardTitle className="flex items-center gap-2">
-                                <Languages className="h-5 w-5 text-primary" />
-                                English Translation
-                            </CardTitle>
-                             <CardDescription>
-                                This text will be used to generate the ISL video.
-                            </CardDescription>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                             <div className="space-y-1.5">
+                                <CardTitle className="flex items-center gap-2">
+                                    <Languages className="h-5 w-5 text-primary" />
+                                    English Translation
+                                </CardTitle>
+                                 <CardDescription>
+                                    This text will be used to generate the ISL video.
+                                </CardDescription>
+                            </div>
+                            <Button variant="ghost" size="icon" onClick={handleClearTranslation} disabled={!translatedText}>
+                                <X className="h-4 w-4" />
+                            </Button>
                         </CardHeader>
                         <CardContent className="flex-grow flex flex-col gap-4">
                             <Textarea
@@ -428,3 +450,5 @@ export default function SpeechToIslPage() {
         </div>
     );
 }
+
+    
