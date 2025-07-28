@@ -12,6 +12,8 @@ import {
   FolderKanban,
   ClipboardList,
   Speech,
+  Text,
+  FileAudio,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -24,15 +26,10 @@ import AudioPage from '@/app/ai-database/audio/page';
 import TemplateAudioPage from '@/app/ai-database/template-audio/page';
 import IslDatasetPage from '@/app/isl-dataset/page';
 import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
+import SpeechToIslPage from '@/app/speech-to-isl/page';
+import TextToIslPage from '@/app/text-to-isl/page';
+import AudioFileToIslPage from '@/app/audio-file-to-isl/page';
 
-// Placeholder for the new component
-const SpeechToIslPage = () => (
-  <div className="flex items-center justify-center h-full">
-    <h1 className="text-2xl font-semibold text-muted-foreground">
-      Speech to ISL Page - Coming Soon
-    </h1>
-  </div>
-);
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');
@@ -58,6 +55,10 @@ export default function HomePage() {
         return <AnnouncementTemplatesPage />;
       case 'speech-to-isl':
         return <SpeechToIslPage />;
+      case 'text-to-isl':
+        return <TextToIslPage />;
+      case 'audio-file-to-isl':
+        return <AudioFileToIslPage />;
       default:
         return <Dashboard />;
     }
@@ -150,6 +151,20 @@ export default function HomePage() {
                   <Speech className="h-5 w-5" />
                   Speech to ISL
                 </div>
+                <div
+                  onClick={() => setActiveView('text-to-isl')}
+                  className={getMobileLinkClassName('text-to-isl')}
+                >
+                  <Text className="h-5 w-5" />
+                  Text to ISL
+                </div>
+                 <div
+                  onClick={() => setActiveView('audio-file-to-isl')}
+                  className={getMobileLinkClassName('audio-file-to-isl')}
+                >
+                  <FileAudio className="h-5 w-5" />
+                  Audio File to ISL
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -211,6 +226,20 @@ export default function HomePage() {
                 >
                   <Speech className="h-4 w-4" />
                   Speech to ISL
+                </div>
+                <div
+                  onClick={() => setActiveView('text-to-isl')}
+                  className={getLinkClassName('text-to-isl')}
+                >
+                  <Text className="h-4 w-4" />
+                  Text to ISL
+                </div>
+                 <div
+                  onClick={() => setActiveView('audio-file-to-isl')}
+                  className={getLinkClassName('audio-file-to-isl')}
+                >
+                  <FileAudio className="h-4 w-4" />
+                  Audio File to ISL
                 </div>
               </div>
             </nav>

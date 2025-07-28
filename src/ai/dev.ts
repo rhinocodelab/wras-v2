@@ -3,3 +3,4 @@
 import './flows/translate-flow';
 import './flows/tts-flow';
 import './flows/announcement-flow';
+import './flows/speech-to-text-flow';

@@ -14,8 +14,8 @@ import { TranslationServiceClient } from '@google-cloud/translate';
 import { googleAI } from '@genkit-ai/googleai';
 
 
-async function translateText(text: string, targetLanguage: string): Promise<string> {
-    if (!text || targetLanguage === 'en') {
+export async function translateText(text: string, targetLanguage: string, sourceLanguage: string): Promise<string> {
+    if (!text || !targetLanguage || targetLanguage === sourceLanguage) {
         return text;
     }
     
@@ -29,7 +29,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
             parent: `projects/${projectId}/locations/global`,
             contents: [text],
             mimeType: 'text/plain',
-            sourceLanguageCode: 'en',
+            sourceLanguageCode: sourceLanguage, // Explicitly set source language
             targetLanguageCode: targetLanguage,
         });
 
@@ -39,7 +39,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         
         return text; 
     } catch (error) {
-        console.error(`Error during translation from 'en' to '${targetLanguage}':`, error);
+        console.error(`Error during translation from '${sourceLanguage}' to '${targetLanguage}':`, error);
         return text;
     }
 }
@@ -79,7 +79,7 @@ const translateRouteFlow = ai.defineFlow(
             const trainNumberStr = String(route['Train Number'] || '');
             trainNumberTranslation = trainNumberStr.split('').map(digit => digitMaps[languageCode][digit] || digit).join(' ');
         } else {
-            trainNumberTranslation = await translateText(String(route['Train Number'] || ''), languageCode);
+            trainNumberTranslation = await translateText(String(route['Train Number'] || ''), languageCode, 'en');
         }
 
         const [
@@ -87,9 +87,9 @@ const translateRouteFlow = ai.defineFlow(
             startStationTranslation,
             endStationTranslation
         ] = await Promise.all([
-            translateText(route['Train Name'], languageCode),
-            translateText(route['Start Station'], languageCode),
-            translateText(route['End Station'], languageCode),
+            translateText(route['Train Name'], languageCode, 'en'),
+            translateText(route['Start Station'], languageCode, 'en'),
+            translateText(route['End Station'], languageCode, 'en'),
         ]);
 
         return {
