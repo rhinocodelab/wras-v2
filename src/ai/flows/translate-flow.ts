@@ -14,8 +14,8 @@ import { TranslationServiceClient } from '@google-cloud/translate';
 import { googleAI } from '@genkit-ai/googleai';
 
 
-async function translateText(text: string, targetLanguage: string): Promise<string> {
-    if (!text || targetLanguage === 'en') {
+export async function translateText(text: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
+    if (!text || targetLanguage === sourceLanguage) {
         return text;
     }
     
@@ -29,7 +29,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
             parent: `projects/${projectId}/locations/global`,
             contents: [text],
             mimeType: 'text/plain',
-            sourceLanguageCode: 'en',
+            sourceLanguageCode: sourceLanguage || 'en',
             targetLanguageCode: targetLanguage,
         });
 
@@ -39,7 +39,7 @@ async function translateText(text: string, targetLanguage: string): Promise<stri
         
         return text; 
     } catch (error) {
-        console.error(`Error during translation from 'en' to '${targetLanguage}':`, error);
+        console.error(`Error during translation from '${sourceLanguage || 'en'}' to '${targetLanguage}':`, error);
         return text;
     }
 }

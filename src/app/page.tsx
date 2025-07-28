@@ -24,15 +24,8 @@ import AudioPage from '@/app/ai-database/audio/page';
 import TemplateAudioPage from '@/app/ai-database/template-audio/page';
 import IslDatasetPage from '@/app/isl-dataset/page';
 import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
+import SpeechToIslPage from '@/app/speech-to-isl/page';
 
-// Placeholder for the new component
-const SpeechToIslPage = () => (
-  <div className="flex items-center justify-center h-full">
-    <h1 className="text-2xl font-semibold text-muted-foreground">
-      Speech to ISL Page - Coming Soon
-    </h1>
-  </div>
-);
 
 export default function HomePage() {
   const [activeView, setActiveView] = useState('dashboard');

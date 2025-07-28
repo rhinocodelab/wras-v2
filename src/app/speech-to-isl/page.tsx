@@ -1,0 +1,286 @@
+
+'use client';
+
+import { useState, useRef, useEffect } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { Mic, MicOff, Loader2, Languages, MessageSquare, Video } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { translateSpeechText } from '@/app/actions';
+
+const LANGUAGE_OPTIONS: { [key: string]: string } = {
+  'en-US': 'English',
+  'hi-IN': 'Hindi',
+  'mr-IN': 'Marathi',
+  'gu-IN': 'Gujarati',
+};
+
+const IslVideoPlayer = ({ playlist, title }: { playlist: string[]; title: string }) => {
+    const [currentVideo, setCurrentVideo] = useState(0);
+    const videoRef = useRef<HTMLVideoElement>(null);
+
+    useEffect(() => {
+        setCurrentVideo(0);
+    }, [playlist]);
+
+    const handleVideoEnd = () => {
+        if (currentVideo < playlist.length - 1) {
+            setCurrentVideo(currentVideo + 1);
+        } else {
+            // Loop back to the start
+            setCurrentVideo(0);
+        }
+    };
+
+    useEffect(() => {
+        videoRef.current?.play();
+    }, [currentVideo, playlist]);
+
+    if (!playlist || playlist.length === 0) {
+        return (
+            <div className="flex flex-col items-center justify-center h-full bg-muted rounded-lg p-4 text-center">
+                <Video className="h-12 w-12 text-muted-foreground mb-4" />
+                <h3 className="text-lg font-semibold">{title}</h3>
+                <p className="text-sm text-muted-foreground">No matching ISL videos found.</p>
+            </div>
+        )
+    }
+
+    return (
+        <Card className="h-full flex flex-col">
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Video className="h-5 w-5 text-primary" />
+                    {title}
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="flex-grow flex flex-col p-2 pt-0">
+                <video
+                    ref={videoRef}
+                    key={playlist[currentVideo]}
+                    className="w-full rounded-t-md bg-black"
+                    controls={false}
+                    autoPlay
+                    muted
+                    onEnded={handleVideoEnd}
+                    playsInline
+                >
+                    <source src={playlist[currentVideo]} type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+                <div className="flex-grow p-2 bg-muted rounded-b-md">
+                    <h3 className="font-semibold text-xs mb-1">ISL Video Sequence</h3>
+                    <p className="text-xs text-muted-foreground">Playing video {currentVideo + 1} of {playlist.length}</p>
+                    <div className="mt-1 text-xs text-muted-foreground break-all">
+                    Current: {playlist[currentVideo].split('/').pop()?.replace('.mp4', '').replace(/_/g, ' ')}
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
+
+export default function SpeechToIslPage() {
+    const [selectedLang, setSelectedLang] = useState('en-US');
+    const [isRecording, setIsRecording] = useState(false);
+    const [transcribedText, setTranscribedText] = useState('');
+    const [translatedText, setTranslatedText] = useState('');
+    const [islPlaylist, setIslPlaylist] = useState<string[]>([]);
+    const [isProcessing, setIsProcessing] = useState(false);
+
+    const { toast } = useToast();
+    const recognitionRef = useRef<any>(null);
+
+    useEffect(() => {
+        // @ts-ignore
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            const recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = selectedLang;
+
+            recognition.onresult = (event: any) => {
+                let finalTranscript = '';
+                let interimTranscript = '';
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+                setTranscribedText(finalTranscript + interimTranscript);
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error("Speech recognition error", event.error);
+                toast({
+                    variant: 'destructive',
+                    title: 'Speech Recognition Error',
+                    description: `An error occurred: ${event.error}. Please ensure you have given microphone permissions.`
+                });
+                setIsRecording(false);
+            };
+            
+            recognition.onend = () => {
+                 if (isRecording) {
+                    recognition.start(); // Restart recognition if it stops unexpectedly
+                }
+            };
+
+            recognitionRef.current = recognition;
+        } else {
+            toast({
+                variant: 'destructive',
+                title: 'Unsupported Browser',
+                description: 'Speech recognition is not supported by your browser.'
+            });
+        }
+    }, [selectedLang, toast, isRecording]);
+
+    const handleMicClick = () => {
+        if (isRecording) {
+            recognitionRef.current?.stop();
+            setIsRecording(false);
+            if (transcribedText) {
+                handleTranslation();
+            }
+        } else {
+            setTranscribedText('');
+            setTranslatedText('');
+            setIslPlaylist([]);
+            recognitionRef.current?.start();
+            setIsRecording(true);
+        }
+    };
+    
+    const handleTranslation = async () => {
+        if (!transcribedText.trim()) {
+            toast({ title: "Nothing to translate", description: "The transcribed text is empty." });
+            return;
+        }
+
+        setIsProcessing(true);
+        try {
+            const formData = new FormData();
+            formData.append('text', transcribedText);
+            formData.append('lang', selectedLang.split('-')[0]);
+
+            const result = await translateSpeechText(formData);
+            
+            setTranslatedText(result.translatedText);
+            setIslPlaylist(result.islPlaylist);
+        } catch (error) {
+            console.error("Translation failed:", error);
+            toast({
+                variant: "destructive",
+                title: "Translation Error",
+                description: "Failed to translate the text."
+            });
+        } finally {
+            setIsProcessing(false);
+        }
+    };
+
+
+    return (
+        <div className="w-full h-full flex flex-col">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-lg font-semibold md:text-2xl flex items-center gap-2">
+                        <Speech className="h-6 w-6 text-primary" />
+                        Speech to ISL Converter
+                    </h1>
+                    <p className="text-muted-foreground">
+                        Select a language, speak, and see the ISL translation in real-time.
+                    </p>
+                </div>
+            </div>
+
+            <Card className="mt-6">
+                <CardContent className="p-4 flex flex-col sm:flex-row items-center gap-4">
+                    <div className="w-full sm:w-auto">
+                        <label className="text-sm font-medium">Spoken Language</label>
+                        <Select value={selectedLang} onValueChange={setSelectedLang} disabled={isRecording}>
+                            <SelectTrigger className="w-full sm:w-[180px]">
+                                <SelectValue placeholder="Select a language" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {Object.entries(LANGUAGE_OPTIONS).map(([code, name]) => (
+                                    <SelectItem key={code} value={code}>{name}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+
+                    <div className="flex-grow" />
+
+                    <Button onClick={handleMicClick} size="lg" className="rounded-full h-16 w-16">
+                        {isRecording ? <MicOff className="h-8 w-8" /> : <Mic className="h-8 w-8" />}
+                    </Button>
+                    <p className="text-sm text-muted-foreground w-28 text-center">
+                        {isRecording ? 'Recording...' : 'Tap to speak'}
+                    </p>
+
+                    <div className="flex-grow" />
+                </CardContent>
+            </Card>
+
+            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
+                <Card className="flex flex-col">
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                           <MessageSquare className="h-5 w-5 text-primary" />
+                           Transcribed Text
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                        <Textarea
+                            value={transcribedText}
+                            readOnly
+                            placeholder="Your spoken words will appear here..."
+                            className="h-full resize-none"
+                        />
+                    </CardContent>
+                </Card>
+
+                <Card className="flex flex-col">
+                     <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <Languages className="h-5 w-5 text-primary" />
+                            English Translation
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="flex-grow">
+                         {isProcessing ? (
+                             <div className="flex items-center justify-center h-full">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                             </div>
+                         ) : (
+                            <Textarea
+                                value={translatedText}
+                                readOnly
+                                placeholder="The English translation will appear here..."
+                                className="h-full resize-none"
+                            />
+                         )}
+                    </CardContent>
+                </Card>
+
+                <div className="md:col-span-1 h-full min-h-[300px]">
+                     {isProcessing ? (
+                         <div className="flex items-center justify-center h-full rounded-lg bg-muted">
+                            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                         </div>
+                     ) : (
+                        <IslVideoPlayer playlist={islPlaylist} title="ISL Video Output" />
+                     )}
+                </div>
+            </div>
+        </div>
+    );
+}

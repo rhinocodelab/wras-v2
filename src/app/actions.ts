@@ -7,7 +7,7 @@ import { cookies } from 'next/headers';
 import { open } from 'sqlite';
 import sqlite3 from 'sqlite3';
 import { revalidatePath } from 'next/cache';
-import { translateAllRoutes } from '@/ai/flows/translate-flow';
+import { translateAllRoutes, translateText as translateFlowText } from '@/ai/flows/translate-flow';
 import { generateSpeech } from '@/ai/flows/tts-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -778,4 +778,31 @@ export async function clearAnnouncementsFolder() {
         return { message: 'Announcements folder cleared.' };
     } catch (error) {
         console.error('Failed to clear announcements folder:', error);
-        // It's not a critical failure if this doesn't work, so don
+        // It's not a critical failure if this doesn't work, so don't throw
+        return { message: 'Could not clear announcements folder.' };
+    }
+}
+
+
+const speechToIslInput = z.object({
+    text: z.string(),
+    lang: z.string(),
+});
+  
+export async function translateSpeechText(formData: FormData) {
+    const parsed = speechToIslInput.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!parsed.success) {
+        throw new Error('Invalid input for translation.');
+    }
+    
+    const { text, lang } = parsed.data;
+
+    const translatedText = await translateFlowText(text, 'en');
+    const islPlaylist = await getIslVideoPlaylist(translatedText);
+
+    return {
+        translatedText,
+        islPlaylist,
+    };
+}
