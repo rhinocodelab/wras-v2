@@ -251,14 +251,16 @@ export default function HomePage() {
             </form>
           </div>
         </header>
-        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20">{renderContent()}</main>
-        <footer className="z-40 border-t bg-background">
-            <div className="mx-auto w-full px-4 sm:px-6">
-                <div className="py-3 text-center text-sm text-muted-foreground">
-                    Designed and Developed by Sundyne Technologies copyright 2025
-                </div>
+        <div className="flex flex-1 flex-col overflow-hidden">
+          <main className="flex-1 overflow-auto p-4 sm:p-6">
+            {renderContent()}
+          </main>
+          <footer className="border-t bg-background p-3">
+            <div className="text-center text-sm text-muted-foreground">
+                Designed and Developed by Sundyne Technologies copyright 2025
             </div>
-        </footer>
+          </footer>
+        </div>
       </div>
     </div>
   );
