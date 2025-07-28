@@ -2,14 +2,35 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableHeader,
+  TableRow,
+  TableHead,
+  TableBody,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { getIslVideos } from '@/app/actions';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, FolderKanban } from 'lucide-react';
+import { Loader2, FolderKanban, PlayCircle } from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
+
+const VIDEOS_PER_PAGE = 5;
 
 export default function IslDatasetPage() {
   const [videos, setVideos] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [selectedVideo, setSelectedVideo] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -38,6 +59,33 @@ export default function IslDatasetPage() {
     fetchVideos();
   }, [toast]);
 
+  const totalPages = Math.ceil(videos.length / VIDEOS_PER_PAGE);
+  const paginatedVideos = videos.slice(
+    (currentPage - 1) * VIDEOS_PER_PAGE,
+    currentPage * VIDEOS_PER_PAGE
+  );
+
+  const prevPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const nextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePlayClick = (videoSrc: string) => {
+    setSelectedVideo(videoSrc);
+    setIsModalOpen(true);
+  }
+
+  const getFileName = (path: string) => {
+    return path.split('/').pop()?.replace('.mp4', '').replace(/_/g, ' ') ?? 'video';
+  }
+
   return (
     <div className="w-full">
       <div className="flex items-center justify-between">
@@ -52,39 +100,89 @@ export default function IslDatasetPage() {
         </div>
       </div>
 
-      <div className="mt-6">
-        {isLoading ? (
-          <div className="flex justify-center items-center h-48">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
-          </div>
-        ) : videos.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {videos.map((videoSrc) => {
-              const fileName = videoSrc.split('/').pop()?.replace('.mp4', '').replace(/_/g, ' ') ?? 'video';
-              return (
-                <Card key={videoSrc}>
-                  <CardHeader>
-                    <CardTitle className="text-base capitalize">{fileName}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <video controls className="w-full rounded-md" muted>
-                      <source src={videoSrc} type="video/mp4" />
-                      Your browser does not support the video tag.
-                    </video>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        ) : (
-          <div className="mt-6 text-center text-muted-foreground border rounded-lg p-12">
-            <p>No videos found in the ISL dataset.</p>
-            <p className="text-sm">
-              Add `.mp4` files to the `public/isl_dataset` directory to see them here.
-            </p>
-          </div>
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <div className="mt-6">
+          {isLoading ? (
+            <div className="flex justify-center items-center h-48">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : videos.length > 0 ? (
+            <Card>
+              <CardContent className="pt-6">
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Video Name</TableHead>
+                        <TableHead className="text-right">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {paginatedVideos.map((videoSrc) => (
+                        <TableRow key={videoSrc}>
+                          <TableCell className="font-medium capitalize">{getFileName(videoSrc)}</TableCell>
+                          <TableCell className="text-right">
+                             <DialogTrigger asChild>
+                                <Button variant="ghost" size="icon" onClick={() => handlePlayClick(videoSrc)}>
+                                    <PlayCircle className="h-5 w-5" />
+                                </Button>
+                            </DialogTrigger>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="mt-6 text-center text-muted-foreground border rounded-lg p-12">
+              <p>No videos found in the ISL dataset.</p>
+              <p className="text-sm">
+                Add `.mp4` files to the `public/isl_dataset` directory to see them here.
+              </p>
+            </div>
+          )}
+        </div>
+        
+        {videos.length > 0 && totalPages > 1 && (
+            <div className="flex items-center justify-end space-x-2 py-4">
+                <Button
+                variant="outline"
+                size="sm"
+                onClick={prevPage}
+                disabled={currentPage === 1}
+                >
+                Previous
+                </Button>
+                <span className="text-sm text-muted-foreground">
+                    Page {currentPage} of {totalPages}
+                </span>
+                <Button
+                variant="outline"
+                size="sm"
+                onClick={nextPage}
+                disabled={currentPage === totalPages}
+                >
+                Next
+                </Button>
+            </div>
         )}
-      </div>
+
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle className="capitalize">{selectedVideo ? getFileName(selectedVideo) : 'Video'}</DialogTitle>
+          </DialogHeader>
+          {selectedVideo && (
+            <div className="mt-4">
+                <video key={selectedVideo} controls autoPlay className="w-full rounded-md" muted>
+                    <source src={selectedVideo} type="video/mp4" />
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
