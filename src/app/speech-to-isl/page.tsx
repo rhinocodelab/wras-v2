@@ -408,7 +408,7 @@ export default function SpeechToIslPage() {
                                  <Button onClick={handleGenerateVideoClick} disabled={isGeneratingVideo || !translatedText}>
                                     {isGeneratingVideo ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Film className="mr-2 h-4 w-4" />}
                                     {isGeneratingVideo ? "Generating..." : "Generate ISL Video"}
-                                </Button>
+                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
