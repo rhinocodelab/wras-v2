@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech, Rocket } from 'lucide-react';
+import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech, Rocket, Film } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { translateSpeechText } from '@/app/actions';
+import { translateSpeechText, getIslVideoPlaylist } from '@/app/actions';
 
 const LANGUAGE_OPTIONS: { [key: string]: string } = {
   'en-US': 'English',
@@ -90,7 +90,8 @@ export default function SpeechToIslPage() {
     const [finalTranscribedText, setFinalTranscribedText] = useState('');
     const [translatedText, setTranslatedText] = useState('');
     const [islPlaylist, setIslPlaylist] = useState<string[]>([]);
-    const [isProcessing, setIsProcessing] = useState(false);
+    const [isTranslating, setIsTranslating] = useState(false);
+    const [isGeneratingVideo, setIsGeneratingVideo] = useState(false);
 
     const { toast } = useToast();
     const recognitionRef = useRef<any>(null);
@@ -100,20 +101,22 @@ export default function SpeechToIslPage() {
         recordingRef.current = isRecording;
     }, [isRecording]);
 
-    const handleFinalTranslation = useCallback(async (textToTranslate: string) => {
+    const handleTranslateClick = useCallback(async () => {
+        const textToTranslate = finalTranscribedText;
         if (!textToTranslate.trim()) return;
 
-        setIsProcessing(true);
+        setIsTranslating(true);
+        setIslPlaylist([]); // Clear previous playlist
         try {
-            const formData = new FormData();
-            formData.append('text', textToTranslate);
-            formData.append('lang', selectedLang.split('-')[0]);
-
-            const result = await translateSpeechText(formData);
-            
-            setTranslatedText(result.translatedText);
-            setIslPlaylist(result.islPlaylist);
-
+            if (selectedLang === 'en-US') {
+                setTranslatedText(textToTranslate);
+            } else {
+                const formData = new FormData();
+                formData.append('text', textToTranslate);
+                formData.append('lang', selectedLang.split('-')[0]);
+                const result = await translateSpeechText(formData);
+                setTranslatedText(result.translatedText);
+            }
         } catch (error) {
             console.error("Translation failed:", error);
             toast({
@@ -122,9 +125,28 @@ export default function SpeechToIslPage() {
                 description: "Failed to translate the text."
             });
         } finally {
-            setIsProcessing(false);
+            setIsTranslating(false);
         }
-    }, [selectedLang, toast]);
+    }, [finalTranscribedText, selectedLang, toast]);
+
+    const handleGenerateVideoClick = useCallback(async () => {
+        if (!translatedText.trim()) return;
+        
+        setIsGeneratingVideo(true);
+        try {
+            const playlist = await getIslVideoPlaylist(translatedText);
+            setIslPlaylist(playlist);
+        } catch (error) {
+             console.error("ISL generation failed:", error);
+            toast({
+                variant: "destructive",
+                title: "ISL Video Error",
+                description: "Failed to generate the ISL video playlist."
+            });
+        } finally {
+            setIsGeneratingVideo(false);
+        }
+    }, [translatedText, toast]);
 
     useEffect(() => {
         // @ts-ignore
@@ -212,7 +234,6 @@ export default function SpeechToIslPage() {
         if (isRecording) {
             recognitionRef.current?.stop();
             setIsRecording(false);
-            handleFinalTranslation(finalTranscribedText);
         } else {
             setTranscribedText('');
             setFinalTranscribedText('');
@@ -344,48 +365,58 @@ export default function SpeechToIslPage() {
             </Card>
 
             <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6 flex-grow">
-                <Card className="flex flex-col">
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                           <MessageSquare className="h-5 w-5 text-primary" />
-                           Transcribed Text
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                        <Textarea
-                            value={transcribedText}
-                            readOnly
-                            placeholder="Your spoken words will appear here..."
-                            className="h-full resize-none"
-                        />
-                    </CardContent>
-                </Card>
+                <div className="md:col-span-2 grid grid-rows-2 gap-6">
+                    <Card className="flex flex-col row-span-1">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                            <MessageSquare className="h-5 w-5 text-primary" />
+                            Transcribed Text
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="flex-grow">
+                            <Textarea
+                                value={transcribedText}
+                                readOnly
+                                placeholder="Your spoken words will appear here..."
+                                className="h-full resize-none"
+                            />
+                        </CardContent>
+                    </Card>
 
-                <Card className="flex flex-col">
-                     <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <Languages className="h-5 w-5 text-primary" />
-                            English Translation
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="flex-grow">
-                         {isProcessing && !translatedText ? (
-                             <div className="flex items-center justify-center h-full">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                             </div>
-                         ) : (
+                    <Card className="flex flex-col row-span-1">
+                        <CardHeader>
+                            <CardTitle className="flex items-center gap-2">
+                                <Languages className="h-5 w-5 text-primary" />
+                                English Translation
+                            </CardTitle>
+                             <CardDescription>
+                                This text will be used to generate the ISL video.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="flex-grow flex flex-col gap-4">
                             <Textarea
                                 value={translatedText}
                                 readOnly
                                 placeholder="The English translation will appear here..."
                                 className="h-full resize-none"
                             />
-                         )}
-                    </CardContent>
-                </Card>
+                            <div className="flex gap-2">
+                                <Button onClick={handleTranslateClick} disabled={isTranslating || !finalTranscribedText || isRecording}>
+                                    {isTranslating ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Languages className="mr-2 h-4 w-4"/>}
+                                    {isTranslating ? "Translating..." : "Translate"}
+                                </Button>
+                                 <Button onClick={handleGenerateVideoClick} disabled={isGeneratingVideo || !translatedText}>
+                                    {isGeneratingVideo ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <Film className="mr-2 h-4 w-4" />}
+                                    {isGeneratingVideo ? "Generating..." : "Generate ISL Video"}
+                                </Button>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
 
                 <div className="md:col-span-1 h-full min-h-[300px]">
-                     {isProcessing && islPlaylist.length === 0 ? (
+                     {isTranslating || isGeneratingVideo ? (
                          <div className="flex items-center justify-center h-full rounded-lg bg-muted">
                             <Loader2 className="h-8 w-8 animate-spin text-primary" />
                          </div>

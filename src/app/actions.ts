@@ -798,11 +798,9 @@ export async function translateSpeechText(formData: FormData) {
     
     const { text, lang } = parsed.data;
 
-    const translatedText = await translateFlowText(text, 'en');
-    const islPlaylist = await getIslVideoPlaylist(translatedText);
-
+    const translatedText = await translateFlowText(text, 'en', lang);
+    
     return {
         translatedText,
-        islPlaylist,
     };
 }
