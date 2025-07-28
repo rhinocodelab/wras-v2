@@ -12,6 +12,7 @@ import { generateSpeech } from '@/ai/flows/tts-flow';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import { generateAnnouncement, AnnouncementInput, AnnouncementOutput, generateTemplateAudio } from '@/ai/flows/announcement-flow';
+import { transcribeAudio } from '@/ai/flows/speech-to-text-flow';
 
 const SESSION_COOKIE_NAME = 'session';
 
@@ -823,5 +824,39 @@ export async function translateInputText(formData: FormData) {
     
     return {
         translatedText,
+    };
+}
+
+const audioToIslInput = z.object({
+    audioDataUri: z.string(),
+    languageCode: z.string(),
+});
+
+export async function transcribeAndTranslateAudio(formData: FormData) {
+    const parsed = audioToIslInput.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!parsed.success) {
+        throw new Error('Invalid input for audio transcription.');
+    }
+    
+    const { audioDataUri, languageCode } = parsed.data;
+
+    const { transcription } = await transcribeAudio({ audioDataUri, languageCode });
+
+    if (!transcription) {
+        return {
+            transcribedText: '',
+            translatedText: '',
+        };
+    }
+    
+    let translatedText = transcription;
+    if (languageCode.split('-')[0] !== 'en') {
+        translatedText = await translateFlowText(transcription, 'en', languageCode.split('-')[0]);
+    }
+
+    return {
+        transcribedText: transcription,
+        translatedText: translatedText,
     };
 }

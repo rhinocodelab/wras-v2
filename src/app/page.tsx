@@ -13,6 +13,7 @@ import {
   ClipboardList,
   Speech,
   Text,
+  FileAudio,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -27,6 +28,7 @@ import IslDatasetPage from '@/app/isl-dataset/page';
 import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
 import SpeechToIslPage from '@/app/speech-to-isl/page';
 import TextToIslPage from '@/app/text-to-isl/page';
+import AudioFileToIslPage from '@/app/audio-file-to-isl/page';
 
 
 export default function HomePage() {
@@ -55,6 +57,8 @@ export default function HomePage() {
         return <SpeechToIslPage />;
       case 'text-to-isl':
         return <TextToIslPage />;
+      case 'audio-file-to-isl':
+        return <AudioFileToIslPage />;
       default:
         return <Dashboard />;
     }
@@ -154,6 +158,13 @@ export default function HomePage() {
                   <Text className="h-5 w-5" />
                   Text to ISL
                 </div>
+                 <div
+                  onClick={() => setActiveView('audio-file-to-isl')}
+                  className={getMobileLinkClassName('audio-file-to-isl')}
+                >
+                  <FileAudio className="h-5 w-5" />
+                  Audio File to ISL
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -222,6 +233,13 @@ export default function HomePage() {
                 >
                   <Text className="h-4 w-4" />
                   Text to ISL
+                </div>
+                 <div
+                  onClick={() => setActiveView('audio-file-to-isl')}
+                  className={getLinkClassName('audio-file-to-isl')}
+                >
+                  <FileAudio className="h-4 w-4" />
+                  Audio File to ISL
                 </div>
               </div>
             </nav>
