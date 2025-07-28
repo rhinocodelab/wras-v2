@@ -804,3 +804,24 @@ export async function translateSpeechText(formData: FormData) {
         translatedText,
     };
 }
+
+const textToIslInput = z.object({
+    text: z.string(),
+    lang: z.string(),
+});
+
+export async function translateInputText(formData: FormData) {
+    const parsed = textToIslInput.safeParse(Object.fromEntries(formData.entries()));
+
+    if (!parsed.success) {
+        throw new Error('Invalid input for translation.');
+    }
+    
+    const { text, lang } = parsed.data;
+
+    const translatedText = await translateFlowText(text, 'en', lang);
+    
+    return {
+        translatedText,
+    };
+}

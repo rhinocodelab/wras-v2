@@ -12,6 +12,7 @@ import {
   FolderKanban,
   ClipboardList,
   Speech,
+  Text,
 } from 'lucide-react';
 import Link from 'next/link';
 import { Sheet, SheetTrigger, SheetContent } from '@/components/ui/sheet';
@@ -25,6 +26,7 @@ import TemplateAudioPage from '@/app/ai-database/template-audio/page';
 import IslDatasetPage from '@/app/isl-dataset/page';
 import AnnouncementTemplatesPage from '@/app/announcement-templates/page';
 import SpeechToIslPage from '@/app/speech-to-isl/page';
+import TextToIslPage from '@/app/text-to-isl/page';
 
 
 export default function HomePage() {
@@ -51,6 +53,8 @@ export default function HomePage() {
         return <AnnouncementTemplatesPage />;
       case 'speech-to-isl':
         return <SpeechToIslPage />;
+      case 'text-to-isl':
+        return <TextToIslPage />;
       default:
         return <Dashboard />;
     }
@@ -143,6 +147,13 @@ export default function HomePage() {
                   <Speech className="h-5 w-5" />
                   Speech to ISL
                 </div>
+                <div
+                  onClick={() => setActiveView('text-to-isl')}
+                  className={getMobileLinkClassName('text-to-isl')}
+                >
+                  <Text className="h-5 w-5" />
+                  Text to ISL
+                </div>
               </nav>
             </SheetContent>
           </Sheet>
@@ -204,6 +215,13 @@ export default function HomePage() {
                 >
                   <Speech className="h-4 w-4" />
                   Speech to ISL
+                </div>
+                <div
+                  onClick={() => setActiveView('text-to-isl')}
+                  className={getLinkClassName('text-to-isl')}
+                >
+                  <Text className="h-4 w-4" />
+                  Text to ISL
                 </div>
               </div>
             </nav>
