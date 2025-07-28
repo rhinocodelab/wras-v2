@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Textarea } from '@/components/ui/textarea';
-import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech } from 'lucide-react';
+import { Mic, MicOff, Loader2, Languages, MessageSquare, Video, Speech, Rocket } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { translateSpeechText } from '@/app/actions';
 
@@ -228,6 +228,69 @@ export default function SpeechToIslPage() {
         }
     };
     
+    const handlePublish = () => {
+        if (!translatedText && !transcribedText) return;
+
+        const tickerText = [transcribedText, translatedText].filter(Boolean).join(' &nbsp; | &nbsp; ');
+        const videoSources = JSON.stringify(islPlaylist);
+
+        const htmlContent = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Live Announcement</title>
+            <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #000; color: #fff; display: flex; flex-direction: column; height: 100vh; overflow: hidden; }
+            .main-content { flex-grow: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 20px; }
+            .video-container { width: 80%; max-width: 960px; aspect-ratio: 16 / 9; background-color: #111; border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+            video { width: 100%; height: 100%; object-fit: cover; }
+            .ticker-wrap { position: fixed; bottom: 0; left: 0; width: 100%; background-color: #1a1a1a; padding: 15px 0; overflow: hidden; }
+            .ticker { display: inline-block; white-space: nowrap; padding-left: 100%; animation: ticker 40s linear infinite; font-size: 1.5em; }
+            @keyframes ticker { 0% { transform: translateX(0); } 100% { transform: translateX(-100%); } }
+            </style>
+        </head>
+        <body>
+            <div class="main-content">
+            <div class="video-container">
+                <video id="isl-video" muted playsinline></video>
+            </div>
+            </div>
+            <div class="ticker-wrap">
+            <div class="ticker">${tickerText}</div>
+            </div>
+
+            <script>
+            const videoElement = document.getElementById('isl-video');
+            const videoPlaylist = ${videoSources};
+            let currentVideoIndex = 0;
+
+            function playNextVideo() {
+                if (!videoElement || videoPlaylist.length === 0) return;
+                videoElement.src = videoPlaylist[currentVideoIndex];
+                videoElement.play().catch(e => console.error("Video play error:", e));
+                currentVideoIndex = (currentVideoIndex + 1) % videoPlaylist.length;
+            }
+            
+            function startPlayback() {
+                if (videoPlaylist.length > 0) {
+                    playNextVideo();
+                }
+            }
+
+            videoElement.addEventListener('ended', playNextVideo);
+            window.addEventListener('load', startPlayback, { once: true });
+            <\/script>
+        </body>
+        </html>
+        `;
+
+        const blob = new Blob([htmlContent], { type: 'text/html' });
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+    };
+
     return (
         <div className="w-full h-full flex flex-col">
             <div className="flex items-center justify-between">
@@ -240,6 +303,10 @@ export default function SpeechToIslPage() {
                         Select a language, speak, and see the ISL translation in real-time.
                     </p>
                 </div>
+                 <Button onClick={handlePublish} disabled={!translatedText && !transcribedText}>
+                    <Rocket className="mr-2 h-4 w-4" />
+                    Publish Announcement
+                </Button>
             </div>
 
             <Card className="mt-6">
@@ -331,3 +398,4 @@ export default function SpeechToIslPage() {
     );
 }
 
+    
