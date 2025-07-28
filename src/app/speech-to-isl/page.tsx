@@ -117,6 +117,12 @@ export default function SpeechToIslPage() {
             };
 
             recognition.onerror = (event: any) => {
+                if (event.error === 'aborted') {
+                    console.log('Speech recognition aborted.');
+                    setIsRecording(false);
+                    return;
+                }
+                
                 console.error("Speech recognition error", event.error);
                 toast({
                     variant: 'destructive',
@@ -127,8 +133,11 @@ export default function SpeechToIslPage() {
             };
             
             recognition.onend = () => {
-                 if (isRecording) {
-                    recognition.start(); // Restart recognition if it stops unexpectedly
+                // The 'onend' event fires when recognition stops for any reason.
+                // We only want to auto-restart if the user hasn't manually stopped it.
+                if (recognitionRef.current && isRecording) {
+                   // recognition.start(); // This can cause rapid-fire restarts. Let's rely on user to restart.
+                   setIsRecording(false); // Update state if it stops on its own.
                 }
             };
 
@@ -153,8 +162,8 @@ export default function SpeechToIslPage() {
             setTranscribedText('');
             setTranslatedText('');
             setIslPlaylist([]);
-            recognitionRef.current?.start();
             setIsRecording(true);
+            recognitionRef.current?.start();
         }
     };
     
