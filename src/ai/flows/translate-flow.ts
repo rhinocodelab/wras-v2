@@ -15,7 +15,7 @@ import { googleAI } from '@genkit-ai/googleai';
 
 
 export async function translateText(text: string, targetLanguage: string, sourceLanguage?: string): Promise<string> {
-    if (!text || targetLanguage === sourceLanguage) {
+    if (!text || !targetLanguage || targetLanguage === sourceLanguage) {
         return text;
     }
     
@@ -29,7 +29,7 @@ export async function translateText(text: string, targetLanguage: string, source
             parent: `projects/${projectId}/locations/global`,
             contents: [text],
             mimeType: 'text/plain',
-            sourceLanguageCode: sourceLanguage || 'en',
+            sourceLanguageCode: sourceLanguage || 'en', // Explicitly set source language
             targetLanguageCode: targetLanguage,
         });
 
@@ -79,7 +79,7 @@ const translateRouteFlow = ai.defineFlow(
             const trainNumberStr = String(route['Train Number'] || '');
             trainNumberTranslation = trainNumberStr.split('').map(digit => digitMaps[languageCode][digit] || digit).join(' ');
         } else {
-            trainNumberTranslation = await translateText(String(route['Train Number'] || ''), languageCode);
+            trainNumberTranslation = await translateText(String(route['Train Number'] || ''), languageCode, 'en');
         }
 
         const [
@@ -87,9 +87,9 @@ const translateRouteFlow = ai.defineFlow(
             startStationTranslation,
             endStationTranslation
         ] = await Promise.all([
-            translateText(route['Train Name'], languageCode),
-            translateText(route['Start Station'], languageCode),
-            translateText(route['End Station'], languageCode),
+            translateText(route['Train Name'], languageCode, 'en'),
+            translateText(route['Start Station'], languageCode, 'en'),
+            translateText(route['End Station'], languageCode, 'en'),
         ]);
 
         return {
