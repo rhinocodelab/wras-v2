@@ -101,7 +101,7 @@ export default function SpeechToIslPage() {
         recordingRef.current = isRecording;
     }, [isRecording]);
 
-    const handleTranslateClick = useCallback(async () => {
+     const handleTranslateClick = useCallback(async () => {
         const textToTranslate = finalTranscribedText;
         if (!textToTranslate.trim()) return;
 
@@ -160,8 +160,7 @@ export default function SpeechToIslPage() {
             recognition.onresult = (event: any) => {
                 let interimTranscript = '';
                 let newFinalTranscript = '';
-                let currentFinalTranscript = finalTranscribedText;
-
+                
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                          newFinalTranscript += event.results[i][0].transcript.trim() + ' ';
@@ -172,9 +171,8 @@ export default function SpeechToIslPage() {
                 
                 if (newFinalTranscript) {
                     setFinalTranscribedText(prev => prev + newFinalTranscript);
-                    currentFinalTranscript += newFinalTranscript;
                 }
-                setTranscribedText(currentFinalTranscript + interimTranscript);
+                setTranscribedText(finalTranscribedText + newFinalTranscript + interimTranscript);
             };
 
             recognition.onerror = (event: any) => {
