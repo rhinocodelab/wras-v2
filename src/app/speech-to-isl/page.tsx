@@ -100,7 +100,7 @@ export default function SpeechToIslPage() {
         recordingRef.current = isRecording;
     }, [isRecording]);
 
-    const handleRealtimeTranslation = useCallback(async (textToTranslate: string) => {
+    const handleFinalTranslation = useCallback(async (textToTranslate: string) => {
         if (!textToTranslate.trim()) return;
 
         setIsProcessing(true);
@@ -111,8 +111,8 @@ export default function SpeechToIslPage() {
 
             const result = await translateSpeechText(formData);
             
-            setTranslatedText(prev => (prev ? prev + ' ' : '') + result.translatedText);
-            setIslPlaylist(prev => [...prev, ...result.islPlaylist]);
+            setTranslatedText(result.translatedText);
+            setIslPlaylist(result.islPlaylist);
 
         } catch (error) {
             console.error("Translation failed:", error);
@@ -147,18 +147,16 @@ export default function SpeechToIslPage() {
                     }
                 }
                 
+                setTranscribedText(finalTranscribedText + newFinalTranscript + interimTranscript);
                 if (newFinalTranscript) {
                     setFinalTranscribedText(prev => prev + newFinalTranscript);
-                    handleRealtimeTranslation(newFinalTranscript.trim());
                 }
-                setTranscribedText(finalTranscribedText + newFinalTranscript + interimTranscript);
             };
 
             recognition.onerror = (event: any) => {
                  if (event.error === 'aborted' || event.error === 'no-speech') {
                     console.log(`Speech recognition stopped: ${event.error}`);
                     if (recordingRef.current) {
-                        // Restart if it was aborted but we are still in recording mode
                         try {
                            recognition.start();
                         } catch(e) {
@@ -208,12 +206,13 @@ export default function SpeechToIslPage() {
             }
         };
 
-    }, [selectedLang, toast, finalTranscribedText, handleRealtimeTranslation]);
+    }, [selectedLang, toast, finalTranscribedText]);
 
     const handleMicClick = () => {
         if (isRecording) {
             recognitionRef.current?.stop();
             setIsRecording(false);
+            handleFinalTranslation(finalTranscribedText);
         } else {
             setTranscribedText('');
             setFinalTranscribedText('');
@@ -331,3 +330,4 @@ export default function SpeechToIslPage() {
         </div>
     );
 }
+
