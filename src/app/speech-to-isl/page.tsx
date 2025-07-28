@@ -386,8 +386,8 @@ export default function SpeechToIslPage() {
                                 Transcribed Text
                                 </CardTitle>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={handleClearTranscription} disabled={!transcribedText}>
-                                <X className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" onClick={handleClearTranscription} disabled={!transcribedText}>
+                                Clear
                             </Button>
                         </CardHeader>
                         <CardContent className="flex-grow">
@@ -411,8 +411,8 @@ export default function SpeechToIslPage() {
                                     This text will be used to generate the ISL video.
                                 </CardDescription>
                             </div>
-                            <Button variant="ghost" size="icon" onClick={handleClearTranslation} disabled={!translatedText}>
-                                <X className="h-4 w-4" />
+                            <Button variant="ghost" size="sm" onClick={handleClearTranslation} disabled={!translatedText}>
+                                Clear
                             </Button>
                         </CardHeader>
                         <CardContent className="flex-grow flex flex-col gap-4">
@@ -450,5 +450,3 @@ export default function SpeechToIslPage() {
         </div>
     );
 }
-
-    
