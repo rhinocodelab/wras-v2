@@ -85,13 +85,77 @@ export default function HomePage() {
   };
 
   return (
-    <div className="flex min-h-screen w-full flex-col items-center bg-muted/40">
-      <div className="flex w-full max-w-7xl flex-col">
-        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
-          <div className="flex items-center gap-2 font-semibold text-primary">
-            <TramFront className="h-6 w-6" />
-            <span className="text-lg font-bold text-primary">WRAS-DHH</span>
+    <div className="flex min-h-screen w-full bg-muted/40">
+      <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
+        <div className="flex h-16 items-center border-b px-6">
+            <div className="flex items-center gap-2 font-semibold text-primary">
+                <TramFront className="h-6 w-6" />
+                <span className="text-lg font-bold text-primary">WRAS-DHH</span>
+            </div>
+        </div>
+        <nav className="flex-1 overflow-auto py-4">
+          <div className="grid items-start px-4 text-sm font-medium">
+            <div
+              onClick={() => setActiveView('dashboard')}
+              className={getLinkClassName('dashboard')}
+            >
+              <Home className="h-4 w-4" />
+              Dashboard
+            </div>
+            <div
+              onClick={() => setActiveView('route-management')}
+              className={getLinkClassName('route-management')}
+            >
+              <GitFork className="h-4 w-4" />
+              Route Management
+            </div>
+            <div
+              onClick={() => setActiveView('ai-database')}
+              className={getLinkClassName('ai-database')}
+            >
+              <Database className="h-4 w-4" />
+              AI Generated Assets
+            </div>
+            <div
+              onClick={() => setActiveView('isl-dataset')}
+              className={getLinkClassName('isl-dataset')}
+            >
+              <FolderKanban className="h-4 w-4" />
+              ISL Dataset
+            </div>
+            <div
+              onClick={() => setActiveView('announcement-templates')}
+              className={getLinkClassName('announcement-templates')}
+            >
+              <ClipboardList className="h-4 w-4" />
+              Announcement Templates
+            </div>
+            <div
+              onClick={() => setActiveView('speech-to-isl')}
+              className={getLinkClassName('speech-to-isl')}
+            >
+              <Speech className="h-4 w-4" />
+              Speech to ISL
+            </div>
+            <div
+              onClick={() => setActiveView('text-to-isl')}
+              className={getLinkClassName('text-to-isl')}
+            >
+              <Text className="h-4 w-4" />
+              Text to ISL
+            </div>
+             <div
+              onClick={() => setActiveView('audio-file-to-isl')}
+              className={getLinkClassName('audio-file-to-isl')}
+            >
+              <FileAudio className="h-4 w-4" />
+              Audio File to ISL
+            </div>
           </div>
+        </nav>
+      </aside>
+      <div className="flex flex-1 flex-col">
+        <header className="sticky top-0 z-30 flex h-16 items-center justify-between gap-4 border-b bg-background px-4 sm:px-6">
           <Sheet>
             <SheetTrigger asChild>
               <Button size="icon" variant="outline" className="sm:hidden">
@@ -168,6 +232,12 @@ export default function HomePage() {
               </nav>
             </SheetContent>
           </Sheet>
+          <div className="flex h-16 items-center border-b px-6 sm:hidden">
+              <div className="flex items-center gap-2 font-semibold text-primary">
+                  <TramFront className="h-6 w-6" />
+                  <span className="text-lg font-bold text-primary">WRAS-DHH</span>
+              </div>
+          </div>
           <div className="ml-auto flex items-center gap-4">
             {session && (
               <div className="flex items-center gap-2 text-sm font-medium">
@@ -181,79 +251,15 @@ export default function HomePage() {
             </form>
           </div>
         </header>
-        <div className="flex flex-1">
-          <aside className="hidden w-60 flex-col border-r bg-background sm:flex">
-            <nav className="flex flex-1 flex-col overflow-auto py-4">
-              <div className="grid items-start px-4 text-sm font-medium">
-                <div
-                  onClick={() => setActiveView('dashboard')}
-                  className={getLinkClassName('dashboard')}
-                >
-                  <Home className="h-4 w-4" />
-                  Dashboard
+        <main className="flex-1 overflow-auto p-4 sm:p-6 pb-20">{renderContent()}</main>
+        <footer className="z-40 border-t bg-background">
+            <div className="mx-auto w-full px-4 sm:px-6">
+                <div className="py-3 text-center text-sm text-muted-foreground">
+                    Designed and Developed by Sundyne Technologies copyright 2025
                 </div>
-                <div
-                  onClick={() => setActiveView('route-management')}
-                  className={getLinkClassName('route-management')}
-                >
-                  <GitFork className="h-4 w-4" />
-                  Route Management
-                </div>
-                <div
-                  onClick={() => setActiveView('ai-database')}
-                  className={getLinkClassName('ai-database')}
-                >
-                  <Database className="h-4 w-4" />
-                  AI Generated Assets
-                </div>
-                <div
-                  onClick={() => setActiveView('isl-dataset')}
-                  className={getLinkClassName('isl-dataset')}
-                >
-                  <FolderKanban className="h-4 w-4" />
-                  ISL Dataset
-                </div>
-                <div
-                  onClick={() => setActiveView('announcement-templates')}
-                  className={getLinkClassName('announcement-templates')}
-                >
-                  <ClipboardList className="h-4 w-4" />
-                  Announcement Templates
-                </div>
-                <div
-                  onClick={() => setActiveView('speech-to-isl')}
-                  className={getLinkClassName('speech-to-isl')}
-                >
-                  <Speech className="h-4 w-4" />
-                  Speech to ISL
-                </div>
-                <div
-                  onClick={() => setActiveView('text-to-isl')}
-                  className={getLinkClassName('text-to-isl')}
-                >
-                  <Text className="h-4 w-4" />
-                  Text to ISL
-                </div>
-                 <div
-                  onClick={() => setActiveView('audio-file-to-isl')}
-                  className={getLinkClassName('audio-file-to-isl')}
-                >
-                  <FileAudio className="h-4 w-4" />
-                  Audio File to ISL
-                </div>
-              </div>
-            </nav>
-          </aside>
-          <main className="flex-1 p-4 sm:p-6 pb-16">{renderContent()}</main>
-        </div>
+            </div>
+        </footer>
       </div>
-      <footer className="fixed bottom-0 left-0 right-0 z-40 bg-background border-t">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6">
-              <div className="py-3 text-center text-sm text-muted-foreground">
-                  Designed and Developed by Sundyne Technologies copyright 2025
-              </div>
-          </div>
-      </footer>
     </div>
   );
 }
