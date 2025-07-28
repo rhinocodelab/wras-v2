@@ -94,6 +94,11 @@ export default function SpeechToIslPage() {
 
     const { toast } = useToast();
     const recognitionRef = useRef<any>(null);
+    const recordingRef = useRef(isRecording);
+
+    useEffect(() => {
+        recordingRef.current = isRecording;
+    }, [isRecording]);
 
     const handleRealtimeTranslation = useCallback(async (textToTranslate: string) => {
         if (!textToTranslate.trim()) return;
@@ -106,8 +111,8 @@ export default function SpeechToIslPage() {
 
             const result = await translateSpeechText(formData);
             
-            setTranslatedText(result.translatedText);
-            setIslPlaylist(result.islPlaylist);
+            setTranslatedText(prev => (prev ? prev + ' ' : '') + result.translatedText);
+            setIslPlaylist(prev => [...prev, ...result.islPlaylist]);
 
         } catch (error) {
             console.error("Translation failed:", error);
@@ -136,26 +141,22 @@ export default function SpeechToIslPage() {
 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
-                        newFinalTranscript += event.results[i][0].transcript + ' ';
+                        newFinalTranscript += event.results[i][0].transcript.trim() + ' ';
                     } else {
                         interimTranscript += event.results[i][0].transcript;
                     }
                 }
                 
                 if (newFinalTranscript) {
-                    const updatedFinalText = finalTranscribedText + newFinalTranscript;
-                    setFinalTranscribedText(updatedFinalText);
-                    setTranscribedText(updatedFinalText); // Update main view with final text
-                    handleRealtimeTranslation(updatedFinalText);
-                } else {
-                    setTranscribedText(finalTranscribedText + interimTranscript);
+                    setFinalTranscribedText(prev => prev + newFinalTranscript);
+                    handleRealtimeTranslation(newFinalTranscript.trim());
                 }
+                setTranscribedText(finalTranscribedText + newFinalTranscript + interimTranscript);
             };
 
             recognition.onerror = (event: any) => {
-                if (event.error === 'aborted' || event.error === 'no-speech') {
+                 if (event.error === 'aborted' || event.error === 'no-speech') {
                     console.log(`Speech recognition stopped: ${event.error}`);
-                    // Let the onend handler manage the recording state.
                     return;
                 }
                 
@@ -169,8 +170,7 @@ export default function SpeechToIslPage() {
             };
             
             recognition.onend = () => {
-                if (recognitionRef.current && isRecording) {
-                   // If it stops but we are supposed to be recording, restart it.
+                if (recordingRef.current) {
                    recognition.start();
                 } else {
                     setIsRecording(false);
@@ -186,14 +186,13 @@ export default function SpeechToIslPage() {
             });
         }
 
-        // Cleanup function
         return () => {
             if (recognitionRef.current) {
                 recognitionRef.current.stop();
             }
         };
 
-    }, [selectedLang, toast, isRecording, finalTranscribedText, handleRealtimeTranslation]);
+    }, [selectedLang, toast, finalTranscribedText, handleRealtimeTranslation]);
 
     const handleMicClick = () => {
         if (isRecording) {
@@ -205,7 +204,12 @@ export default function SpeechToIslPage() {
             setTranslatedText('');
             setIslPlaylist([]);
             setIsRecording(true);
-            recognitionRef.current?.start();
+            try {
+              recognitionRef.current?.start();
+            } catch (e) {
+                console.error("Could not start recognition:", e);
+                setIsRecording(false);
+            }
         }
     };
     
@@ -305,5 +309,4 @@ export default function SpeechToIslPage() {
             </div>
         </div>
     );
-
-    
+}
